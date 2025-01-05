@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <link rel="shortcut icon" href="images/favicon19.jpg" type="image/x-icon">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıtlı Hesaplar</title>
+    <style>
+        /* Stil düzenlemeleri buraya */
+    </style>
+</head>
+
+<body>
+
+    <h2>Kayıtlı Kullanıcılar</h2>
+    <ul id="user-list">
+        <!-- Kayıtlı kullanıcılar buraya eklenecek -->
+    </ul>
+
+    <script>
+        // Sayfa yüklendiğinde şifre kontrolü
+        window.onload = function () {
+            const password = prompt("Lütfen şifrenizi girin:");
+
+            if (password !== "dogruSifre") {
+                alert("Yanlış şifre!");
+                window.location.href = "index.html"; // Yanlış şifre girildiğinde ana sayfaya yönlendir
+            }
+        };
+
+        // Kullanıcıları listele
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const userList = document.getElementById('user-list');
+        users.forEach(user => {
+            const li = document.createElement('li');
+            li.textContent = `Kullanıcı Adı: ${user.username}`;
+            userList.appendChild(li);
+        });
+    </script>
+
+</body>
+
+</html>

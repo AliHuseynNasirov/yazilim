@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <link rel="shortcut icon" href="images/favicon19.jpg" type="image/x-icon">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .background-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .login-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+            .login-box h2 {
+                margin-bottom: 20px;
+                font-size: 24px;
+            }
+
+            .login-box input[type="text"],
+            .login-box input[type="password"] {
+                width: 90%;
+                padding: 12px;
+                margin: 10px 0;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 16px;
+            }
+
+            .login-box button {
+                width: 100%;
+                padding: 12px;
+                background-color: #007bff;
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+                .login-box button:hover {
+                    background-color: #0056b3;
+                }
+
+            .login-box a {
+                display: block;
+                margin-top: 15px;
+                color: #007bff;
+                text-decoration: none;
+                font-size: 16px;
+            }
+
+                .login-box a:hover {
+                    text-decoration: underline;
+                }
+
+        /* Ana Sayfaya Git Butonu */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+            .home-btn:hover {
+                background-color: #0056b3;
+            }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ana Sayfaya Git Butonu -->
+    <button class="home-btn" onclick="window.location.href='index.html'">Ana Sayfaya Git</button>
+
+    <img src="images/yazilim01.jpg" alt="Fotoğraf" class="background-img">
+    <div class="login-box">
+        <h2>Giriş Yap</h2>
+        <form onsubmit="login(event)">
+            <input type="text" id="username" placeholder="Kullanıcı Adı" required>
+            <input type="password" id="password" placeholder="Parola" required>
+            <button type="submit">Giriş</button>
+        </form>
+        <a href="register.html">Hesabınız yoksa, tıklayın</a>
+        <a href="#" onclick="openForgotPassword()">Şifrenizi mi unuttunuz?</a>
+    </div>
+
+    <!-- Şifremi Unuttum Penceresi -->
+    <div id="forgotPasswordBox" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: whitesmoke; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center; z-index: 1000;">
+        <h2>Şifremi Unuttum</h2>
+        <form onsubmit="resetPassword(event)">
+            <input type="text" id="forgotUsername" placeholder="Kullanıcı Adı" required>
+            <input type="email" id="forgotEmail" placeholder="E-posta" required>
+            <button type="submit">Şifreyi Sıfırla</button>
+        </form>
+        <button onclick="closeForgotPassword()" style="margin-top: 10px; background-color: #ccc; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Kapat</button>
+    </div>
+
+    <script>
+        function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+
+            const userFound = users.find(user => user.username === username && user.password === password);
+
+            if (userFound) {
+                alert('Başarıyla giriş yaptınız!');
+                window.location.href = 'index.html';
+            } else {
+                alert('Kullanıcı adı veya parola hatalı!');
+            }
+        }
+
+        function openForgotPassword() {
+            document.getElementById('forgotPasswordBox').style.display = 'block';
+        }
+
+        function closeForgotPassword() {
+            document.getElementById('forgotPasswordBox').style.display = 'none';
+        }
+
+        function resetPassword(event) {
+            event.preventDefault();
+            const username = document.getElementById('forgotUsername').value;
+            const email = document.getElementById('forgotEmail').value;
+
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const userFound = users.find(user => user.username === username && user.email === email);
+
+            if (userFound) {
+                alert('Şifre sıfırlama talimatları e-posta adresinize gönderildi!');
+            } else {
+                alert('Kullanıcı bulunamadı. Bilgilerinizi kontrol edin.');
+            }
+
+            closeForgotPassword();
+        }
+    </script>
+</body>
+
+</html>
