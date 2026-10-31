@@ -159,7 +159,83 @@ function personCard(c, i, compact) {
       <li><b>Sprache:</b> ${esc(c.lang)}</li>
     </ul>
     ${compact ? '' : `<span class="pnum">${i + 1}</span>`}
+    ${(() => { const b = store.get('cardStars', {})[c.name]; return b && !compact ? `<span class="pstars">${'⭐'.repeat(b)}</span>` : ''; })()}
   </div>`;
+}
+
+const FIELD_LABELS = [
+  ['name', 'Name', (c) => c.name],
+  ['age', 'Alter', (c) => `${c.age} Jahre`],
+  ['country', 'Land', (c) => c.land],
+  ['city', 'Wohnort', (c) => c.city],
+  ['language', 'Sprache', (c) => c.lang],
+];
+function listCard(c, i) {
+  return `<div class="lcard ${c.color}" data-i="${i}">
+    <div class="lc-top">
+      <img src="images/${c.img}.jpg" alt="${esc(c.name)}">
+      <div class="lc-title">
+        <span class="lc-num">Kart ${i + 1}</span>
+        <b>${esc(c.name)}</b>
+        <span class="lc-now">🎤 Sənin növbən!</span>
+        <span class="lc-stars"></span>
+      </div>
+      <span class="lc-check">✅</span>
+    </div>
+    <ul class="lc-fields">
+      ${FIELD_LABELS.map(([f, label, get]) => `<li data-f="${f}"><span class="tick"></span><b>${label}:</b> ${esc(get(c))}</li>`).join('')}
+    </ul>
+  </div>`;
+}
+
+// Kiçik səs effektləri (WebAudio)
+const fx = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      try {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch {}
+    }
+    if (this.ctx) this.ctx.resume();
+  },
+  tone(freqs, dur = 0.12, type = 'sine', vol = 0.12) {
+    if (!this.ctx) return;
+    let t = this.ctx.currentTime;
+    for (const f of freqs) {
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = type;
+      o.frequency.value = f;
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g).connect(this.ctx.destination);
+      o.start(t);
+      o.stop(t + dur);
+      t += dur * 0.8;
+    }
+  },
+  ding() { this.tone([880, 1320], 0.1); },
+  win() { this.tone([523, 659, 784, 1047], 0.14, 'triangle'); },
+  oops() { this.tone([240, 180], 0.12, 'square', 0.05); },
+};
+
+function confetti(anchor, count = 40) {
+  const box = document.createElement('div');
+  box.className = 'confetti';
+  const r = anchor ? anchor.getBoundingClientRect() : { left: 0, width: innerWidth, top: innerHeight * 0.3 };
+  const colors = ['#111', '#dd0000', '#ffce00', '#4caf50', '#2f62c9', '#e05555'];
+  for (let k = 0; k < count; k++) {
+    const p = document.createElement('i');
+    p.style.left = `${r.left + Math.random() * r.width}px`;
+    p.style.top = `${r.top + Math.random() * 20}px`;
+    p.style.background = colors[k % colors.length];
+    p.style.setProperty('--dx', `${(Math.random() - 0.5) * 160}px`);
+    p.style.animationDelay = `${Math.random() * 0.2}s`;
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 1800);
 }
 
 function renderHome() {
@@ -381,16 +457,15 @@ function renderPractice(id) {
 
   $app.innerHTML = `
     ${header(`🎙️ ${esc(d.title)}`, `#/d/${d.id}`)}
-    <main class="practice">
+    <main class="practice ${d.cards ? 'cards-mode' : ''}">
       <details class="rule-mini">
         <summary>📘 ${d.phases ? 'Plan və qayda' : esc(d.rule.title)}</summary>
         <div class="rule">${planHtml(d)}${ruleHtml(d.rule)}</div>
       </details>
-      ${d.cards ? `<div class="card-panel">
-        <button class="nav" id="prevCard" aria-label="Əvvəlki">‹</button>
-        <div id="cardView"></div>
-        <button class="nav" id="nextCard" aria-label="Növbəti">›</button>
-      </div>` : ''}
+      ${d.cards ? `<div class="score-bar">
+        <span id="scDone">✅ 0/${d.cards.length}</span><span id="scStars">⭐ 0</span><span id="scErr">❌ 0</span>
+      </div>
+      <div id="cardList" class="card-list">${d.cards.map((c, i) => listCard(c, i)).join('')}</div>` : ''}
       <div id="chat" class="chat">
         <div class="sys">${s.apiKey ? 'Başlamaq üçün aşağıdakı düyməyə bas. Müəllim almanca danışacaq, səhvlərini izah edəcək.' : '🔑 Əvvəlcə <a href="#/settings">Ayarlar</a>-da API açarını yaz.'}</div>
       </div>
@@ -447,20 +522,93 @@ function renderPractice(id) {
     scroll();
   }
 
-  function showCard(i, fromUser) {
+  // ---- Kartlar: alt-alta, hər düzgün cümlədə ✓, kart bitəndə yaşıl + ulduz ----
+  const FIELDS = ['name', 'age', 'country', 'city', 'language'];
+  const cardState = (d.cards || []).map(() => ({ fields: new Set(), mistakes: 0, done: false }));
+  const cardEls = [...$app.querySelectorAll('.lcard')];
+  const starsFor = (st) => (st.mistakes === 0 ? 3 : st.mistakes <= 2 ? 2 : 1);
+
+  function updateScore() {
+    if (!d.cards) return;
+    const done = cardState.filter((x) => x.done);
+    $app.querySelector('#scDone').textContent = `✅ ${done.length}/${d.cards.length}`;
+    $app.querySelector('#scStars').textContent = `⭐ ${done.reduce((n, x) => n + starsFor(x), 0)}`;
+    $app.querySelector('#scErr').textContent = `❌ ${cardState.reduce((n, x) => n + x.mistakes, 0)}`;
+  }
+
+  function setActive(i, fromUser) {
     if (!d.cards) return;
     cardIdx = Math.max(0, Math.min(d.cards.length - 1, i));
-    const c = d.cards[cardIdx];
-    $app.querySelector('#cardView').innerHTML = `<div class="card-count">Kart ${cardIdx + 1} / ${d.cards.length}</div>${personCard(c, cardIdx, true)}`;
+    cardEls.forEach((el, j) => el.classList.toggle('active', j === cardIdx));
+    // Yalnız kart siyahısını sürüşdür (bütün səhifəni yox)
+    setTimeout(() => {
+      const list = $app.querySelector('#cardList');
+      if (list) list.scrollTo({ top: Math.max(0, cardEls[cardIdx].offsetTop - 80), behavior: 'smooth' }); // əvvəlki (yaşıl) kartın kənarı görünsün
+    }, 380);
     if (fromUser && session && session.ready) {
+      const c = d.cards[cardIdx];
       sys(`➡️ Kart ${cardIdx + 1}: ${c.name}`);
       session.sendText(`[App] The learner switched to card ${cardIdx + 1} (${c.name}). Continue with card ${cardIdx + 1} now.`);
     }
   }
+
+  function markField(cardNo, field) {
+    const i = (parseInt(cardNo, 10) || cardIdx + 1) - 1;
+    const st = cardState[i];
+    if (!st || !FIELDS.includes(field)) return 'invalid';
+    if (i !== cardIdx) setActive(i);
+    if (!st.fields.has(field)) {
+      st.fields.add(field);
+      const li = cardEls[i].querySelector(`[data-f="${field}"]`);
+      li.classList.add('ok');
+      fx.ding();
+    }
+    if (st.fields.size === FIELDS.length && !st.done) completeCard(i);
+    return `ticked ${field} on card ${i + 1} (${st.fields.size}/5)`;
+  }
+
+  function completeCard(i) {
+    const st = cardState[i];
+    st.done = true;
+    const stars = starsFor(st);
+    const el = cardEls[i];
+    el.classList.add('done', 'flash');
+    el.querySelector('.lc-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+    const best = store.get('cardStars', {});
+    best[d.cards[i].name] = Math.max(best[d.cards[i].name] || 0, stars);
+    store.set('cardStars', best);
+    fx.win();
+    confetti(el);
+    updateScore();
+    setTimeout(() => {
+      el.classList.remove('flash');
+      const next = cardState.findIndex((x, j) => j > i && !x.done);
+      const anyLeft = next !== -1 ? next : cardState.findIndex((x) => !x.done);
+      if (anyLeft === -1) return finishAll();
+      if (cardIdx === i) setActive(anyLeft);
+    }, 1100);
+  }
+
+  function finishAll() {
+    const total = cardState.reduce((n, x) => n + starsFor(x), 0);
+    confetti(null, 120);
+    const ov = document.createElement('div');
+    ov.className = 'finish';
+    ov.innerHTML = `<div class="finish-box">
+      <div class="trophy">🏆</div>
+      <h2>Bütün kartlar bitdi!</h2>
+      <p class="stars-big">⭐ ${total} / ${d.cards.length * 3}</p>
+      <p>${cardState.reduce((n, x) => n + x.mistakes, 0)} səhv düzəldildi</p>
+      <a class="btn ghost" href="#/mistakes/${cat.id}">📒 Səhvlərimə bax</a>
+      <button class="btn primary big" id="closeFinish">Davam et</button>
+    </div>`;
+    $app.appendChild(ov);
+    ov.querySelector('#closeFinish').addEventListener('click', () => ov.remove());
+  }
+
   if (d.cards) {
-    showCard(0);
-    $app.querySelector('#prevCard').addEventListener('click', () => showCard(cardIdx - 1, true));
-    $app.querySelector('#nextCard').addEventListener('click', () => showCard(cardIdx + 1, true));
+    setActive(0);
+    cardEls.forEach((el, i) => el.addEventListener('click', () => i !== cardIdx && setActive(i, true)));
   }
 
   function mistakeNote(m) {
@@ -481,6 +629,7 @@ function renderPractice(id) {
   }
 
   startBtn.addEventListener('click', async () => {
+    fx.init();
     startBtn.disabled = true;
     setStatus('Qoşulur…');
     chat.innerHTML = '';
@@ -497,10 +646,19 @@ function renderPractice(id) {
       onTool(name, args) {
         if (name === 'log_mistake') {
           mistakeNote(saveMistake(cat, d, args));
+          if (d.cards && cardState[cardIdx]) {
+            cardState[cardIdx].mistakes++;
+            fx.oops();
+            cardEls[cardIdx].classList.remove('shake');
+            void cardEls[cardIdx].offsetWidth;
+            cardEls[cardIdx].classList.add('shake');
+            updateScore();
+          }
           return 'saved';
         }
+        if (name === 'mark_correct') return markField(args.card, args.field);
         if (name === 'show_card') {
-          showCard((parseInt(args.index, 10) || 1) - 1);
+          setActive((parseInt(args.index, 10) || 1) - 1);
           return `showing card ${cardIdx + 1}: ${d.cards[cardIdx].name}`;
         }
         return 'unknown function';

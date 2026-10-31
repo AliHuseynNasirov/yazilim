@@ -57,8 +57,9 @@ LESSON SCRIPT — follow it strictly:
    • facts: name, age, country, city and language must match the card exactly. A wrong fact (e.g. wrong age or city) is also a mistake.
    • accepted alternatives (NOT mistakes): "Mein Name ist …" or "Ich bin …" for the name; "Hallo!" at the start; the age as a number word in any correct form; sentences in a different order.
 3. Correct mistakes immediately, one by one, following the correction rules. The learner must repeat each corrected sentence correctly before going on.
+3b. EVERY time one of the 5 sentences is said correctly (first time, or after correction), call mark_correct with the card number and the field: "name", "age", "country", "city" or "language". The learner's screen ticks that line green. When all 5 fields of a card are ticked, the app turns the whole card green automatically.
 4. If a sentence is missing, tell the learner in ${expl} which information is missing (e.g. "Yaşını demədin.") and wait for that sentence.
-5. When all 5 sentences of the card are correct, say "Super!" briefly, then announce in ${expl} the next card (e.g. "İndi ${n > 1 ? 2 : 1}-ci kart: ${dialog.cards[1] ? dialog.cards[1].name : ''}.") and call show_card with the next index. Always go in order 1 → ${n}.
+5. When all 5 sentences of the card are correct (all 5 mark_correct calls done), say "Super!" briefly, then announce in ${expl} the next card (e.g. "İndi ${n > 1 ? 2 : 1}-ci kart: ${dialog.cards[1] ? dialog.cards[1].name : ''}.") and call show_card with the next index. Always go in order 1 → ${n}.
 6. If the learner says they want another card (or the app tells you the learner switched cards), call show_card with that index and continue with that card.
 7. After card ${n}, say in ${expl} that all cards are finished, list the mistakes the learner made (wrong → right) and praise them.
 
@@ -168,6 +169,18 @@ export function buildTools(dialog) {
     },
   ];
   if (dialog.cards) {
+    tools.push({
+      name: 'mark_correct',
+      description: 'Tick one sentence of a person card as correctly said by the learner.',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          card: { type: 'INTEGER', description: `Card number from 1 to ${dialog.cards.length}.` },
+          field: { type: 'STRING', enum: ['name', 'age', 'country', 'city', 'language'], description: 'Which sentence was correct.' },
+        },
+        required: ['card', 'field'],
+      },
+    });
     tools.push({
       name: 'show_card',
       description: 'Show the person card the learner should present now on the learner\'s screen.',
