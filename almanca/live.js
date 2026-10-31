@@ -74,6 +74,8 @@ export class LiveSession {
         model: `models/${model}`,
         generationConfig: {
           responseModalities: ['AUDIO'],
+          // Aşağı temperatur: müəllim plana daha dəqiq əməl edir, mövzudan yayınmır
+          temperature: 0.4,
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
         },
         systemInstruction: { parts: [{ text: systemText }] },

@@ -131,6 +131,18 @@ function ruleHtml(rule) {
     ${(rule.tips || []).map((t) => `<p class="tip">💡 ${esc(t)}</p>`).join('')}`;
 }
 
+function planHtml(d) {
+  if (!d.phases) return '';
+  return `
+    <h2>🗺️ Dərsin planı</h2>
+    <ol class="phases">${d.phases.map((p) => `<li>${esc(p.title)}</li>`).join('')}</ol>
+    <p class="muted small">Hər mərhələ dəyişəndə müəllim azərbaycanca xəbər verəcək. Səhv etsən, nəyin səhv olduğunu deyəcək və cümləni düzgün təkrar etməyini istəyəcək.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Mövzu</th><th>Sual (du)</th><th>Cavab (ich)</th></tr></thead>
+      <tbody>${d.topics.map((t) => `<tr><td>${esc(t.az)}</td><td>${esc(t.q)}</td><td>${esc(t.a)}</td></tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
 function renderDialog(id) {
   const found = findDialog(id);
   if (!found) return renderHome();
@@ -140,6 +152,7 @@ function renderDialog(id) {
     <main>
       <p class="situation">🎬 ${esc(d.situation)}</p>
       <nav class="tabs">
+        ${d.phases ? '<button data-tab="plan">Plan</button>' : ''}
         <button data-tab="dialog" class="active">Dialoq</button>
         <button data-tab="rule">Qayda</button>
         <button data-tab="vocab">Lüğət</button>
@@ -155,6 +168,7 @@ function renderDialog(id) {
             </div>`).join('')}
         </div>
       </section>
+      ${d.phases ? `<section data-pane="plan" hidden>${planHtml(d)}</section>` : ''}
       <section data-pane="rule" hidden class="rule">${ruleHtml(d.rule)}</section>
       <section data-pane="vocab" hidden>
         <div class="vocab">
@@ -266,8 +280,8 @@ function renderPractice(id) {
     ${header(`🎙️ ${esc(d.title)}`, `#/d/${d.id}`)}
     <main class="practice">
       <details class="rule-mini">
-        <summary>📘 ${esc(d.rule.title)}</summary>
-        <div class="rule">${ruleHtml(d.rule)}</div>
+        <summary>📘 ${d.phases ? 'Plan və qayda' : esc(d.rule.title)}</summary>
+        <div class="rule">${planHtml(d)}${ruleHtml(d.rule)}</div>
       </details>
       <div id="chat" class="chat">
         <div class="sys">${s.apiKey ? 'Başlamaq üçün aşağıdakı düyməyə bas. Müəllim almanca danışacaq, səhvlərini izah edəcək.' : '🔑 Əvvəlcə <a href="#/settings">Ayarlar</a>-da API açarını yaz.'}</div>
