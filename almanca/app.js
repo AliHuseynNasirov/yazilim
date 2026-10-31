@@ -1,6 +1,6 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
-import { buildSystemPrompt, START_MESSAGE } from './prompt.js';
+import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 
 const $app = document.getElementById('app');
 
@@ -61,6 +61,7 @@ function route() {
   if (view === 'd') return renderDialog(id);
   if (view === 'practice') return renderPractice(id);
   if (view === 'settings') return renderSettings();
+  if (view === 'mistakes') return renderMistakes(id);
   renderHome();
 }
 window.addEventListener('hashchange', route);
@@ -69,8 +70,96 @@ function header(title, back) {
   return `<header class="top">
     ${back ? `<a class="icon-btn" href="${back}" aria-label="Geri">‹</a>` : ''}
     <h1>${title}</h1>
+    <a class="icon-btn badge-wrap" href="#/mistakes" aria-label="Səhvlərim">📒${mistakeBadge()}</a>
     <a class="icon-btn" href="#/settings" aria-label="Ayarlar">⚙️</a>
   </header>`;
+}
+
+// ---------- Səhvlər dəftəri ----------
+const getMistakes = () => store.get('mistakes', []);
+function mistakeBadge() {
+  const n = getMistakes().length;
+  return n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : '';
+}
+function saveMistake(category, dialog, args) {
+  const list = getMistakes();
+  const item = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    ts: Date.now(),
+    cat: category.id,
+    dialogId: dialog.id,
+    dialogTitle: dialog.title,
+    wrong: String(args.wrong || '').slice(0, 300),
+    correct: String(args.correct || '').slice(0, 300),
+    explanation: String(args.explanation || '').slice(0, 400),
+  };
+  list.unshift(item);
+  store.set('mistakes', list.slice(0, 1000));
+  return item;
+}
+
+function renderMistakes(filter) {
+  const all = getMistakes();
+  const list = filter ? all.filter((m) => m.cat === filter) : all;
+  const cats = CATEGORIES.filter((c) => all.some((m) => m.cat === c.id));
+  const fmt = (ts) => new Date(ts).toLocaleString('az', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+  const groups = CATEGORIES.map((c) => ({ c, items: list.filter((m) => m.cat === c.id) })).filter((g) => g.items.length);
+
+  $app.innerHTML = `
+    ${header('📒 Səhvlərim', '#/')}
+    <main>
+      <p class="muted">Müəllimin düzəltdiyi bütün səhvlər burada saxlanılır. Hər məşqdən sonra bura bax və düzgün cümlələri ucadan təkrar et.</p>
+      ${cats.length ? `<div class="filters">
+        <a class="chip-btn ${!filter ? 'active' : ''}" href="#/mistakes">Hamısı (${all.length})</a>
+        ${cats.map((c) => `<a class="chip-btn ${filter === c.id ? 'active' : ''}" href="#/mistakes/${c.id}">${c.icon} ${esc(c.title)} (${all.filter((m) => m.cat === c.id).length})</a>`).join('')}
+      </div>` : ''}
+      ${!list.length ? '<div class="empty">🎉 Hələ qeyd edilmiş səhv yoxdur. Səsli məşq et — müəllim səhvlərini bura yazacaq.</div>' : ''}
+      ${groups.map((g) => `
+        <h2>${g.c.icon} ${esc(g.c.title)}</h2>
+        <div class="mistakes">
+          ${g.items.map((m) => `
+            <div class="mistake" data-id="${m.id}">
+              <div class="m-head"><small>${esc(m.dialogTitle)} · ${fmt(m.ts)}</small><button class="del" data-del="${m.id}" aria-label="Sil">✕</button></div>
+              <div class="wrong">❌ ${esc(m.wrong)}</div>
+              <div class="right">✅ ${esc(m.correct)} <button class="say" data-say="${esc(m.correct)}" aria-label="Dinlə">🔊</button></div>
+              <div class="expl">💡 ${esc(m.explanation)}</div>
+            </div>`).join('')}
+        </div>`).join('')}
+      ${list.length ? `<button class="btn ghost" id="clearAll">🗑 ${filter ? 'Bu kateqoriyanı' : 'Hamısını'} sil</button>` : ''}
+    </main>`;
+
+  $app.querySelectorAll('[data-del]').forEach((b) =>
+    b.addEventListener('click', () => {
+      store.set('mistakes', getMistakes().filter((m) => m.id !== b.dataset.del));
+      renderMistakes(filter);
+    }),
+  );
+  $app.querySelectorAll('[data-say]').forEach((b) => b.addEventListener('click', () => {
+    speechSynthesis.cancel();
+    speak(b.dataset.say);
+  }));
+  const clear = $app.querySelector('#clearAll');
+  if (clear) clear.addEventListener('click', () => {
+    if (!confirm('Səhvlər silinsin?')) return;
+    store.set('mistakes', filter ? getMistakes().filter((m) => m.cat !== filter) : []);
+    renderMistakes(filter);
+  });
+}
+
+// ---------- Şəxs kartları ----------
+function personCard(c, i, compact) {
+  return `<div class="pcard ${c.color} ${compact ? 'compact' : ''}">
+    <img src="images/${c.img}.jpg" alt="${esc(c.name)}">
+    <ul>
+      <li><b>Name:</b> ${esc(c.name)}</li>
+      <li><b>Alter:</b> ${c.age} Jahre</li>
+      <li><b>Land:</b> ${esc(c.land)}</li>
+      <li><b>Wohnort:</b> ${esc(c.city)}</li>
+      <li><b>Sprache:</b> ${esc(c.lang)}</li>
+    </ul>
+    ${compact ? '' : `<span class="pnum">${i + 1}</span>`}
+  </div>`;
 }
 
 function renderHome() {
@@ -87,6 +176,10 @@ function renderHome() {
         <div class="progress"><span style="width:${Math.round((finished / total) * 100)}%"></span></div>
         <small>${finished} / ${total} dialoq məşq edilib</small>
       </section>
+      <a class="card row mistakes-link" href="#/mistakes">
+        <div><b>📒 Səhvlərim</b><small>Bütün kateqoriyalardan qeyd edilmiş səhvlər və izahları</small></div>
+        <span class="state">${getMistakes().length} ›</span>
+      </a>
       <div class="grid">
         ${CATEGORIES.map((c) => {
           const n = c.dialogs.filter((d) => done[d.id]).length;
@@ -151,8 +244,13 @@ function renderDialog(id) {
     ${header(esc(d.title), `#/cat/${c.id}`)}
     <main>
       <p class="situation">🎬 ${esc(d.situation)}</p>
+      ${(() => {
+        const n = getMistakes().filter((m) => m.dialogId === d.id).length;
+        return n ? `<a class="notice soft" href="#/mistakes/${c.id}">📒 Bu dialoqda ${n} səhv qeyd edilib — bax →</a>` : '';
+      })()}
       <nav class="tabs">
         ${d.phases ? '<button data-tab="plan">Plan</button>' : ''}
+        ${d.cards ? '<button data-tab="cards">Kartlar</button>' : ''}
         <button data-tab="dialog" class="active">Dialoq</button>
         <button data-tab="rule">Qayda</button>
         <button data-tab="vocab">Lüğət</button>
@@ -169,6 +267,10 @@ function renderDialog(id) {
         </div>
       </section>
       ${d.phases ? `<section data-pane="plan" hidden>${planHtml(d)}</section>` : ''}
+      ${d.cards ? `<section data-pane="cards" hidden>
+        <p class="muted small">Hər kart üçün 5 cümlə de: <i>Ich heiße … · Ich bin … Jahre alt · Ich komme aus … · Ich wohne in … · Ich spreche …</i></p>
+        <div class="pcards">${d.cards.map((c, i) => personCard(c, i)).join('')}</div>
+      </section>` : ''}
       <section data-pane="rule" hidden class="rule">${ruleHtml(d.rule)}</section>
       <section data-pane="vocab" hidden>
         <div class="vocab">
@@ -272,9 +374,10 @@ function renderSettings() {
 function renderPractice(id) {
   const found = findDialog(id);
   if (!found) return renderHome();
-  const { dialog: d } = found;
+  const { category: cat, dialog: d } = found;
   const s = settings();
   const ptt = s.mode === 'ptt';
+  let cardIdx = 0;
 
   $app.innerHTML = `
     ${header(`🎙️ ${esc(d.title)}`, `#/d/${d.id}`)}
@@ -283,6 +386,11 @@ function renderPractice(id) {
         <summary>📘 ${d.phases ? 'Plan və qayda' : esc(d.rule.title)}</summary>
         <div class="rule">${planHtml(d)}${ruleHtml(d.rule)}</div>
       </details>
+      ${d.cards ? `<div class="card-panel">
+        <button class="nav" id="prevCard" aria-label="Əvvəlki">‹</button>
+        <div id="cardView"></div>
+        <button class="nav" id="nextCard" aria-label="Növbəti">›</button>
+      </div>` : ''}
       <div id="chat" class="chat">
         <div class="sys">${s.apiKey ? 'Başlamaq üçün aşağıdakı düyməyə bas. Müəllim almanca danışacaq, səhvlərini izah edəcək.' : '🔑 Əvvəlcə <a href="#/settings">Ayarlar</a>-da API açarını yaz.'}</div>
       </div>
@@ -339,6 +447,32 @@ function renderPractice(id) {
     scroll();
   }
 
+  function showCard(i, fromUser) {
+    if (!d.cards) return;
+    cardIdx = Math.max(0, Math.min(d.cards.length - 1, i));
+    const c = d.cards[cardIdx];
+    $app.querySelector('#cardView').innerHTML = `<div class="card-count">Kart ${cardIdx + 1} / ${d.cards.length}</div>${personCard(c, cardIdx, true)}`;
+    if (fromUser && session && session.ready) {
+      sys(`➡️ Kart ${cardIdx + 1}: ${c.name}`);
+      session.sendText(`[App] The learner switched to card ${cardIdx + 1} (${c.name}). Continue with card ${cardIdx + 1} now.`);
+    }
+  }
+  if (d.cards) {
+    showCard(0);
+    $app.querySelector('#prevCard').addEventListener('click', () => showCard(cardIdx - 1, true));
+    $app.querySelector('#nextCard').addEventListener('click', () => showCard(cardIdx + 1, true));
+  }
+
+  function mistakeNote(m) {
+    const el = document.createElement('a');
+    el.className = 'mnote';
+    el.href = `#/mistakes/${cat.id}`;
+    el.innerHTML = `📝 Səhv qeyd edildi: <s>${esc(m.wrong)}</s> → <b>${esc(m.correct)}</b>`;
+    chat.appendChild(el);
+    if (last) last.open = false;
+    scroll();
+  }
+
   let micOn = true;
   const idleStatus = () => (ptt ? 'Danışmaq üçün 🎙️ düyməsini basılı saxla' : micOn ? '🎧 Dinləyirəm… danış' : '🔇 Mikrofon bağlıdır');
   function updateMic() {
@@ -359,6 +493,18 @@ function renderPractice(id) {
       voice: s.voice,
       pushToTalk: ptt,
       systemText: buildSystemPrompt(d, s),
+      tools: buildTools(d),
+      onTool(name, args) {
+        if (name === 'log_mistake') {
+          mistakeNote(saveMistake(cat, d, args));
+          return 'saved';
+        }
+        if (name === 'show_card') {
+          showCard((parseInt(args.index, 10) || 1) - 1);
+          return `showing card ${cardIdx + 1}: ${d.cards[cardIdx].name}`;
+        }
+        return 'unknown function';
+      },
       onEvent(type, data) {
         switch (type) {
           case 'ready':

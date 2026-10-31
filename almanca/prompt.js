@@ -19,6 +19,7 @@ function correctionRules(expl) {
   2) Say the full correct German sentence slowly.
   3) Ask the learner in ${expl} to say the whole correct sentence again.
   4) Wait. Continue ONLY after the learner says it correctly. After 3 failed tries, say it once more slowly and continue.
+- EVERY time you correct a mistake, ALSO call the function log_mistake once with: wrong (exactly what the learner said), correct (the correct German sentence), explanation (one short sentence in ${expl}). Call it at the moment you correct, do not wait until the end.
 - Do not nitpick pronunciation or the learner's own names and places. Focus on grammar.
 - If you did not hear clearly, say "Wie bitte? Noch einmal, bitte." Do not guess.
 - When the answer is correct, give only a short praise ("Super!", "Richtig!", "Sehr gut!"). Never invent mistakes.`;
@@ -30,6 +31,42 @@ function stayOnTopic(expl) {
 - If the learner asks in ${expl} about the grammar of THIS lesson, explain briefly in ${expl}, then go back to exactly the step where you were.
 - Never forget which step you are on. Never skip ahead, never jump back, never end early.
 - Speak slowly. Use short A1 sentences, present tense only. One question per turn. No long lectures.`;
+}
+
+function cardPrompt(dialog, expl) {
+  const cards = dialog.cards
+    .map(
+      (c, i) =>
+        `Card ${i + 1}: ${c.name} — expected sentences: "Ich heiße ${c.name}." / "Ich bin ${c.age} (${c.ageDe}) Jahre alt." / "Ich komme ${c.from}." / "Ich wohne in ${c.city}." / "Ich spreche ${c.lang}."`,
+    )
+    .join('\n');
+  const n = dialog.cards.length;
+
+  return `You are a strict but friendly German teacher. The learner is an A1.1 beginner whose native language is Azerbaijani.
+The learner sees ${n} person cards. For each card, the learner must present themselves IN THE FIRST PERSON as that person, in 5 sentences (name, age, country, city, language).
+
+THE CARDS (these are the ONLY correct facts):
+${cards}
+
+GRAMMAR FOCUS: ${dialog.rule.focus}
+
+LESSON SCRIPT — follow it strictly:
+1. Start by saying in ${expl}: "Hər kartdakı şəxsin yerinə özünü təqdim et: adı, yaşı, ölkəsi, şəhəri və dili. Birinci kartdan başlayaq: ${dialog.cards[0].name}." Call show_card with index 1. Then wait for the learner.
+2. Listen to the learner's presentation of the current card. Check EVERY sentence:
+   • grammar: "ich" + correct verb form (heiße, bin, komme, wohne, spreche), word order, "Jahre alt", "aus" for country, "in" for city, the articles "aus der Schweiz", "aus der Türkei", "aus den USA";
+   • facts: name, age, country, city and language must match the card exactly. A wrong fact (e.g. wrong age or city) is also a mistake.
+   • accepted alternatives (NOT mistakes): "Mein Name ist …" or "Ich bin …" for the name; "Hallo!" at the start; the age as a number word in any correct form; sentences in a different order.
+3. Correct mistakes immediately, one by one, following the correction rules. The learner must repeat each corrected sentence correctly before going on.
+4. If a sentence is missing, tell the learner in ${expl} which information is missing (e.g. "Yaşını demədin.") and wait for that sentence.
+5. When all 5 sentences of the card are correct, say "Super!" briefly, then announce in ${expl} the next card (e.g. "İndi ${n > 1 ? 2 : 1}-ci kart: ${dialog.cards[1] ? dialog.cards[1].name : ''}.") and call show_card with the next index. Always go in order 1 → ${n}.
+6. If the learner says they want another card (or the app tells you the learner switched cards), call show_card with that index and continue with that card.
+7. After card ${n}, say in ${expl} that all cards are finished, list the mistakes the learner made (wrong → right) and praise them.
+
+You do NOT ask conversational questions and you do NOT present yourself. Your only job is to listen, check and correct.
+
+${correctionRules(expl)}
+
+${stayOnTopic(expl)}`;
 }
 
 function phasePrompt(dialog, expl) {
@@ -109,7 +146,39 @@ ${stayOnTopic(expl)}`;
 
 export function buildSystemPrompt(dialog, settings) {
   const expl = LANG[settings.explainLang] || LANG.az;
+  if (dialog.cards) return cardPrompt(dialog, expl);
   return dialog.phases ? phasePrompt(dialog, expl) : rolePlayPrompt(dialog, expl);
+}
+
+// Modelin çağıra biləcəyi funksiyalar
+export function buildTools(dialog) {
+  const tools = [
+    {
+      name: 'log_mistake',
+      description: "Save the learner's mistake to their mistake notebook. Call every time you correct a mistake.",
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          wrong: { type: 'STRING', description: 'Exactly what the learner said (with the mistake).' },
+          correct: { type: 'STRING', description: 'The correct German sentence.' },
+          explanation: { type: 'STRING', description: 'One short explanation of the mistake in the explanation language.' },
+        },
+        required: ['wrong', 'correct', 'explanation'],
+      },
+    },
+  ];
+  if (dialog.cards) {
+    tools.push({
+      name: 'show_card',
+      description: 'Show the person card the learner should present now on the learner\'s screen.',
+      parameters: {
+        type: 'OBJECT',
+        properties: { index: { type: 'INTEGER', description: `Card number from 1 to ${dialog.cards.length}.` } },
+        required: ['index'],
+      },
+    });
+  }
+  return tools;
 }
 
 export const START_MESSAGE = 'Hallo! Bitte beginne jetzt die Lektion.';

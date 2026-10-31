@@ -1,9 +1,9 @@
 // Offline üçün tətbiq fayllarını keşləyir. Səsli məşq internet tələb edir.
-const CACHE = 'deutsch-a1-v2';
+const CACHE = 'deutsch-a1-v3';
 const FILES = [
   './', './index.html', './style.css', './app.js', './data.js', './live.js',
   './prompt.js', './pcm-worklet.js', './manifest.json',
-  './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
+  './images/thomas.jpg', './images/anna.jpg', './images/lukas.jpg', './images/maria.jpg', './images/ali.jpg', './images/elena.jpg', './images/leyla.jpg', './images/john.jpg', './images/mei.jpg', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {

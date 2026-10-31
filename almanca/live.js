@@ -63,7 +63,7 @@ export class LiveSession {
   }
 
   connect() {
-    const { apiKey, model, voice, systemText, pushToTalk } = this.o;
+    const { apiKey, model, voice, systemText, pushToTalk, tools } = this.o;
     this.ws = new WebSocket(`${WS_URL}?key=${encodeURIComponent(apiKey)}`);
     // Sinxron oxumaq üçün: mesajların sırası qarışmasın
     this.ws.binaryType = 'arraybuffer';
@@ -82,6 +82,7 @@ export class LiveSession {
         inputAudioTranscription: {},
         outputAudioTranscription: {},
       };
+      if (tools && tools.length) setup.tools = [{ functionDeclarations: tools }];
       if (pushToTalk) {
         setup.realtimeInputConfig = { automaticActivityDetection: { disabled: true } };
       }
@@ -112,6 +113,20 @@ export class LiveSession {
       return;
     }
     if (m.goAway) this.emit('goaway', m.goAway);
+    if (m.toolCall) {
+      // Model funksiya çağırır (səhvi qeyd et, kartı göstər) — dərhal cavab veririk
+      const responses = (m.toolCall.functionCalls || []).map((fc) => {
+        let result = 'ok';
+        try {
+          result = (this.o.onTool && this.o.onTool(fc.name, fc.args || {})) || 'ok';
+        } catch (err) {
+          result = 'error: ' + err.message;
+        }
+        return { id: fc.id, name: fc.name, response: { result } };
+      });
+      this.send({ toolResponse: { functionResponses: responses } });
+      return;
+    }
     const sc = m.serverContent;
     if (!sc) return;
     if (sc.interrupted) {

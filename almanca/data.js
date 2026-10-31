@@ -116,6 +116,82 @@ export const CATEGORIES = [
         ],
       },
       {
+        id: 'tanisliq-kart',
+        title: 'Şəxs kartları: özünü başqası kimi təqdim et',
+        situation:
+          'Hər kartdakı şəxsin yerinə keç və özünü onun kimi təqdim et: "Ich heiße Thomas. Ich bin 35 Jahre alt…". Müəllim dinləyir və hər səhvi dərhal düzəltdirir.',
+        ai: 'You are a strict but friendly German teacher. The learner presents themselves as the person on each card.',
+        user: 'The learner speaks in the first person as the card person.',
+        cards: [
+          { name: 'Thomas', age: 35, ageDe: 'fünfunddreißig', land: 'Deutschland', from: 'aus Deutschland', city: 'Hamburg', lang: 'Deutsch', img: 'thomas', color: 'blue' },
+          { name: 'Anna', age: 28, ageDe: 'achtundzwanzig', land: 'Österreich', from: 'aus Österreich', city: 'Wien', lang: 'Deutsch', img: 'anna', color: 'blue' },
+          { name: 'Lukas', age: 42, ageDe: 'zweiundvierzig', land: 'Schweiz', from: 'aus der Schweiz', city: 'Zürich', lang: 'Deutsch', img: 'lukas', color: 'blue' },
+          { name: 'Maria', age: 31, ageDe: 'einunddreißig', land: 'Spanien', from: 'aus Spanien', city: 'Berlin', lang: 'Spanisch', img: 'maria', color: 'green' },
+          { name: 'Ali', age: 45, ageDe: 'fünfundvierzig', land: 'Türkei', from: 'aus der Türkei', city: 'München', lang: 'Türkisch', img: 'ali', color: 'green' },
+          { name: 'Elena', age: 26, ageDe: 'sechsundzwanzig', land: 'Russland', from: 'aus Russland', city: 'Köln', lang: 'Russisch', img: 'elena', color: 'green' },
+          { name: 'Leyla', age: 33, ageDe: 'dreiunddreißig', land: 'Aserbaidschan', from: 'aus Aserbaidschan', city: 'Berlin', lang: 'Aserbaidschanisch', img: 'leyla', color: 'red' },
+          { name: 'John', age: 50, ageDe: 'fünfzig', land: 'USA', from: 'aus den USA', city: 'Frankfurt', lang: 'Englisch', img: 'john', color: 'red' },
+          { name: 'Mei', age: 29, ageDe: 'neunundzwanzig', land: 'China', from: 'aus China', city: 'Düsseldorf', lang: 'Chinesisch', img: 'mei', color: 'red' },
+        ],
+        lines: [
+          ['B', 'Hallo! Ich heiße Thomas.', 'Salam! Mənim adım Tomasdır.'],
+          ['B', 'Ich bin fünfunddreißig Jahre alt.', '35 yaşım var.'],
+          ['B', 'Ich komme aus Deutschland.', 'Mən Almaniyadanam.'],
+          ['B', 'Ich wohne in Hamburg.', 'Hamburqda yaşayıram.'],
+          ['B', 'Ich spreche Deutsch.', 'Almanca danışıram.'],
+          ['A', 'Super, Thomas! Jetzt Karte zwei: Anna.', 'Super, Tomas! İndi ikinci kart: Anna.'],
+          ['B', 'Hallo! Ich heiße Lukas. Ich komme aus der Schweiz.', 'Salam! Adım Lukasdır. İsveçrədənəm.'],
+          ['B', 'Ich heiße Ali. Ich komme aus der Türkei.', 'Adım Əlidir. Türkiyədənəm.'],
+          ['B', 'Ich heiße John. Ich komme aus den USA.', 'Adım Condur. ABŞ-danam.'],
+        ],
+        rule: {
+          title: 'Özünü təqdim etmək: 5 cümlə (ich-forması)',
+          focus:
+            'Self-introduction in first person: "Ich heiße …", "Ich bin … Jahre alt", "Ich komme aus …" (with article for der Schweiz, der Türkei, den USA), "Ich wohne in …", "Ich spreche …"; numbers 20–50.',
+          text: [
+            'Hər kart üçün <b>5 cümlə</b> de, hamısı <b>ich</b> ilə: fel <b>-e</b> ilə bitir (heiß<b>e</b>, komm<b>e</b>, wohn<b>e</b>, sprech<b>e</b>), "sein" isə <b>bin</b>.',
+            'Yaş: <b>Ich bin … Jahre alt.</b> ("haben" yox!). Rəqəmi tək+onluq kimi de: 35 = <i>fünfunddreißig</i>.',
+            'Ölkələrin çoxu artiklsızdır: <i>aus Deutschland, aus Spanien</i>. Amma bunlar artikl ilə gəlir: <b>aus der Schweiz, aus der Türkei, aus den USA</b>.',
+            'Şəhər: <b>in</b> + şəhər: <i>Ich wohne in Berlin.</i> Dil: <i>Ich spreche Spanisch.</i>',
+          ],
+          tables: [
+            {
+              head: ['Kartda', 'Sən deyirsən'],
+              rows: [
+                ['Name: Thomas', 'Ich heiße Thomas.'],
+                ['Alter: 35 Jahre', 'Ich bin fünfunddreißig Jahre alt.'],
+                ['Land: Deutschland', 'Ich komme aus Deutschland.'],
+                ['Wohnort: Hamburg', 'Ich wohne in Hamburg.'],
+                ['Sprache: Deutsch', 'Ich spreche Deutsch.'],
+              ],
+            },
+            {
+              head: ['Ölkə', 'Necə deyilir'],
+              rows: [
+                ['Schweiz', 'aus der Schweiz'],
+                ['Türkei', 'aus der Türkei'],
+                ['USA', 'aus den USA'],
+                ['Österreich, Spanien, Russland, China…', 'aus Österreich, aus Spanien…'],
+              ],
+            },
+          ],
+          tips: [
+            'Tez-tez edilən səhvlər: ❌ Ich heißt → ✅ Ich heiße · ❌ Ich habe 35 Jahre → ✅ Ich bin 35 Jahre alt · ❌ aus Türkei → ✅ aus der Türkei · ❌ Ich wohne aus Berlin → ✅ Ich wohne in Berlin',
+          ],
+        },
+        vocab: [
+          ['der Name', 'ad'],
+          ['das Alter', 'yaş'],
+          ['das Land', 'ölkə'],
+          ['der Wohnort', 'yaşayış yeri'],
+          ['die Sprache', 'dil'],
+          ['die Schweiz', 'İsveçrə'],
+          ['die Türkei', 'Türkiyə'],
+          ['die USA', 'ABŞ'],
+          ['Österreich', 'Avstriya'],
+        ],
+      },
+      {
         id: 'tanisliq-2',
         title: 'Haradansan?',
         situation: 'Yeni dostunla haradan olduğunuz və harada yaşadığınız barədə danışırsınız.',
