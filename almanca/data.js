@@ -1,0 +1,763 @@
+// A1.1 dialoq kateqoriyaları.
+// Hər dialoqda: nümunə dialoq (de + az), qayda (rule), lüğət (vocab)
+// və süni intellekt üçün rol təsviri (ai / user — ingiliscə, model üçün).
+
+export const CATEGORIES = [
+  {
+    id: 'tanisliq',
+    icon: '👋',
+    title: 'Tanışlıq',
+    dialogs: [
+      {
+        id: 'tanisliq-1',
+        title: 'Salam, mən Əliyəm',
+        situation: 'Dil kursunda yeni bir tələbə ilə tanış olursan.',
+        ai: 'You are Anna, a friendly student meeting the learner for the first time at a language school in Germany.',
+        user: 'The learner plays themselves and introduces themselves (name, how they are).',
+        lines: [
+          ['A', 'Hallo! Ich bin Anna. Wie heißt du?', 'Salam! Mən Annayam. Sənin adın nədir?'],
+          ['B', 'Hallo, Anna! Ich heiße Ali.', 'Salam, Anna! Mənim adım Əlidir.'],
+          ['A', 'Freut mich, Ali!', 'Tanış olduğuma şadam, Əli!'],
+          ['B', 'Freut mich auch!', 'Mən də şadam!'],
+          ['A', "Wie geht's dir?", 'Necəsən?'],
+          ['B', 'Gut, danke. Und dir?', 'Yaxşı, sağ ol. Bəs sən?'],
+          ['A', 'Auch gut, danke!', 'Mən də yaxşıyam, sağ ol!'],
+        ],
+        rule: {
+          title: '"sein" və "heißen" fellərinin təsrifi',
+          focus: 'Conjugation of "sein" and "heißen" in present tense; introducing yourself.',
+          text: [
+            'Alman dilində fel şəxsə görə dəyişir. <b>sein</b> (olmaq) qaydasız feldir — əzbərləmək lazımdır.',
+            '<b>heißen</b> (adlanmaq) qaydalıdır: kök <i>heiß-</i> + sonluq. Diqqət: <i>du heißt</i> — kök ß ilə bitdiyi üçün -st yox, sadəcə -t əlavə olunur.',
+          ],
+          tables: [
+            {
+              head: ['Şəxs', 'sein', 'heißen'],
+              rows: [
+                ['ich (mən)', 'bin', 'heiße'],
+                ['du (sən)', 'bist', 'heißt'],
+                ['er / sie / es', 'ist', 'heißt'],
+                ['wir (biz)', 'sind', 'heißen'],
+                ['ihr (siz)', 'seid', 'heißt'],
+                ['sie / Sie', 'sind', 'heißen'],
+              ],
+            },
+          ],
+          tips: ['"Ich bin Ali" = "Ich heiße Ali" = "Mein Name ist Ali" — üçü də eyni mənadadır.'],
+        },
+        vocab: [
+          ['Hallo!', 'Salam!'],
+          ['heißen', 'adlanmaq'],
+          ['Wie heißt du?', 'Adın nədir?'],
+          ['Freut mich!', 'Tanış olduğuma şadam!'],
+          ["Wie geht's?", 'Necəsən?'],
+          ['gut', 'yaxşı'],
+          ['danke', 'sağ ol'],
+          ['auch', 'də / da'],
+        ],
+      },
+      {
+        id: 'tanisliq-2',
+        title: 'Haradansan?',
+        situation: 'Yeni dostunla haradan olduğunuz və harada yaşadığınız barədə danışırsınız.',
+        ai: 'You are Max from Berlin, now living in Munich. You chat with the learner about where you both come from, where you live and which languages you speak.',
+        user: 'The learner talks about their country, city and languages.',
+        lines: [
+          ['A', 'Woher kommst du?', 'Haradansan?'],
+          ['B', 'Ich komme aus Aserbaidschan. Und du?', 'Mən Azərbaycandanam. Bəs sən?'],
+          ['A', 'Ich komme aus Deutschland, aus Berlin.', 'Mən Almaniyadanam, Berlindən.'],
+          ['B', 'Wo wohnst du jetzt?', 'İndi harada yaşayırsan?'],
+          ['A', 'Ich wohne in München. Und du?', 'Münhendə yaşayıram. Bəs sən?'],
+          ['B', 'Ich wohne in Baku. Ich lerne Deutsch.', 'Bakıda yaşayıram. Alman dili öyrənirəm.'],
+          ['A', 'Toll! Welche Sprachen sprichst du?', 'Əla! Hansı dillərdə danışırsan?'],
+          ['B', 'Ich spreche Aserbaidschanisch, Russisch und ein bisschen Deutsch.', 'Azərbaycanca, rusca və bir az almanca danışıram.'],
+        ],
+        rule: {
+          title: 'Qaydalı fellər və W-sualları',
+          focus: 'Regular verb conjugation (kommen, wohnen, lernen) and W-questions with the verb in position 2; "aus" + country, "in" + city.',
+          text: [
+            'Qaydalı fellərdə kökə bu sonluqlar əlavə olunur: <b>ich -e, du -st, er/sie/es -t, wir -en, ihr -t, sie/Sie -en</b>.',
+            'W-suallarında (<i>Wer? Was? Wo? Woher? Wie?</i>) sual sözü birinci, fel <b>İKİNCİ</b> yerdə durur: <i>Woher kommst du?</i>',
+            '<b>kommen aus</b> + ölkə = haradan gəlmək. <b>wohnen in</b> + şəhər = harada yaşamaq.',
+          ],
+          tables: [
+            {
+              head: ['Şəxs', 'kommen', 'wohnen'],
+              rows: [
+                ['ich', 'komme', 'wohne'],
+                ['du', 'kommst', 'wohnst'],
+                ['er / sie / es', 'kommt', 'wohnt'],
+                ['wir', 'kommen', 'wohnen'],
+                ['ihr', 'kommt', 'wohnt'],
+                ['sie / Sie', 'kommen', 'wohnen'],
+              ],
+            },
+          ],
+          tips: ['"sprechen" qaydasızdır: ich spreche, du sprichst, er spricht.'],
+        },
+        vocab: [
+          ['woher?', 'haradan?'],
+          ['wo?', 'harada?'],
+          ['kommen aus', '...-dan gəlmək'],
+          ['wohnen', 'yaşamaq'],
+          ['lernen', 'öyrənmək'],
+          ['sprechen', 'danışmaq'],
+          ['die Sprache', 'dil'],
+          ['ein bisschen', 'bir az'],
+          ['jetzt', 'indi'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'salam',
+    icon: '🤝',
+    title: 'Salamlaşma və rəsmi dil',
+    dialogs: [
+      {
+        id: 'salam-1',
+        title: 'Rəsmi tanışlıq (Sie)',
+        situation: 'Universitetdə müəllimlə ilk dəfə görüşürsən. Rəsmi danışmaq lazımdır.',
+        ai: 'You are Frau Müller, a polite university teacher. Use only the formal "Sie". Ask the learner for their name, surname and how they are.',
+        user: 'The learner is a new student and must use the formal "Sie".',
+        lines: [
+          ['A', 'Guten Tag! Ich bin Frau Müller.', 'Günortanız xeyir! Mən xanım Müllerəm.'],
+          ['B', 'Guten Tag, Frau Müller! Mein Name ist Ali Hasanov.', 'Günortanız xeyir, xanım Müller! Mənim adım Əli Həsənovdur.'],
+          ['A', 'Wie bitte? Wie ist Ihr Nachname?', 'Bağışlayın? Soyadınız nədir?'],
+          ['B', 'Hasanov.', 'Həsənov.'],
+          ['A', 'Danke. Wie geht es Ihnen?', 'Sağ olun. Necəsiniz?'],
+          ['B', 'Sehr gut, danke. Und Ihnen?', 'Çox yaxşı, sağ olun. Bəs siz?'],
+          ['A', 'Danke, gut. Auf Wiedersehen!', 'Sağ olun, yaxşıyam. Görüşənədək!'],
+          ['B', 'Auf Wiedersehen!', 'Görüşənədək!'],
+        ],
+        rule: {
+          title: '"du" və "Sie" — qeyri-rəsmi və rəsmi',
+          focus: 'Difference between informal "du" and formal "Sie"; formal greetings.',
+          text: [
+            '<b>du</b> — dostlar, ailə, uşaqlar və gənclər arasında.',
+            '<b>Sie</b> (həmişə böyük hərflə!) — tanımadığın böyüklər, müəllim, işçi, məmur. "Sie" ilə fel <i>wir</i> formasındadır: <i>Sie kommen, Sie heißen, Sie sind</i>.',
+          ],
+          tables: [
+            {
+              head: ['Azərbaycanca', 'du', 'Sie'],
+              rows: [
+                ['Necəsən / Necəsiniz?', "Wie geht's dir?", 'Wie geht es Ihnen?'],
+                ['Adın / Adınız?', 'Wie heißt du?', 'Wie heißen Sie?'],
+                ['Haradansan / Haradansınız?', 'Woher kommst du?', 'Woher kommen Sie?'],
+                ['Sağ ol / Sağ olun (vidalaşma)', 'Tschüss!', 'Auf Wiedersehen!'],
+              ],
+            },
+          ],
+          tips: ['Guten Morgen — sabahınız xeyir · Guten Tag — gününüz xeyir · Guten Abend — axşamınız xeyir · Gute Nacht — gecəniz xeyrə qalsın.'],
+        },
+        vocab: [
+          ['Guten Tag!', 'Gününüz xeyir!'],
+          ['Wie bitte?', 'Bağışlayın, necə?'],
+          ['der Vorname', 'ad'],
+          ['der Nachname', 'soyad'],
+          ['Frau / Herr', 'xanım / cənab'],
+          ['Auf Wiedersehen!', 'Görüşənədək!'],
+          ['Tschüss!', 'Hələlik!'],
+        ],
+      },
+      {
+        id: 'salam-2',
+        title: 'Adını hərf-hərf de',
+        situation: 'Dil kursuna qeydiyyatdan keçirsən. Katibə adını, telefonunu və e-poçtunu soruşur.',
+        ai: 'You are a secretary at a language school registering the learner. Ask for name, ask them to spell it (buchstabieren), then ask for phone number and e-mail. Use "Sie".',
+        user: 'The learner registers for a course and spells their name letter by letter.',
+        lines: [
+          ['A', 'Wie heißen Sie, bitte?', 'Adınız nədir, zəhmət olmasa?'],
+          ['B', 'Ali Hasanov.', 'Əli Həsənov.'],
+          ['A', 'Können Sie das bitte buchstabieren?', 'Hərf-hərf deyə bilərsiniz?'],
+          ['B', 'A – L – I. H – A – S – A – N – O – V.', 'A – L – İ. H – A – S – A – N – O – V.'],
+          ['A', 'Danke. Und Ihre Telefonnummer?', 'Sağ olun. Bəs telefon nömrəniz?'],
+          ['B', 'Null, eins, fünf, sieben, drei, zwei, acht, neun.', 'Sıfır, bir, beş, yeddi, üç, iki, səkkiz, doqquz.'],
+          ['A', 'Und Ihre E-Mail-Adresse?', 'Bəs e-poçt ünvanınız?'],
+          ['B', 'ali Punkt hasanov at gmail Punkt com.', 'ali nöqtə hasanov at gmail nöqtə com.'],
+        ],
+        rule: {
+          title: 'Alman əlifbası və tələffüz',
+          focus: 'German alphabet, spelling names letter by letter, special letters ä ö ü ß and letter combinations.',
+          text: [
+            'Hərflərin çoxu azərbaycancaya oxşayır, amma bəziləri fərqli oxunur. Xüsusilə <b>J, V, W, Y, Z</b> hərflərinə diqqət et.',
+            'Hərf birləşmələri çox vacibdir: onları bilsən, istənilən sözü oxuya bilərsən.',
+          ],
+          tables: [
+            {
+              head: ['Hərf', 'Adı', 'Necə oxunur'],
+              rows: [
+                ['J', 'jot', '"yot"'],
+                ['V', 'fau', '"fau" (sözdə adətən "f")'],
+                ['W', 'we', '"ve"'],
+                ['Y', 'Ypsilon', '"üpsilon"'],
+                ['Z', 'zett', '"tset" (sözdə "ts")'],
+                ['ß', 'Eszett', '"es-tset" = ss'],
+                ['ä / ö / ü', 'a-Umlaut…', '"ə" / "ö" / "ü"'],
+              ],
+            },
+            {
+              head: ['Birləşmə', 'Oxunuş', 'Nümunə'],
+              rows: [
+                ['ei', '"ay"', 'mein, heißen'],
+                ['ie', 'uzun "i"', 'Sie, vier'],
+                ['eu / äu', '"oy"', 'Deutsch, Häuser'],
+                ['sch', '"ş"', 'Schule'],
+                ['s + sait', '"z"', 'Sie, Sonne'],
+                ['st / sp (əvvəldə)', '"şt" / "şp"', 'Straße, sprechen'],
+              ],
+            },
+          ],
+          tips: ['@ = "at", . = "Punkt", - = "Bindestrich".'],
+        },
+        vocab: [
+          ['buchstabieren', 'hərf-hərf demək'],
+          ['die Telefonnummer', 'telefon nömrəsi'],
+          ['die E-Mail-Adresse', 'e-poçt ünvanı'],
+          ['der Punkt', 'nöqtə'],
+          ['Können Sie …?', '… edə bilərsiniz?'],
+          ['bitte', 'zəhmət olmasa'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'reqem',
+    icon: '🔢',
+    title: 'Rəqəmlər və yaş',
+    dialogs: [
+      {
+        id: 'reqem-1',
+        title: 'Neçə yaşın var?',
+        situation: 'Yeni dostun yaşını və telefon nömrəni soruşur.',
+        ai: 'You are Sophie, a young German student. Ask the learner their age, phone number and house number. Practise numbers; ask them to repeat numbers slowly.',
+        user: 'The learner tells their age, phone number and address.',
+        lines: [
+          ['A', 'Wie alt bist du?', 'Neçə yaşın var?'],
+          ['B', 'Ich bin zweiundzwanzig Jahre alt. Und du?', '22 yaşım var. Bəs sənin?'],
+          ['A', 'Ich bin neunzehn. Wie ist deine Handynummer?', '19. Mobil nömrən neçədir?'],
+          ['B', 'Null, eins, sieben, sechs, drei, vier, fünf, acht.', 'Sıfır, bir, yeddi, altı, üç, dörd, beş, səkkiz.'],
+          ['A', 'Noch einmal, bitte. Langsam!', 'Bir daha, zəhmət olmasa. Yavaş!'],
+          ['B', 'Null – eins – sieben – sechs – drei – vier – fünf – acht.', 'Sıfır – bir – yeddi – altı – üç – dörd – beş – səkkiz.'],
+          ['A', 'Danke! Und deine Adresse?', 'Sağ ol! Bəs ünvanın?'],
+          ['B', 'Hauptstraße dreizehn.', 'Hauptstraße, 13.'],
+        ],
+        rule: {
+          title: 'Rəqəmlər 0–100 və yaş',
+          focus: 'Numbers 0–100 (especially 13–19 and 21–99 order), telling age with "Ich bin … Jahre alt".',
+          text: [
+            '13–19: rəqəm + <b>zehn</b> (drei<b>zehn</b>). Diqqət: <i>sechzehn</i> (s düşür), <i>siebzehn</i> (en düşür).',
+            '21–99: <b>ƏVVƏL TƏK, SONRA ONLUQ</b>: <i>einundzwanzig</i> = "bir-və-iyirmi".',
+            'Yaş deyəndə <b>sein</b> işlənir, "haben" yox: <i>Ich bin 22 Jahre alt.</i>',
+          ],
+          tables: [
+            {
+              head: ['', '', '', ''],
+              rows: [
+                ['0 null', '1 eins', '2 zwei', '3 drei'],
+                ['4 vier', '5 fünf', '6 sechs', '7 sieben'],
+                ['8 acht', '9 neun', '10 zehn', '11 elf'],
+                ['12 zwölf', '13 dreizehn', '16 sechzehn', '17 siebzehn'],
+                ['20 zwanzig', '21 einundzwanzig', '30 dreißig', '40 vierzig'],
+                ['50 fünfzig', '60 sechzig', '70 siebzig', '100 hundert'],
+              ],
+            },
+          ],
+          tips: ['30 = dreißig (ß ilə, z yox!).'],
+        },
+        vocab: [
+          ['Wie alt bist du?', 'Neçə yaşın var?'],
+          ['das Jahr / die Jahre', 'il / illər'],
+          ['die Handynummer', 'mobil nömrə'],
+          ['noch einmal', 'bir daha'],
+          ['langsam', 'yavaş'],
+          ['die Adresse', 'ünvan'],
+          ['die Straße', 'küçə'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'aile',
+    icon: '👨‍👩‍👧',
+    title: 'Ailə',
+    dialogs: [
+      {
+        id: 'aile-1',
+        title: 'Mənim ailəm',
+        situation: 'Dostun ailən barədə soruşur: bacı-qardaş, valideynlər, uşaqlar.',
+        ai: 'You are Tom, a curious German friend. Ask the learner about their family: siblings, parents, names and ages. Tell a little about your own family too.',
+        user: 'The learner describes their family.',
+        lines: [
+          ['A', 'Hast du Geschwister?', 'Bacı-qardaşın var?'],
+          ['B', 'Ja, ich habe einen Bruder und eine Schwester.', 'Bəli, bir qardaşım və bir bacım var.'],
+          ['A', 'Wie heißt dein Bruder?', 'Qardaşının adı nədir?'],
+          ['B', 'Mein Bruder heißt Murad. Er ist fünfzehn.', 'Qardaşımın adı Muraddır. O, 15 yaşındadır.'],
+          ['A', 'Und deine Schwester?', 'Bəs bacın?'],
+          ['B', 'Meine Schwester heißt Leyla. Sie ist Studentin.', 'Bacımın adı Leyladır. O, tələbədir.'],
+          ['A', 'Hast du Kinder?', 'Uşağın var?'],
+          ['B', 'Nein, ich habe keine Kinder.', 'Xeyr, uşağım yoxdur.'],
+        ],
+        rule: {
+          title: '"haben" feli və mein / dein',
+          focus: 'Conjugation of "haben", "ein/einen" after haben (accusative), negation "kein/keine", possessives mein/meine, dein/deine.',
+          text: [
+            '<b>haben</b> = "var" mənasında: <i>Ich habe einen Bruder</i> = Bir qardaşım var.',
+            '"haben"-dən sonra kişi cinsində (der) <b>ein → einen</b> olur. İnkar: <b>kein / keine</b> — <i>Ich habe keine Kinder.</i>',
+            '<b>mein</b> ismin cinsinə görə dəyişir: der / das → <i>mein</i>, die / cəm → <i>meine</i>.',
+          ],
+          tables: [
+            {
+              head: ['Şəxs', 'haben'],
+              rows: [
+                ['ich', 'habe'],
+                ['du', 'hast'],
+                ['er / sie / es', 'hat'],
+                ['wir', 'haben'],
+                ['ihr', 'habt'],
+                ['sie / Sie', 'haben'],
+              ],
+            },
+            {
+              head: ['İsim', 'mein…', 'dein…'],
+              rows: [
+                ['der Vater', 'mein Vater', 'dein Vater'],
+                ['die Mutter', 'meine Mutter', 'deine Mutter'],
+                ['das Kind', 'mein Kind', 'dein Kind'],
+                ['die Eltern (cəm)', 'meine Eltern', 'deine Eltern'],
+              ],
+            },
+          ],
+          tips: ['Peşə deyəndə artikl yoxdur: "Sie ist Studentin." ("eine Studentin" yox).'],
+        },
+        vocab: [
+          ['die Familie', 'ailə'],
+          ['der Vater / die Mutter', 'ata / ana'],
+          ['der Bruder / die Schwester', 'qardaş / bacı'],
+          ['die Geschwister', 'bacı-qardaş'],
+          ['die Eltern', 'valideynlər'],
+          ['das Kind / die Kinder', 'uşaq / uşaqlar'],
+          ['verheiratet / ledig', 'evli / subay'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'kafe',
+    icon: '☕',
+    title: 'Kafe və yemək',
+    dialogs: [
+      {
+        id: 'kafe-1',
+        title: 'Kafedə sifariş',
+        situation: 'Kafeyə gəlmisən. Ofisiant sifariş götürür, sonra hesabı ödəyirsən.',
+        ai: 'You are a waiter (Kellner) in a German café. Use "Sie". Take the learner\'s drink and food order, ask about milk and sugar, then bring the bill and tell the price.',
+        user: 'The learner is a customer ordering drinks and cake, then paying.',
+        lines: [
+          ['A', 'Guten Tag! Was möchten Sie trinken?', 'Gününüz xeyir! Nə içmək istəyirsiniz?'],
+          ['B', 'Ich möchte einen Kaffee, bitte.', 'Bir qəhvə istəyirəm, zəhmət olmasa.'],
+          ['A', 'Mit Milch und Zucker?', 'Süd və şəkərlə?'],
+          ['B', 'Mit Milch, ohne Zucker.', 'Südlü, şəkərsiz.'],
+          ['A', 'Möchten Sie auch etwas essen?', 'Bir şey yemək də istəyirsiniz?'],
+          ['B', 'Ja, ich nehme ein Stück Kuchen.', 'Bəli, bir dilim tort götürürəm.'],
+          ['B', 'Die Rechnung, bitte!', 'Hesab, zəhmət olmasa!'],
+          ['A', 'Das macht sieben Euro fünfzig.', 'Cəmi 7 avro 50 sent.'],
+          ['B', 'Zehn Euro, bitte. Stimmt so.', 'On avro, buyurun. Qalığı qalsın.'],
+          ['A', 'Vielen Dank!', 'Çox sağ olun!'],
+        ],
+        rule: {
+          title: '"möchten" və Akkusativ (einen / eine / ein)',
+          focus: 'Polite "möchten" conjugation; accusative indefinite article when ordering (only masculine ein → einen changes).',
+          text: [
+            '<b>möchten</b> — nəzakətli "istəmək". Diqqət: <i>er/sie möchte</i> — sonunda -t yoxdur!',
+            'Sifarişdə isim Akkusativdə olur. Yalnız <b>kişi cinsi (der)</b> dəyişir: ein → <b>einen</b>. Qadın (eine) və orta (ein) cins dəyişmir.',
+          ],
+          tables: [
+            {
+              head: ['Şəxs', 'möchten'],
+              rows: [
+                ['ich', 'möchte'],
+                ['du', 'möchtest'],
+                ['er / sie / es', 'möchte'],
+                ['wir', 'möchten'],
+                ['ihr', 'möchtet'],
+                ['sie / Sie', 'möchten'],
+              ],
+            },
+            {
+              head: ['İsim', 'Ich möchte…'],
+              rows: [
+                ['der Kaffee', 'einen Kaffee'],
+                ['der Tee', 'einen Tee'],
+                ['die Cola', 'eine Cola'],
+                ['das Wasser', 'ein Wasser'],
+              ],
+            },
+          ],
+          tips: ['"Ich nehme…" (götürürəm) və "Ich hätte gern…" (istərdim) də sifariş üçün çox işlənir.'],
+        },
+        vocab: [
+          ['trinken / essen', 'içmək / yemək'],
+          ['der Kaffee / der Tee', 'qəhvə / çay'],
+          ['das Wasser', 'su'],
+          ['die Milch / der Zucker', 'süd / şəkər'],
+          ['der Kuchen', 'tort, piroq'],
+          ['mit / ohne', 'ilə / -sız'],
+          ['die Rechnung', 'hesab'],
+          ['zahlen', 'ödəmək'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'alis',
+    icon: '🛒',
+    title: 'Alış-veriş',
+    dialogs: [
+      {
+        id: 'alis-1',
+        title: 'Bazarda',
+        situation: 'Bazarda meyvə-tərəvəz alırsan, qiymət soruşursan.',
+        ai: 'You are a friendly seller at a German market stall selling fruit and vegetables. Use "Sie". Ask what the learner wants, tell prices, ask "Noch etwas?" and give the total.',
+        user: 'The learner buys fruit and vegetables and asks prices.',
+        lines: [
+          ['A', 'Guten Tag! Was darf es sein?', 'Gününüz xeyir! Buyurun, nə istəyirsiniz?'],
+          ['B', 'Ich hätte gern ein Kilo Äpfel.', 'Bir kilo alma istərdim.'],
+          ['A', 'Gern. Noch etwas?', 'Məmnuniyyətlə. Başqa bir şey?'],
+          ['B', 'Ja, drei Tomaten und eine Gurke. Was kosten die Bananen?', 'Bəli, üç pomidor və bir xiyar. Banan neçəyədir?'],
+          ['A', 'Ein Kilo kostet zwei Euro zwanzig.', 'Bir kilosu 2 avro 20 sentdir.'],
+          ['B', 'Gut, dann ein Kilo Bananen. Das ist alles.', 'Yaxşı, onda bir kilo banan. Bu qədər.'],
+          ['A', 'Das macht sechs Euro achtzig.', 'Cəmi 6 avro 80 sent.'],
+          ['B', 'Bitte schön.', 'Buyurun.'],
+          ['A', 'Danke schön. Schönen Tag noch!', 'Çox sağ olun. Gününüz xoş keçsin!'],
+        ],
+        rule: {
+          title: 'İsimlərin cəmi və "Was kostet / kosten…?"',
+          focus: 'Plural forms of nouns (-n, -e, -er, umlaut, no change), plural article "die", "Was kostet …?" vs "Was kosten …?", saying prices.',
+          text: [
+            'Cəm üçün bir neçə sonluq var: <b>-(e)n, -e, -er, -s</b>, ya da dəyişmir; bəzən sait <b>¨</b> alır. Ən yaxşısı hər sözü cəmi ilə birlikdə əzbərləmək.',
+            'Cəmdə artikl həmişə <b>die</b>-dir.',
+            'Tək: <i>Was kost<b>et</b> der Apfel?</i> — Cəm: <i>Was kost<b>en</b> die Äpfel?</i>',
+            'Qiymət: 2,20 € = <i>zwei Euro zwanzig</i>.',
+          ],
+          tables: [
+            {
+              head: ['Tək', 'Cəm', 'Sonluq'],
+              rows: [
+                ['der Apfel', 'die Äpfel', '¨'],
+                ['die Tomate', 'die Tomaten', '-n'],
+                ['die Banane', 'die Bananen', '-n'],
+                ['das Ei', 'die Eier', '-er'],
+                ['die Kartoffel', 'die Kartoffeln', '-n'],
+                ['das Brötchen', 'die Brötchen', '—'],
+              ],
+            },
+          ],
+          tips: ['"Ich hätte gern…" = "…istərdim" — mağazada ən nəzakətli forma.'],
+        },
+        vocab: [
+          ['Was darf es sein?', 'Nə istəyirsiniz?'],
+          ['Ich hätte gern…', '… istərdim'],
+          ['Noch etwas?', 'Başqa bir şey?'],
+          ['kosten', 'qiyməti olmaq'],
+          ['das Kilo / das Gramm', 'kilo / qram'],
+          ['Das ist alles.', 'Bu qədər.'],
+          ['billig / teuer', 'ucuz / baha'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'saat',
+    icon: '⏰',
+    title: 'Saat və görüş',
+    dialogs: [
+      {
+        id: 'saat-1',
+        title: 'Saat neçədir? Kinoya gedək',
+        situation: 'Dostunla saat soruşursan və kinoya getmək üçün görüş təyin edirsən.',
+        ai: 'You are Lisa, a German friend. Ask the learner what time it is, then make plans to go to the cinema: agree on a day and a time. Practise "um" + time and "am" + weekday.',
+        user: 'The learner tells the time and arranges a meeting.',
+        lines: [
+          ['A', 'Entschuldigung, wie spät ist es?', 'Bağışla, saat neçədir?'],
+          ['B', 'Es ist halb drei.', 'Saat iki yarımdır.'],
+          ['A', 'Danke! Hast du am Samstag Zeit?', 'Sağ ol! Şənbə günü vaxtın var?'],
+          ['B', 'Am Samstag? Ja. Was machen wir?', 'Şənbə? Hə. Nə edirik?'],
+          ['A', 'Wir gehen ins Kino. Der Film beginnt um acht Uhr.', 'Kinoya gedirik. Film saat 8-də başlayır.'],
+          ['B', 'Super! Treffen wir uns um Viertel nach sieben?', 'Super! Saat 7:15-də görüşək?'],
+          ['A', 'Okay, bis Samstag!', 'Oldu, şənbəyədək!'],
+        ],
+        rule: {
+          title: 'Saat, həftənin günləri: "um" və "am"',
+          focus: 'Telling time informally (Viertel nach, halb, Viertel vor), "um" + time, "am" + weekday, days of the week.',
+          text: [
+            'Diqqət: <b>halb neun = 8:30</b> (növbəti saatın yarısı — azərbaycanca "doqquzun yarısı" kimi!).',
+            'Saatla <b>um</b>: <i>um acht Uhr</i>. Günlə <b>am</b>: <i>am Montag</i>.',
+            'Rəsmi saat: <i>Es ist acht Uhr dreißig.</i>',
+          ],
+          tables: [
+            {
+              head: ['Saat', 'Almanca'],
+              rows: [
+                ['8:00', 'acht Uhr'],
+                ['8:10', 'zehn nach acht'],
+                ['8:15', 'Viertel nach acht'],
+                ['8:30', 'halb neun'],
+                ['8:45', 'Viertel vor neun'],
+                ['8:50', 'zehn vor neun'],
+              ],
+            },
+            {
+              head: ['Almanca', 'Azərbaycanca'],
+              rows: [
+                ['Montag', 'bazar ertəsi'],
+                ['Dienstag', 'çərşənbə axşamı'],
+                ['Mittwoch', 'çərşənbə'],
+                ['Donnerstag', 'cümə axşamı'],
+                ['Freitag', 'cümə'],
+                ['Samstag', 'şənbə'],
+                ['Sonntag', 'bazar'],
+              ],
+            },
+          ],
+          tips: ['"Wie spät ist es?" = "Wie viel Uhr ist es?" — ikisi də "Saat neçədir?"'],
+        },
+        vocab: [
+          ['Wie spät ist es?', 'Saat neçədir?'],
+          ['die Uhr', 'saat'],
+          ['halb / Viertel', 'yarım / dörddə bir'],
+          ['nach / vor', 'keçir / qalır'],
+          ['Zeit haben', 'vaxtı olmaq'],
+          ['das Kino', 'kino'],
+          ['beginnen', 'başlamaq'],
+          ['bis Samstag!', 'şənbəyədək!'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'hobbi',
+    icon: '⚽',
+    title: 'Hobbilər',
+    dialogs: [
+      {
+        id: 'hobbi-1',
+        title: 'Boş vaxtında nə edirsən?',
+        situation: 'Dostunla hobbiləriniz barədə danışırsınız.',
+        ai: 'You are Jonas, a German friend. Talk with the learner about hobbies and free time. Use "gern" a lot and start some sentences with time words (am Wochenende, abends) to show verb position 2.',
+        user: 'The learner talks about what they like and do not like doing.',
+        lines: [
+          ['A', 'Was machst du gern in der Freizeit?', 'Boş vaxtında nə etməyi xoşlayırsan?'],
+          ['B', 'Ich spiele gern Fußball. Und du?', 'Futbol oynamağı xoşlayıram. Bəs sən?'],
+          ['A', 'Ich lese gern und ich höre gern Musik.', 'Kitab oxumağı və musiqi dinləməyi xoşlayıram.'],
+          ['B', 'Welche Musik hörst du gern?', 'Hansı musiqini xoşlayırsan?'],
+          ['A', 'Pop und Jazz. Und was machst du noch?', 'Pop və caz. Bəs sən daha nə edirsən?'],
+          ['B', 'Ich koche sehr gern!', 'Yemək bişirməyi çox xoşlayıram!'],
+          ['A', 'Am Wochenende gehe ich oft schwimmen.', 'Həftə sonu tez-tez üzməyə gedirəm.'],
+          ['B', 'Wirklich? Ich schwimme nicht gern.', 'Doğrudan? Mən üzməyi xoşlamıram.'],
+        ],
+        rule: {
+          title: '"gern" və fel 2-ci yerdə',
+          focus: 'Expressing likes with "gern" / "nicht gern"; verb in position 2 in statements (inversion after time words); verb first in yes/no questions.',
+          text: [
+            'Xoşlamaq üçün: <b>fel + gern</b>. <i>Ich koche gern</i> = Bişirməyi xoşlayıram. İnkar: <b>nicht gern</b>.',
+            'Ən vacib qayda: nəqli cümlədə <b>FEL həmişə 2-ci yerdədir</b>. Cümlə zaman sözü ilə başlasa, şəxs feldən sonraya keçir.',
+            'Bəli/xeyr sualında fel <b>1-ci</b> yerdədir: <i>Spielst du gern Fußball?</i>',
+          ],
+          tables: [
+            {
+              head: ['1-ci yer', '2-ci yer (FEL)', 'Qalan hissə'],
+              rows: [
+                ['Ich', 'spiele', 'gern Fußball.'],
+                ['Am Wochenende', 'spiele', 'ich Fußball.'],
+                ['Was', 'machst', 'du gern?'],
+              ],
+            },
+          ],
+          tips: ['"lesen" qaydasızdır: ich lese, du liest, er liest.'],
+        },
+        vocab: [
+          ['die Freizeit', 'boş vaxt'],
+          ['gern', 'məmnuniyyətlə, xoşlayaraq'],
+          ['spielen', 'oynamaq'],
+          ['lesen', 'oxumaq'],
+          ['hören', 'dinləmək'],
+          ['kochen', 'bişirmək'],
+          ['schwimmen', 'üzmək'],
+          ['oft', 'tez-tez'],
+          ['das Wochenende', 'həftə sonu'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'yol',
+    icon: '🗺️',
+    title: 'Şəhərdə yol',
+    dialogs: [
+      {
+        id: 'yol-1',
+        title: 'Vağzal haradadır?',
+        situation: 'Şəhərdə azmısan və yoldan keçəndən yol soruşursan.',
+        ai: 'You are a helpful passer-by in a German city. Use "Sie". The learner asks for directions (Bahnhof, Apotheke, Haltestelle). Give simple directions with the formal imperative: geradeaus, links, rechts.',
+        user: 'The learner is a tourist asking the way.',
+        lines: [
+          ['B', 'Entschuldigung, wo ist der Bahnhof?', 'Bağışlayın, vağzal haradadır?'],
+          ['A', 'Gehen Sie geradeaus und dann die zweite Straße links.', 'Düz gedin, sonra ikinci küçədən sola dönün.'],
+          ['B', 'Ist das weit?', 'Uzaqdır?'],
+          ['A', 'Nein, nur fünf Minuten zu Fuß.', 'Xeyr, piyada cəmi 5 dəqiqə.'],
+          ['B', 'Gibt es hier auch eine Apotheke?', 'Burada aptek də var?'],
+          ['A', 'Ja, da vorne rechts.', 'Bəli, orada, qabaqda sağda.'],
+          ['B', 'Vielen Dank!', 'Çox sağ olun!'],
+          ['A', 'Bitte, gern geschehen!', 'Dəyməz, buyurun!'],
+        ],
+        rule: {
+          title: 'Rəsmi əmr (Imperativ) və "es gibt"',
+          focus: 'Formal imperative with "Sie" (verb first), directions, "Gibt es hier …?" with accusative.',
+          text: [
+            'Rəsmi əmr: <b>fel + Sie</b>, fel birinci yerdə: <i>Gehen Sie geradeaus!</i>',
+            '<b>es gibt</b> + Akkusativ = "var": <i>Gibt es hier eine Apotheke?</i> (Burada aptek var?)',
+          ],
+          tables: [
+            {
+              head: ['Fel', 'Əmr (Sie)'],
+              rows: [
+                ['gehen', 'Gehen Sie geradeaus!'],
+                ['nehmen', 'Nehmen Sie den Bus!'],
+                ['fahren', 'Fahren Sie links!'],
+              ],
+            },
+            {
+              head: ['Almanca', 'Azərbaycanca'],
+              rows: [
+                ['links', 'sola / solda'],
+                ['rechts', 'sağa / sağda'],
+                ['geradeaus', 'düz'],
+                ['da vorne', 'orada, qabaqda'],
+              ],
+            },
+          ],
+          tips: ['Kömək istəyəndə həmişə "Entschuldigung, …" ilə başla.'],
+        },
+        vocab: [
+          ['Entschuldigung!', 'Bağışlayın!'],
+          ['der Bahnhof', 'vağzal'],
+          ['die Straße', 'küçə'],
+          ['weit / nah', 'uzaq / yaxın'],
+          ['zu Fuß', 'piyada'],
+          ['die Apotheke', 'aptek'],
+          ['die Haltestelle', 'dayanacaq'],
+          ['es gibt', 'var'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'ev',
+    icon: '🏠',
+    title: 'Ev və mənzil',
+    dialogs: [
+      {
+        id: 'ev-1',
+        title: 'Yeni mənzilim',
+        situation: 'Dostun yeni mənzilin barədə soruşur.',
+        ai: 'You are Mia, a German friend. Ask the learner about their flat: size, rooms, kitchen, balcony, rent. Use adjectives (groß, klein, hell, teuer) and replace nouns with er/sie/es.',
+        user: 'The learner describes their flat.',
+        lines: [
+          ['A', 'Wie ist deine neue Wohnung?', 'Yeni mənzilin necədir?'],
+          ['B', 'Sie ist klein, aber sehr schön.', 'Kiçikdir, amma çox gözəldir.'],
+          ['A', 'Wie viele Zimmer hat sie?', 'Neçə otağı var?'],
+          ['B', 'Zwei Zimmer, eine Küche und ein Bad.', 'İki otaq, bir mətbəx və bir hamam.'],
+          ['A', 'Ist die Wohnung teuer?', 'Mənzil bahadır?'],
+          ['B', 'Nein, die Miete ist nicht teuer. Aber die Küche ist alt.', 'Xeyr, kirayə baha deyil. Amma mətbəx köhnədir.'],
+          ['A', 'Gibt es einen Balkon?', 'Eyvan var?'],
+          ['B', 'Ja! Der Balkon ist groß und hell.', 'Hə! Eyvan böyük və işıqlıdır.'],
+        ],
+        rule: {
+          title: 'der / die / das və er / sie / es',
+          focus: 'Noun genders der/die/das, replacing nouns with er/sie/es, predicative adjectives after "sein" (no ending).',
+          text: [
+            'Hər isim üç cinsdən birinə aiddir: <b>der</b> (kişi), <b>die</b> (qadın), <b>das</b> (orta). Sözü həmişə artikli ilə öyrən!',
+            'İsmi əvəz edəndə cinsə uyğun əvəzlik: <i>Die Wohnung ist klein → <b>Sie</b> ist klein.</i>',
+            '"sein"-dən sonra sifət dəyişmir: <i>Der Balkon ist groß.</i>',
+          ],
+          tables: [
+            {
+              head: ['İsim', 'Əvəzlik'],
+              rows: [
+                ['der Balkon', 'er'],
+                ['die Küche', 'sie'],
+                ['das Bad', 'es'],
+                ['die Zimmer (cəm)', 'sie'],
+              ],
+            },
+          ],
+          tips: ['Rəngli kartlar faydalıdır: der — mavi, die — qırmızı, das — yaşıl.'],
+        },
+        vocab: [
+          ['die Wohnung', 'mənzil'],
+          ['das Zimmer', 'otaq'],
+          ['die Küche', 'mətbəx'],
+          ['das Bad', 'hamam'],
+          ['der Balkon', 'eyvan'],
+          ['die Miete', 'kirayə'],
+          ['groß / klein', 'böyük / kiçik'],
+          ['neu / alt', 'yeni / köhnə'],
+          ['hell / dunkel', 'işıqlı / qaranlıq'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'serbest',
+    icon: '🎯',
+    title: 'Sərbəst məşq',
+    dialogs: [
+      {
+        id: 'serbest-1',
+        title: 'A1.1 sərbəst söhbət',
+        situation: 'Bütün mövzulardan qarışıq suallar: tanışlıq, ailə, hobbi, saat, ev…',
+        ai: 'You are Lena, a friendly German conversation partner. Have a free A1.1 conversation mixing all beginner topics: name, origin, age, family, hobbies, time, food, flat. Change topic every 2–3 questions.',
+        user: 'The learner talks freely about themselves.',
+        lines: [
+          ['A', 'Hallo! Wie heißt du und woher kommst du?', 'Salam! Adın nədir və haradansan?'],
+          ['B', 'Ich heiße Ali und komme aus Aserbaidschan.', 'Adım Əlidir, Azərbaycandanam.'],
+          ['A', 'Was machst du gern?', 'Nə etməyi xoşlayırsan?'],
+          ['B', 'Ich lerne gern Deutsch!', 'Alman dili öyrənməyi xoşlayıram!'],
+        ],
+        rule: {
+          title: 'Təkrar: ən vacib 5 qayda',
+          focus: 'Review of all A1.1 grammar: verb conjugation, verb position 2, du/Sie, der/die/das, ein/einen.',
+          text: [
+            '1. Fel şəxsə görə dəyişir: <i>ich komme, du kommst, er kommt</i>.',
+            '2. Nəqli cümlədə fel <b>2-ci</b> yerdə, bəli/xeyr sualında <b>1-ci</b> yerdə.',
+            '3. Tanımadıqlarına <b>Sie</b>, dostlara <b>du</b>.',
+            '4. Hər ismi artikli ilə öyrən: <b>der / die / das</b>.',
+            '5. "haben / möchten / es gibt"-dən sonra kişi cinsində <b>einen</b>.',
+          ],
+          tables: [],
+          tips: ['Başa düşməsən, azərbaycanca "başa düşmədim" de — Lena izah edəcək.'],
+        },
+        vocab: [
+          ['Wie bitte?', 'Necə? (təkrar edin)'],
+          ['Ich verstehe nicht.', 'Başa düşmürəm.'],
+          ['Noch einmal, bitte.', 'Bir daha, zəhmət olmasa.'],
+          ['Langsam, bitte.', 'Yavaş, zəhmət olmasa.'],
+          ['Was bedeutet …?', '… nə deməkdir?'],
+        ],
+      },
+    ],
+  },
+];
+
+export function findCategory(id) {
+  return CATEGORIES.find((c) => c.id === id);
+}
+
+export function findDialog(id) {
+  for (const c of CATEGORIES) {
+    const d = c.dialogs.find((x) => x.id === id);
+    if (d) return { category: c, dialog: d };
+  }
+  return null;
+}
