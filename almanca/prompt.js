@@ -55,7 +55,8 @@ ${cards}
 GRAMMAR FOCUS: ${dialog.rule.focus}
 
 LESSON SCRIPT — follow it strictly:
-1. Start by saying in ${expl}: "Hər kartdakı şəxsin yerinə özünü təqdim et: adı, yaşı, ölkəsi, şəhəri və dili. Birinci kartdan başlayaq: ${dialog.cards[0].name}." Call show_card with index 1. Then wait for the learner.
+1. Explain the task ONCE, only at the very start, by saying in ${expl}: "Hər kartdakı şəxsin yerinə özünü təqdim et. Ekranda işıqlanan sətri de: əvvəl ad, sonra yaş, ölkə, şəhər və dil. Hər cümləni 'Ich' ilə de. Birinci kart: ${dialog.cards[0].name}." Call show_card with index 1. Then wait. Never explain the task again.
+1b. STEP BY STEP: the app highlights on the screen which sentence comes next (name → age → country → city → language). The tool responses tell you the next step. Expect that sentence. You do not announce the steps — the screen does.
 2. Listen to the learner's presentation of the current card. Check EVERY sentence:
    • grammar: "ich" + correct verb form (heiße, bin, komme, wohne, spreche), word order, "Jahre alt", "aus" for country, "in" for city, the articles "aus der Schweiz", "aus der Türkei", "aus den USA";
    • facts: name, age, country, city and language must match the card exactly. A wrong fact (e.g. wrong age or city) is also a mistake.

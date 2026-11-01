@@ -193,3 +193,7 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 .lc-fields li.skip { color: #9a6b00; }
 .lc-fields li.skip .tick { background: #f0b400; border-color: #f0b400; }
 .lc-fields li.skip .tick::after { content: '!'; font-weight: 700; }
+.lc-fields li.now { background: #fff8db; border-radius: 8px; padding-left: 6px; font-weight: 600; flex-wrap: wrap; }
+.lc-fields li.now .tick { border-color: #f0b400; animation: glow 1.6s ease-in-out infinite; }
+.lc-fields li .hint { flex-basis: 100%; font-size: 13px; color: #b3261e; font-weight: 600; padding-left: 30px; }
+.okline { align-self: flex-end; background: #e9f7ef; border: 1px solid #b7e2c6; color: #1b6b3a; font-weight: 600; border-radius: 12px; padding: 6px 10px; font-size: 15px; }

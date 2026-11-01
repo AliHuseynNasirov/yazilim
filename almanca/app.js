@@ -603,6 +603,7 @@ function renderPractice(id) {
     if (!d.cards) return;
     cardIdx = Math.max(0, Math.min(d.cards.length - 1, i));
     cardEls.forEach((el, j) => el.classList.toggle('active', j === cardIdx));
+    updateStep();
     // Yalnız kart siyahısını sürüşdür (bütün səhifəni yox)
     setTimeout(() => {
       const list = $app.querySelector('#cardList');
@@ -629,10 +630,54 @@ function renderPractice(id) {
       return rejectionText(errs);
     }
     setTick(i, field, 'ok');
-    return `ticked ${field} on card ${i + 1} (${st.fields.size}/5)`;
+    return `ticked ${field} on card ${i + 1} (${st.fields.size}/5). Say only a very short praise ("Super!"), nothing else. ${stepInfo()} Do not tell the learner the next step — the screen shows it.`;
   }
 
   // ✓ (ok) və ya ⚠ (skip — 3 cəhddən sonra keçildi) qoy
+  // Hər sahə üçün düzgün cümlə və ekranda göstərilən nümunə
+  const SENT = {
+    name: (c) => `Ich heiße ${c.name}.`,
+    age: (c) => `Ich bin ${c.age} Jahre alt.`,
+    country: (c) => `Ich komme ${c.from}.`,
+    city: (c) => `Ich wohne in ${c.city}.`,
+    language: (c) => `Ich spreche ${c.lang}.`,
+  };
+  const HINT = { name: 'Ich heiße …', age: 'Ich bin … Jahre alt.', country: 'Ich komme aus …', city: 'Ich wohne in …', language: 'Ich spreche …' };
+  const nextField = (i) => FIELDS.find((f) => !cardState[i].fields.has(f));
+  // Növbəti deyiləcək sətri işıqlandır (addım-addım: Name → Alter → Land → Wohnort → Sprache)
+  function updateStep() {
+    if (!d.cards) return;
+    cardEls.forEach((el, j) => {
+      const nf = j === cardIdx && !cardState[j].done ? nextField(j) : null;
+      el.querySelectorAll('.lc-fields li').forEach((li) => {
+        const on = li.dataset.f === nf;
+        li.classList.toggle('now', on);
+        let h = li.querySelector('.hint');
+        if (on && !h) {
+          h = document.createElement('span');
+          h.className = 'hint';
+          li.appendChild(h);
+        }
+        if (h) h.textContent = on ? `🎤 ${HINT[li.dataset.f]}` : '';
+      });
+    });
+  }
+  function stepInfo() {
+    const nf = nextField(cardIdx);
+    if (!nf) return 'This card is complete.';
+    const c = d.cards[cardIdx];
+    return `Next step on the screen: card ${cardIdx + 1} (${c.name}), "${nf}" — expected sentence: "${SENT[nf](c)}".`;
+  }
+  // Çatda "Super" əvəzinə qəbul olunan düzgün cümləni göstər
+  function acceptedNote(i, field) {
+    const el = document.createElement('div');
+    el.className = 'okline';
+    el.textContent = `✅ ${SENT[field](d.cards[i])}`;
+    chat.appendChild(el);
+    if (last) last.open = false;
+    scroll();
+  }
+
   function setTick(i, field, kind) {
     const st = cardState[i];
     if (!st || st.done) return;
@@ -644,12 +689,14 @@ function renderPractice(id) {
       li.classList.add('ok');
       tickedThisUtter.push({ i, field });
       fx.ding();
+      acceptedNote(i, field);
     } else {
       if (st.fields.has(field)) return;
       li.classList.add('skip');
     }
     st.fields.add(field);
     if (st.fields.size === FIELDS.length) completeCard(i);
+    updateStep();
   }
 
   // Eyni cümlədə ard-arda səhv sayı; 3-cü dəfədən sonra ilişib qalmamaq üçün keçirik
@@ -694,6 +741,7 @@ function renderPractice(id) {
     const st = cardState[i];
     if (!st || st.done || !st.fields.has(field)) return;
     st.fields.delete(field);
+    setTimeout(updateStep, 0);
     cardEls[i].querySelector(`[data-f="${field}"]`).classList.remove('ok');
   }
 
