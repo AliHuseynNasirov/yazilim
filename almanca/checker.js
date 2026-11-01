@@ -324,3 +324,47 @@ export function checkWords(text, lex) {
   }
   return out;
 }
+
+// ---------- Kart cümləsinin düzgünlüyünü sabit yoxlama ----------
+function normText(t) {
+  return ' ' + normWord(t).replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+}
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Yazıda kartın hansı cümlələri TAM DÜZGÜN deyilib? → ['name', 'age', ...] */
+export function matchCardSentence(text, card) {
+  const t = normText(text);
+  const n = (s) => esc(normWord(s).replace(/[^a-z0-9]+/g, ' ').trim());
+  const ageWord = n(card.ageDe);
+  const ageSplit = ageWord.replace(/und/, ' und ');
+  const pats = {
+    name: `(?:ich heisse|mein name ist|ich bin) ${n(card.name)}`,
+    age: `ich bin (?:${card.age}|${ageWord}|${ageSplit}) jahre alt`,
+    country: `ich komme ${n(card.from)}`,
+    city: `ich wohne in ${n(card.city)}`,
+    language: `ich spreche ${n(card.lang)}`,
+  };
+  return Object.entries(pats)
+    .filter(([, p]) => new RegExp(` ${p} `).test(t))
+    .map(([f]) => f);
+}
+
+/** Səhvin hansı kart sahəsinə aid olduğunu təxmin edir. */
+export function inferField(text) {
+  const t = normText(text || '');
+  if (/ (jahre?|alt) /.test(t)) return 'age';
+  if (/ (heis\w*|name) /.test(t)) return 'name';
+  if (/ (komm\w*|aus) /.test(t)) return 'country';
+  if (/ wohn\w* /.test(t)) return 'city';
+  if (/ (sprech\w*|sprich\w*) /.test(t)) return 'language';
+  return null;
+}
+
+/** Ekranda göstərməyə yarayan yazıdırmı? ("40356", gürcü hərfləri və s. — yox) */
+export function plausibleTranscript(text) {
+  const letters = text.match(/\p{L}/gu) || [];
+  const digits = text.match(/\d/g) || [];
+  if (letters.length < 2 || digits.length > letters.length) return false;
+  const latin = letters.filter((ch) => /\p{Script=Latin}/u.test(ch)).length;
+  return latin / letters.length >= 0.8;
+}

@@ -1,7 +1,7 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
-import { checkSentence, checkWords, buildLexicon } from './checker.js';
+import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript } from './checker.js';
 
 const $app = document.getElementById('app');
 
@@ -561,9 +561,17 @@ function renderPractice(id) {
       const el = document.createElement('div');
       el.className = `msg ${role}`;
       chat.appendChild(el);
-      last = { role, el, open: true };
+      last = { role, el, open: true, raw: '' };
     }
-    last.el.textContent += text;
+    last.raw += text;
+    // Yazıya çevirmə alınmayıbsa ("40356", gürcü hərfləri) mənasız mətn göstərmə
+    if (role === 'user' && !plausibleTranscript(last.raw)) {
+      last.el.textContent = '🎙️ (səsin yazıya çevrilmədi — müəllim səsini eşidir)';
+      last.el.classList.add('unclear');
+    } else {
+      last.el.textContent = last.raw;
+      last.el.classList.remove('unclear');
+    }
     scroll();
   }
   function sys(text) {
@@ -615,18 +623,52 @@ function renderPractice(id) {
     if (errs.length) {
       checkedUtter = utterId;
       appLog(errs);
+      if (noteFail(field) >= 3) return `REJECTED — not ticked. Correct sentence: "${errs[0].fullCorrect}". The mistake is already saved. ${MOVE_ON}`;
       return rejectionText(errs);
     }
-    if (!st.fields.has(field)) {
-      tickedThisUtter.push({ i, field });
-      st.fields.add(field);
-      const li = cardEls[i].querySelector(`[data-f="${field}"]`);
-      li.classList.add('ok');
-      fx.ding();
-    }
-    if (st.fields.size === FIELDS.length && !st.done) completeCard(i);
+    setTick(i, field, 'ok');
     return `ticked ${field} on card ${i + 1} (${st.fields.size}/5)`;
   }
+
+  // ✓ (ok) və ya ⚠ (skip — 3 cəhddən sonra keçildi) qoy
+  function setTick(i, field, kind) {
+    const st = cardState[i];
+    if (!st || st.done) return;
+    const li = cardEls[i].querySelector(`[data-f="${field}"]`);
+    if (kind === 'ok') {
+      fails[`${i}:${field}`] = 0;
+      if (st.fields.has(field) && !li.classList.contains('skip')) return;
+      li.classList.remove('skip');
+      li.classList.add('ok');
+      tickedThisUtter.push({ i, field });
+      fx.ding();
+    } else {
+      if (st.fields.has(field)) return;
+      li.classList.add('skip');
+    }
+    st.fields.add(field);
+    if (st.fields.size === FIELDS.length) completeCard(i);
+  }
+
+  // Eyni cümlədə ard-arda səhv sayı; 3-cü dəfədən sonra ilişib qalmamaq üçün keçirik
+  const fails = {};
+  const failedUtter = {};
+  function noteFail(field) {
+    if (!d.cards || !field) return 0;
+    const k = `${cardIdx}:${field}`;
+    if (failedUtter[k] !== utterId) {
+      failedUtter[k] = utterId;
+      fails[k] = (fails[k] || 0) + 1;
+    }
+    if (fails[k] >= 3) {
+      setTick(cardIdx, field, 'skip');
+      sys('⚠️ Bu cümlə 3 dəfə alınmadı — 📒 dəftərə yazıldı, sonra yenə məşq edərsən. Davam edirik.');
+    }
+    return fails[k];
+  }
+  const MOVE_ON =
+    'This was already the 3rd try for this sentence, so do NOT ask for it again: say the correct sentence one last time slowly, ' +
+    'then say in Azerbaijani "Bunu sonra yenə məşq edərik, davam edək." and wait silently for the next sentence.';
 
   // Yenidən qoşulanda yeni sessiyaya dəqiq vəziyyəti de ki, çaşmasın
   function cardResumeText() {
@@ -733,10 +775,18 @@ function renderPractice(id) {
     if (checkedUtter === utterId || !userUtter.trim()) return;
     checkedUtter = utterId;
     const errs = findErrors();
+    // Model ✓ qoymağı unudubsa: yazıda tam düzgün deyilən cümlələri özümüz ✓ edək
+    if (d.cards && modelLoggedUtter !== utterId) {
+      for (const f of matchCardSentence(userUtter, d.cards[cardIdx])) if (!errs.some((e) => blocks(e, f))) setTick(cardIdx, f, 'ok');
+    }
     if (!errs.length) return;
     for (const t of tickedThisUtter) if (errs.some((e) => blocks(e, t.field))) untick(t.i, t.field);
     if (modelLoggedUtter === utterId) return; // model özü düzəldib
     appLog(errs);
+    if (noteFail(errs[0].field || inferField(errs[0].fullCorrect)) >= 3) {
+      session.sendText(`[App] The learner said "${errs[0].fullWrong}" (wrong). Correct: "${errs[0].fullCorrect}". The mistake is already saved, do not call log_mistake. ${MOVE_ON}`);
+      return;
+    }
     sys('🔎 Yoxlama: cümlədə səhv var — müəllim indi düzəldəcək.');
     session.sendText(
       `[App] Grammar check: the learner said "${errs[0].fullWrong}". This is WRONG and you did not correct it: ` +
@@ -777,6 +827,8 @@ function renderPractice(id) {
       apiKey: s.apiKey,
       model: s.model,
       fallbackModels: MODELS,
+      // Kart dərsində yalnız almanca: azərbaycanca ipucu "Jahre" sözünü "yağı" kimi yazırdı
+      transcriptionLanguages: d.cards ? ['de-DE'] : ['de-DE', 'az-AZ'],
       voice: s.voice,
       pushToTalk: ptt,
       systemText: buildSystemPrompt(d, s),
@@ -784,11 +836,22 @@ function renderPractice(id) {
       onTool(name, args) {
         if (name === 'log_mistake') {
           if (appLoggedUtter === utterId) return 'already saved';
-          modelLoggedUtter = utterId;
-          // Ekrandakı yazı düzgün əlifbadadırsa onu götür, yoxsa (gürcü/kiril və s.) modelin eşitdiyini
           const heard = userUtter.trim();
-          if (heard && looksLatin(heard)) args = { ...args, wrong: heard };
+          const field = d.cards ? inferField(args.correct) || inferField(heard) : null;
+          // Model təkrar "səhv" deyir, amma yazıda cümlə TAM düzgündürsə — qəbul et (ilişib qalmasın)
+          if (field && heard && fails[`${cardIdx}:${field}`] >= 1 && matchCardSentence(heard, d.cards[cardIdx]).includes(field) && !findErrors().some((e) => blocks(e, field))) {
+            setTick(cardIdx, field, 'ok');
+            sys('✅ Yoxlama: cümlən düzgün eşidildi — qəbul edildi.');
+            return (
+              `NOT SAVED — this is NOT a mistake. The speech recognition clearly heard the correct sentence "${heard}". ` +
+              'The learner said it correctly. Do not correct it again. Say only "Super!" and wait for the next sentence. The line is already ticked.'
+            );
+          }
+          modelLoggedUtter = utterId;
+          // Ekrandakı yazı mənalıdırsa onu götür, yoxsa ("40356", gürcü hərfləri) modelin eşitdiyini
+          if (heard && plausibleTranscript(heard)) args = { ...args, wrong: heard };
           registerMistake(args);
+          if (noteFail(field) >= 3) return `saved. ${MOVE_ON}`;
           return 'saved';
         }
         if (name === 'mark_correct') return markField(args.card, args.field);

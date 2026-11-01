@@ -189,3 +189,7 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 .finish-box .trophy { font-size: 56px; }
 .stars-big { font-size: 26px; font-weight: 800; margin: 0; }
 .pstars { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,.9); border-radius: 99px; padding: 0 6px; font-size: 12px; }
+.msg.user.unclear { opacity: .7; font-style: italic; font-size: 14px; }
+.lc-fields li.skip { color: #9a6b00; }
+.lc-fields li.skip .tick { background: #f0b400; border-color: #f0b400; }
+.lc-fields li.skip .tick::after { content: '!'; font-weight: 700; }
