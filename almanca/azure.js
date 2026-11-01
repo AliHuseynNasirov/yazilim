@@ -3,7 +3,7 @@
 // 0–100 bal verir və sözün əskik / artıq / səhv tələffüz olunduğunu deyir.
 
 // 16 kHz, 16-bit, mono PCM → WAV baytları
-function pcmToWav(pcm) {
+export function pcmToWav(pcm) {
   const dataBytes = pcm.length * 2;
   const buf = new ArrayBuffer(44 + dataBytes);
   const v = new DataView(buf);

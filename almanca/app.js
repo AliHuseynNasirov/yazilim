@@ -2,7 +2,7 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
-import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel } from './azure.js';
+import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
 const $app = document.getElementById('app');
 
@@ -792,10 +792,26 @@ function renderPractice(id) {
     return el;
   }
   // "🎯 Azure eşitdi: … · 72/100" + rəngli söz balları
-  function renderAzure(el, r) {
+  // Azure-a göndərilən səsi dinlə (səsin özündə problem varmı — yoxlamaq üçün)
+  function addReplay(el, pcm) {
+    if (!pcm) return;
+    const b = document.createElement('button');
+    b.className = 'replay';
+    b.type = 'button';
+    b.textContent = '▶️ Azure-a gedən səsi dinlə';
+    b.addEventListener('click', () => {
+      const url = URL.createObjectURL(new Blob([pcmToWav(pcm)], { type: 'audio/wav' }));
+      const au = new Audio(url);
+      au.onended = () => URL.revokeObjectURL(url);
+      au.play();
+    });
+    el.appendChild(b);
+  }
+  function renderAzure(el, r, pcm) {
     if (!r || !r.ok) {
       el.textContent = `🎯 Azure: cavab alınmadı — ${r ? r.error : 'naməlum xəta'}`;
       el.classList.add('fail');
+      addReplay(el, pcm);
       return;
     }
     const chips = r.words
@@ -811,6 +827,7 @@ function renderPractice(id) {
       })
       .join(' ');
     el.innerHTML = `🎯 Azure eşitdi: ${esc(r.text || '—')} · <b>${r.score ?? '?'}/100</b><div class="wchips">${chips}</div>`;
+    addReplay(el, pcm);
     scroll();
   }
 
@@ -1177,14 +1194,14 @@ function renderPractice(id) {
             // Azure üçün rəqəm SÖZLƏ yazılır (sən "fünfunddreißig" deyirsən, "35" yox)
             const c0 = d.cards[cardIdx];
             const ref = field === 'age' ? `Ich bin ${c0.ageDe} Jahre alt.` : SENT[field](c0);
-            const a = { pressId, field, ref, done: false, result: null };
+            const a = { pressId, field, ref, done: false, result: null, pcm: data };
             az = a;
             const line = azureLine();
             line.textContent = `🎯 Azure yoxlayır… (${a.ref})`;
             a.promise = assessPronunciation(data, a.ref, s.azureKey, s.azureRegion).then((r) => {
               a.done = true;
               a.result = r;
-              renderAzure(line, r);
+              renderAzure(line, r, a.pcm);
               if (deferredCheck && !pendingMarks && a.pressId === pressId && !verifierPending()) {
                 deferredCheck = false;
                 checkAfterTurn();
