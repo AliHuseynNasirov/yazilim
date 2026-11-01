@@ -50,7 +50,9 @@ export async function assessPronunciation(pcm, referenceText, key, region, { tim
     GradingSystem: 'HundredMark',
     Granularity: 'Phoneme',
     Dimension: 'Comprehensive',
-    EnableMiscue: true,
+    // Artıq/əskik söz axtarışı sönülü: aksentli nitqdə Azure uydurma "artıq" sözlər tapırdı.
+    // Azure yalnız gözlənilən hər sözün tələffüzünə bal verir; əskik sözləri tətbiqin öz yoxlaması tutur.
+    EnableMiscue: false,
     PhonemeAlphabet: 'IPA',
   };
   const ctl = new AbortController();
