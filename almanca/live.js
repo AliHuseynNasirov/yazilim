@@ -45,6 +45,8 @@ export class LiveSession {
     this.turnAudio = 0;
     // Yazıya çevirmə üçün dil ipucu (almanca əsas, azərbaycanca ikinci)
     this.langHint = true;
+    // Yazıya çevirmə "hərfi" rejimdə: eşitdiyini düzəltmədən yazsın ("kommet" → "kommet", "komme" yox)
+    this.verbatim = true;
   }
 
   get model() {
@@ -111,9 +113,10 @@ export class LiveSession {
         },
         systemInstruction: { parts: [{ text: systemText }] },
         // Dil ipucu olmasa, sistem dili özü təxmin edir və bəzən gürcü/rus hərfləri ilə yazır
-        inputAudioTranscription: this.langHint
-          ? { languageCodes: this.o.transcriptionLanguages || ['de-DE', 'az-AZ'] }
-          : {},
+        inputAudioTranscription: {
+          ...(this.langHint ? { languageCodes: this.o.transcriptionLanguages || ['de-DE', 'az-AZ'] } : {}),
+          ...(this.verbatim ? { mode: 'VERBATIM' } : {}),
+        },
         outputAudioTranscription: {},
         // Bağlantı qopanda eyni söhbəti davam etdirmək üçün
         sessionResumption: this.resumeHandle ? { handle: this.resumeHandle } : {},
@@ -143,6 +146,12 @@ export class LiveSession {
       if (this.closed) return;
       this.stopPlayback();
 
+      // Model "hərfi" rejimi qəbul etmirsə (1007), onsuz yenidən qoşul
+      if (!setupDone && e.code === 1007 && this.verbatim) {
+        this.verbatim = false;
+        this.connect();
+        return;
+      }
       // Model dil ipucunu qəbul etmirsə (1007), ipucusuz yenidən qoşul
       if (!setupDone && e.code === 1007 && this.langHint) {
         this.langHint = false;
