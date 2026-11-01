@@ -510,6 +510,14 @@ function renderPractice(id) {
   const quick = $app.querySelector('#quick');
 
   let last = null; // {role, el, open}
+  // Şagirdin son dediyi (ekrandakı yazı) — səhv dəftərinə bu yazılır
+  let userUtter = '';
+  let userUtterOpen = false;
+  const noteUser = (text, fresh) => {
+    if (fresh || !userUtterOpen) userUtter = '';
+    userUtterOpen = !fresh;
+    userUtter += text;
+  };
   const setStatus = (t) => (statusEl.textContent = t);
   const scroll = () => (chat.scrollTop = chat.scrollHeight);
 
@@ -656,6 +664,9 @@ function renderPractice(id) {
       tools: buildTools(d),
       onTool(name, args) {
         if (name === 'log_mistake') {
+          // Modelin "eşitdiyi" yox, ekrandakı yazını (daha dəqiqdir) götür
+          const heard = userUtter.trim();
+          if (heard) args = { ...args, wrong: heard };
           mistakeNote(saveMistake(cat, d, args));
           if (d.cards && cardState[cardIdx]) {
             cardState[cardIdx].mistakes++;
@@ -715,9 +726,11 @@ function renderPractice(id) {
               done[d.id] = Date.now();
               store.set('done', done);
             }
+            noteUser(data);
             addText('user', data);
             break;
           case 'aiText':
+            userUtterOpen = false;
             if (last && last.role === 'user') last.open = false;
             addText('ai', data);
             break;
@@ -806,6 +819,7 @@ function renderPractice(id) {
     if (last) last.open = false;
     addText('user', t);
     last.open = false;
+    noteUser(t, true);
     session.sendText(t);
     inp.value = '';
   });
