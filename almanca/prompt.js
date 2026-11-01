@@ -13,6 +13,8 @@ function correctionRules(expl) {
   • irregular forms: ich bin / du bist / er ist; ich spreche / du sprichst; du heißt;
   • word order: in W-questions the verb comes right after the question word ("Wo wohnst du?"), in statements the verb is in 2nd position, in yes/no questions the verb comes first;
   • the right pronoun (ich in answers, du in questions) and the right question word.
+- The learner speaks German with an Azerbaijani accent. Listen to the audio itself and interpret it as German. Do not treat the accent as a mistake.
+- Messages starting with "[App]" come from the app, not from the learner: follow them silently.
 - Judge exactly what the learner said. Never silently fix it in your head and continue as if it was correct.
 - If there is ANY grammar mistake:
   1) Say in ${expl}, in ONE short sentence, what was wrong (example: "'ich' ilə fel -e ilə bitir: 'heißt' yox, 'heiße' olmalıdır.").

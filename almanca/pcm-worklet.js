@@ -8,6 +8,13 @@ class PcmCapture extends AudioWorkletProcessor {
     this.acc = 0;
     this.n = 0;
     this.t = 0;
+    // "flush": buferdə qalan yarımçıq hissəni dərhal göndər
+    this.port.onmessage = (e) => {
+      if (e.data !== 'flush') return;
+      const part = this.chunk.slice(0, this.len);
+      this.len = 0;
+      this.port.postMessage({ flush: part.buffer }, [part.buffer]);
+    };
   }
 
   push(v) {

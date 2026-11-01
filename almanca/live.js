@@ -1,10 +1,13 @@
 // Gemini Live API (native audio) üçün brauzer müştərisi.
 // Mikrofon → 16 kHz PCM → WebSocket; cavab 24 kHz PCM → dinamik.
+// Bağlantı qopsa (məs. 1011 server xətası) avtomatik bərpa edir: əvvəlcə eyni
+// söhbəti davam etdirir (session resumption), alınmasa ehtiyat modelə keçir.
 
 const WS_URL =
   'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
 
 const AC = window.AudioContext || window.webkitAudioContext;
+const MAX_RETRIES = 4;
 
 function bytesToB64(bytes) {
   let s = '';
@@ -23,17 +26,26 @@ function b64ToBytes(b64) {
 
 export class LiveSession {
   /**
-   * @param {{apiKey:string, model:string, voice:string, systemText:string,
-   *          pushToTalk:boolean, onEvent:(type:string, data?:any)=>void}} opts
+   * @param {{apiKey:string, model:string, fallbackModels?:string[], voice:string, systemText:string,
+   *          pushToTalk:boolean, tools?:object[], onTool?:Function, onEvent:(type:string, data?:any)=>void}} opts
    */
   constructor(opts) {
     this.o = opts;
+    this.models = [opts.model, ...(opts.fallbackModels || []).filter((m) => m !== opts.model)];
+    this.modelIdx = 0;
     this.ws = null;
     this.ready = false;
     this.sending = !opts.pushToTalk;
     this.closed = false;
     this.sources = new Set();
     this.nextTime = 0;
+    this.resumeHandle = null;
+    this.retries = 0;
+    this.everReady = false;
+  }
+
+  get model() {
+    return this.models[this.modelIdx];
   }
 
   emit(type, data) {
@@ -63,15 +75,17 @@ export class LiveSession {
   }
 
   connect() {
-    const { apiKey, model, voice, systemText, pushToTalk, tools } = this.o;
+    const { apiKey, voice, systemText, tools } = this.o;
+    const resuming = !!this.resumeHandle;
     this.ws = new WebSocket(`${WS_URL}?key=${encodeURIComponent(apiKey)}`);
     // Sinxron oxumaq üçün: mesajların sırası qarışmasın
     this.ws.binaryType = 'arraybuffer';
     const decoder = new TextDecoder();
+    const ws = this.ws;
 
-    this.ws.onopen = () => {
+    ws.onopen = () => {
       const setup = {
-        model: `models/${model}`,
+        model: `models/${this.model}`,
         generationConfig: {
           responseModalities: ['AUDIO'],
           // Aşağı temperatur: müəllim plana daha dəqiq əməl edir, mövzudan yayınmır
@@ -81,15 +95,17 @@ export class LiveSession {
         systemInstruction: { parts: [{ text: systemText }] },
         inputAudioTranscription: {},
         outputAudioTranscription: {},
+        // Bağlantı qopanda eyni söhbəti davam etdirmək üçün
+        sessionResumption: this.resumeHandle ? { handle: this.resumeHandle } : {},
+        // Uzun dərslərdə kontekst dolmasın
+        contextWindowCompression: { slidingWindow: {} },
       };
       if (tools && tools.length) setup.tools = [{ functionDeclarations: tools }];
-      if (pushToTalk) {
-        setup.realtimeInputConfig = { automaticActivityDetection: { disabled: true } };
-      }
       this.send({ setup });
     };
 
-    this.ws.onmessage = (e) => {
+    ws.onmessage = (e) => {
+      if (ws !== this.ws) return;
       const txt = typeof e.data === 'string' ? e.data : decoder.decode(e.data);
       let msg;
       try {
@@ -97,19 +113,43 @@ export class LiveSession {
       } catch {
         return;
       }
-      this.handle(msg);
+      this.handle(msg, resuming);
     };
 
-    this.ws.onclose = (e) => {
+    ws.onclose = (e) => {
+      if (ws !== this.ws) return;
       this.ready = false;
-      if (!this.closed) this.emit('close', { code: e.code, reason: e.reason });
+      if (this.closed) return;
+      this.stopPlayback();
+
+      // 1000 = normal bitmə, 1008 = açar/model qəbul olunmadı — bunları təkrarlamırıq
+      const retryable = e.code !== 1000 && e.code !== 1008 && e.code !== 1007;
+      if (retryable && this.retries < MAX_RETRIES) {
+        this.retries++;
+        // 2-ci uğursuzluqdan sonra ehtiyat modelə keç (köhnə söhbət açarı yeni modeldə işləmir)
+        if (this.retries >= 2 && this.modelIdx < this.models.length - 1) {
+          this.modelIdx++;
+          this.resumeHandle = null;
+        }
+        this.emit('reconnecting', { attempt: this.retries, code: e.code, model: this.model });
+        setTimeout(() => !this.closed && this.connect(), 500 * this.retries);
+        return;
+      }
+      this.emit('close', { code: e.code, reason: e.reason });
     };
   }
 
-  handle(m) {
+  handle(m, resuming) {
     if (m.setupComplete) {
       this.ready = true;
-      this.emit('ready');
+      const wasReady = this.everReady;
+      this.everReady = true;
+      this.emit('ready', { reconnect: wasReady, resumed: wasReady && resuming, model: this.model });
+      return;
+    }
+    if (m.sessionResumptionUpdate) {
+      const u = m.sessionResumptionUpdate;
+      if (u.resumable && u.newHandle) this.resumeHandle = u.newHandle;
       return;
     }
     if (m.goAway) this.emit('goaway', m.goAway);
@@ -139,39 +179,47 @@ export class LiveSession {
     }
     if (sc.inputTranscription && sc.inputTranscription.text) this.emit('userText', sc.inputTranscription.text);
     if (sc.outputTranscription && sc.outputTranscription.text) this.emit('aiText', sc.outputTranscription.text);
-    if (sc.turnComplete) this.emit('turnComplete');
+    if (sc.turnComplete) {
+      this.retries = 0; // uğurlu cavab — sayğacı sıfırla
+      this.emit('turnComplete');
+    }
   }
 
   send(obj) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(obj));
   }
 
-  onPcm(buf) {
-    const pcm = new Int16Array(buf);
-    let sum = 0;
-    for (let i = 0; i < pcm.length; i += 8) sum += Math.abs(pcm[i]);
-    this.emit('level', Math.min(1, (sum / (pcm.length / 8) / 32768) * 6));
-    if (!this.ready || !this.sending) return;
-    this.send({
-      realtimeInput: { audio: { data: bytesToB64(new Uint8Array(buf)), mimeType: 'audio/pcm;rate=16000' } },
-    });
+  onPcm(data) {
+    // Adi hissə: ArrayBuffer. "flush" cavabı: { flush: ArrayBuffer }
+    const isFlush = data && data.flush !== undefined;
+    const buf = isFlush ? data.flush : data;
+    if (buf && buf.byteLength) {
+      const pcm = new Int16Array(buf);
+      let sum = 0;
+      for (let i = 0; i < pcm.length; i += 8) sum += Math.abs(pcm[i]);
+      this.emit('level', Math.min(1, (sum / Math.max(1, pcm.length / 8) / 32768) * 6));
+      if (this.ready && (this.sending || isFlush)) {
+        this.send({
+          realtimeInput: { audio: { data: bytesToB64(new Uint8Array(buf)), mimeType: 'audio/pcm;rate=16000' } },
+        });
+      }
+    }
+    if (isFlush && this.ready) this.send({ realtimeInput: { audioStreamEnd: true } });
   }
 
-  // Sərbəst rejimdə: mikrofonu aç/bağla. "Bas və danış" rejimində: basılı saxla.
+  // Mikrofonu aç/bağla. "Bas və danış" rejimində düymə basılı olanda açıqdır.
+  // Serverin avtomatik nitq aşkarlaması həmişə açıqdır (əl ilə rejim 1011 xətasına səbəb olurdu).
   setSending(on) {
     if (on === this.sending) return;
-    this.sending = on;
-    if (!this.ready) return;
-    if (this.o.pushToTalk) {
-      if (on) {
-        this.stopPlayback();
-        this.send({ realtimeInput: { activityStart: {} } });
-      } else {
-        this.send({ realtimeInput: { activityEnd: {} } });
-      }
-    } else if (!on) {
-      this.send({ realtimeInput: { audioStreamEnd: true } });
+    if (on) {
+      if (this.o.pushToTalk) this.stopPlayback();
+      this.sending = true;
+      return;
     }
+    this.sending = false;
+    // Buferdə qalan son səsi də göndər, sonra "səs bitdi" de
+    if (this.worklet) this.worklet.port.postMessage('flush');
+    else if (this.ready) this.send({ realtimeInput: { audioStreamEnd: true } });
   }
 
   sendText(text) {

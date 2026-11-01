@@ -4,11 +4,15 @@ import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 
 const $app = document.getElementById('app');
 
+// Birinci model əsasdır; xəta olsa sıra ilə digərlərinə keçilir.
+// 12-2025 modelində tez-tez 1011 xətası olduğu üçün 09-2025 əsas seçilib.
 const MODELS = [
+  'gemini-2.5-flash-native-audio-preview-09-2025',
+  'gemini-3.1-flash-live-preview',
   'gemini-2.5-flash-native-audio-preview-12-2025',
   'gemini-2.5-flash-native-audio-latest',
-  'gemini-2.5-flash-native-audio-preview-09-2025',
 ];
+const SETTINGS_VERSION = 2;
 const VOICES = ['Kore', 'Aoede', 'Leda', 'Zephyr', 'Puck', 'Charon', 'Fenrir', 'Orus'];
 const DEFAULTS = { apiKey: '', model: MODELS[0], voice: 'Kore', explainLang: 'az', mode: 'free' };
 
@@ -25,7 +29,12 @@ const store = {
     localStorage.setItem('dA1.' + k, JSON.stringify(v));
   },
 };
-const settings = () => ({ ...DEFAULTS, ...store.get('settings', {}) });
+function settings() {
+  const saved = store.get('settings', {});
+  // Köhnə ayarlarda saxlanmış problemli modeli yeni əsas modellə əvəz et
+  if (saved.v !== SETTINGS_VERSION) delete saved.model;
+  return { ...DEFAULTS, ...saved };
+}
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -438,6 +447,7 @@ function renderSettings() {
       voice: $app.querySelector('#voice').value,
       explainLang: $app.querySelector('#explainLang').value,
       mode: $app.querySelector('#mode').value,
+      v: SETTINGS_VERSION,
     });
     history.length > 1 ? history.back() : (location.hash = '#/');
   });
@@ -639,6 +649,7 @@ function renderPractice(id) {
     session = new LiveSession({
       apiKey: s.apiKey,
       model: s.model,
+      fallbackModels: MODELS,
       voice: s.voice,
       pushToTalk: ptt,
       systemText: buildSystemPrompt(d, s),
@@ -665,7 +676,26 @@ function renderPractice(id) {
       },
       onEvent(type, data) {
         switch (type) {
+          case 'reconnecting':
+            sys(`⚠️ Bağlantı qopdu (kod ${data.code}). Yenidən qoşulur… (${data.attempt})`);
+            setStatus('🔄 Yenidən qoşulur…');
+            break;
           case 'ready':
+            if (data && data.reconnect) {
+              setStatus(idleStatus());
+              if (data.resumed) {
+                sys('✅ Bağlantı bərpa olundu, qaldığımız yerdən davam edirik.');
+              } else {
+                sys(`✅ Yenidən qoşuldu (${data.model}).`);
+                session.sendText(
+                  d.cards
+                    ? `[App] The connection was restarted. Do not repeat the introduction. Continue the lesson with card ${cardIdx + 1} (${d.cards[cardIdx].name}); the learner should present this card now.`
+                    : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped.',
+                );
+              }
+              break;
+            }
+            sys('ℹ️ Sənin sözlərinin yazısı avtomatikdir, bəzən səhv dildə görünə bilər. Müəllim isə səsini birbaşa eşidir.');
             started = Date.now();
             startBtn.hidden = true;
             micBtn.hidden = endBtn.hidden = textForm.hidden = quick.hidden = false;
@@ -737,14 +767,18 @@ function renderPractice(id) {
     const down = (e) => {
       e.preventDefault();
       micBtn.classList.add('hold');
+      clearTimeout(releaseTimer);
       session && session.setSending(true);
       setStatus('🔴 Danış… (buraxanda göndərilir)');
     };
+    let releaseTimer = null;
     const up = () => {
       if (!micBtn.classList.contains('hold')) return;
       micBtn.classList.remove('hold');
-      session && session.setSending(false);
       setStatus('⏳ Cavab gözlənilir…');
+      // Son söz kəsilməsin deyə düyməni buraxandan sonra bir az da dinlə
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(() => session && session.setSending(false), 450);
     };
     micBtn.addEventListener('pointerdown', down);
     micBtn.addEventListener('pointerup', up);
