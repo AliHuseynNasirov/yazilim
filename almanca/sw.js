@@ -1,8 +1,8 @@
 // Offline üçün tətbiq fayllarını keşləyir. Səsli məşq internet tələb edir.
-const CACHE = 'deutsch-a1-v7';
+const CACHE = 'deutsch-a1-v8';
 const FILES = [
   './', './index.html', './style.css', './app.js', './data.js', './live.js',
-  './prompt.js', './pcm-worklet.js', './manifest.json',
+  './prompt.js', './checker.js', './pcm-worklet.js', './manifest.json',
   './images/thomas.jpg', './images/anna.jpg', './images/lukas.jpg', './images/maria.jpg', './images/ali.jpg', './images/elena.jpg', './images/leyla.jpg', './images/john.jpg', './images/mei.jpg', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 

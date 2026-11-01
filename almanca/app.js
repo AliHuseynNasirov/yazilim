@@ -1,6 +1,7 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
+import { checkSentence } from './checker.js';
 
 const $app = document.getElementById('app');
 
@@ -495,6 +496,7 @@ function renderPractice(id) {
           <button data-q="Wie bitte? Noch einmal, langsam bitte.">🔁 Təkrar et</button>
           <button data-q="Hilfe! Was kann ich sagen?">🆘 Kömək</button>
           <button data-q="Başa düşmədim, azərbaycanca izah et.">❓ İzah et</button>
+          <button id="soundTest" type="button">🔊 Səsi yoxla</button>
         </div>
       </div>
     </main>`;
@@ -513,10 +515,27 @@ function renderPractice(id) {
   // Şagirdin son dediyi (ekrandakı yazı) — səhv dəftərinə bu yazılır
   let userUtter = '';
   let userUtterOpen = false;
+  // Hər yeni cümlə üçün sayğac və yoxlama vəziyyəti
+  let utterId = 0;
+  let modelLoggedUtter = -1; // model bu cümlə üçün səhv qeyd edib
+  let appLoggedUtter = -1; // tətbiq (yoxlayıcı) bu cümlə üçün səhv qeyd edib
+  let checkedUtter = -1; // bu cümlə artıq yoxlanılıb
+  let aiTurnText = '';
+  let tickedThisUtter = []; // [{i, field}]
   const noteUser = (text, fresh) => {
-    if (fresh || !userUtterOpen) userUtter = '';
+    if (fresh || !userUtterOpen) {
+      userUtter = '';
+      utterId++;
+      aiTurnText = '';
+      tickedThisUtter = [];
+    }
     userUtterOpen = !fresh;
     userUtter += text;
+  };
+  // Ekrandakı yazıda qrammatika səhvlərini tap
+  const findErrors = () => {
+    const text = userUtter.trim();
+    return text && looksLatin(text) ? checkSentence(text) : [];
   };
   const setStatus = (t) => (statusEl.textContent = t);
   const scroll = () => (chat.scrollTop = chat.scrollHeight);
@@ -575,7 +594,15 @@ function renderPractice(id) {
     const st = cardState[i];
     if (!st || !FIELDS.includes(field)) return 'invalid';
     if (i !== cardIdx) setActive(i);
+    // Yoxlayıcı bu cümlədə səhv tapırsa — ✓ qoyma, modelə düzəltməsini de
+    const errs = findErrors().filter((e) => e.field === field);
+    if (errs.length) {
+      checkedUtter = utterId;
+      appLog(errs);
+      return rejectionText(errs);
+    }
     if (!st.fields.has(field)) {
+      tickedThisUtter.push({ i, field });
       st.fields.add(field);
       const li = cardEls[i].querySelector(`[data-f="${field}"]`);
       li.classList.add('ok');
@@ -583,6 +610,13 @@ function renderPractice(id) {
     }
     if (st.fields.size === FIELDS.length && !st.done) completeCard(i);
     return `ticked ${field} on card ${i + 1} (${st.fields.size}/5)`;
+  }
+
+  function untick(i, field) {
+    const st = cardState[i];
+    if (!st || st.done || !st.fields.has(field)) return;
+    st.fields.delete(field);
+    cardEls[i].querySelector(`[data-f="${field}"]`).classList.remove('ok');
   }
 
   function completeCard(i) {
@@ -629,6 +663,55 @@ function renderPractice(id) {
     cardEls.forEach((el, i) => el.addEventListener('click', () => i !== cardIdx && setActive(i, true)));
   }
 
+  // Səhvi dəftərə yaz + kartı titrət
+  function registerMistake(args) {
+    mistakeNote(saveMistake(cat, d, args));
+    if (d.cards && cardState[cardIdx]) {
+      cardState[cardIdx].mistakes++;
+      fx.oops();
+      cardEls[cardIdx].classList.remove('shake');
+      void cardEls[cardIdx].offsetWidth;
+      cardEls[cardIdx].classList.add('shake');
+      updateScore();
+    }
+  }
+
+  // Yoxlayıcının tapdığı səhvi (model qeyd etməyibsə) dəftərə yaz
+  function appLog(errs) {
+    if (modelLoggedUtter === utterId || appLoggedUtter === utterId) return;
+    appLoggedUtter = utterId;
+    registerMistake({ wrong: errs[0].fullWrong, correct: errs[0].fullCorrect, explanation: errs.map((e) => e.az).join(' ') });
+  }
+
+  function rejectionText(errs) {
+    return (
+      `REJECTED — not ticked. The learner actually said: "${errs[0].fullWrong}". ` +
+      `Mistake: ${errs.map((e) => e.en).join('; ')}. Correct sentence: "${errs[0].fullCorrect}". ` +
+      'The mistake is already saved, do not call log_mistake. Now, OUT LOUD: tell the learner in Azerbaijani: ' +
+      `"${errs.map((e) => e.az).join(' ')}" Then say the correct sentence slowly and ask the learner to repeat it. ` +
+      'Only call mark_correct after they repeat it correctly.'
+    );
+  }
+
+  // Müəllimin cavabı bitəndə: buraxılmış səhv varsa, düzəltməsini tələb et
+  function checkAfterTurn() {
+    if (checkedUtter === utterId || !userUtter.trim()) return;
+    checkedUtter = utterId;
+    const errs = findErrors();
+    if (!errs.length) return;
+    for (const t of tickedThisUtter) if (errs.some((e) => e.field === t.field)) untick(t.i, t.field);
+    if (modelLoggedUtter === utterId) return; // model özü düzəldib
+    appLog(errs);
+    sys('🔎 Yoxlama: cümlədə səhv var — müəllim indi düzəldəcək.');
+    session.sendText(
+      `[App] Grammar check: the learner said "${errs[0].fullWrong}". This is WRONG and you did not correct it: ` +
+        `${errs.map((e) => e.en).join('; ')}. Correct sentence: "${errs[0].fullCorrect}". ` +
+        'The mistake is already saved, do not call log_mistake. Now, OUT LOUD: tell the learner in Azerbaijani: ' +
+        `"${errs.map((e) => e.az).join(' ')}" Say the correct sentence slowly and ask the learner to repeat it. ` +
+        'Do not call mark_correct for it until they repeat it correctly. Then continue from the same place.',
+    );
+  }
+
   function mistakeNote(m) {
     const el = document.createElement('a');
     el.className = 'mnote';
@@ -664,18 +747,12 @@ function renderPractice(id) {
       tools: buildTools(d),
       onTool(name, args) {
         if (name === 'log_mistake') {
+          if (appLoggedUtter === utterId) return 'already saved';
+          modelLoggedUtter = utterId;
           // Ekrandakı yazı düzgün əlifbadadırsa onu götür, yoxsa (gürcü/kiril və s.) modelin eşitdiyini
           const heard = userUtter.trim();
           if (heard && looksLatin(heard)) args = { ...args, wrong: heard };
-          mistakeNote(saveMistake(cat, d, args));
-          if (d.cards && cardState[cardIdx]) {
-            cardState[cardIdx].mistakes++;
-            fx.oops();
-            cardEls[cardIdx].classList.remove('shake');
-            void cardEls[cardIdx].offsetWidth;
-            cardEls[cardIdx].classList.add('shake');
-            updateScore();
-          }
+          registerMistake(args);
           return 'saved';
         }
         if (name === 'mark_correct') return markField(args.card, args.field);
@@ -731,11 +808,14 @@ function renderPractice(id) {
             break;
           case 'aiText':
             userUtterOpen = false;
+            aiTurnText += data;
             if (last && last.role === 'user') last.open = false;
             addText('ai', data);
             break;
           case 'turnComplete':
             if (last) last.open = false;
+            if (data && data.audio === 0 && aiTurnText.trim()) sys('🔇 Bu cavabın səsi serverdən gəlmədi.');
+            checkAfterTurn();
             break;
           case 'speaking':
             setStatus(data ? '🗣️ Müəllim danışır…' : idleStatus());
@@ -824,7 +904,11 @@ function renderPractice(id) {
     inp.value = '';
   });
 
-  quick.querySelectorAll('button').forEach((b) =>
+  $app.querySelector('#soundTest').addEventListener('click', () => {
+    if (session) session.testTone();
+    sys('🔊 Siqnal çaldı. Eşitmədinsə: telefonun yan düyməsi ilə səsi artır (musiqi/media səsi) və səssiz rejimi söndür.');
+  });
+  quick.querySelectorAll('button[data-q]').forEach((b) =>
     b.addEventListener('click', () => {
       if (!session) return;
       if (last) last.open = false;

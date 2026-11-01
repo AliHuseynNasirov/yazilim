@@ -42,6 +42,7 @@ export class LiveSession {
     this.resumeHandle = null;
     this.retries = 0;
     this.everReady = false;
+    this.turnAudio = 0;
     // Yazıya çevirmə üçün dil ipucu (almanca əsas, azərbaycanca ikinci)
     this.langHint = true;
   }
@@ -56,12 +57,25 @@ export class LiveSession {
 
   // İstifadəçi toxunuşu ilə çağırılmalıdır (iOS səs icazəsi üçün).
   async start() {
-    this.playCtx = new AC({ sampleRate: 24000 });
+    // Cihazın öz sürətində; 24 kHz səs buferləri avtomatik çevrilir (bəzi Android-lərdə 24 kHz kontekst səssiz qalırdı)
+    this.playCtx = new AC();
     this.micCtx = new AC();
+    // Səsi gücləndir + sıxıcı (cızıltı olmasın)
+    this.outGain = this.playCtx.createGain();
+    this.outGain.gain.value = 1.8;
+    const comp = this.playCtx.createDynamicsCompressor();
+    this.outGain.connect(comp).connect(this.playCtx.destination);
     await Promise.all([this.playCtx.resume(), this.micCtx.resume()]);
 
+    // "Bas və danış" rejimində əks-səda söndürücü lazım deyil. Onu söndürmək Android-də
+    // səsin qulaqcığa (zəng dinamikinə) keçməsinin qarşısını alır — səs əsas dinamikdən gəlir.
     this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      audio: {
+        channelCount: 1,
+        echoCancellation: !this.o.pushToTalk,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
     });
     if (this.closed) return this.cleanup();
 
@@ -195,7 +209,8 @@ export class LiveSession {
     if (sc.outputTranscription && sc.outputTranscription.text) this.emit('aiText', sc.outputTranscription.text);
     if (sc.turnComplete) {
       this.retries = 0; // uğurlu cavab — sayğacı sıfırla
-      this.emit('turnComplete');
+      this.emit('turnComplete', { audio: this.turnAudio });
+      this.turnAudio = 0;
     }
   }
 
@@ -241,7 +256,9 @@ export class LiveSession {
   }
 
   play(b64) {
+    if (this.playCtx.state !== 'running') this.playCtx.resume();
     const bytes = b64ToBytes(b64);
+    this.turnAudio += bytes.length;
     const pcm = new Int16Array(bytes.buffer, 0, bytes.byteLength >> 1);
     const f = new Float32Array(pcm.length);
     for (let i = 0; i < pcm.length; i++) f[i] = pcm[i] / 32768;
@@ -249,7 +266,7 @@ export class LiveSession {
     buf.copyToChannel(f, 0);
     const s = this.playCtx.createBufferSource();
     s.buffer = buf;
-    s.connect(this.playCtx.destination);
+    s.connect(this.outGain);
     const t = Math.max(this.nextTime, this.playCtx.currentTime + 0.05);
     s.start(t);
     this.nextTime = t + buf.duration;
@@ -259,6 +276,20 @@ export class LiveSession {
       if (!this.sources.size) this.emit('speaking', false);
     };
     this.emit('speaking', true);
+  }
+
+  // Səs yoxlaması: qısa siqnal
+  testTone() {
+    if (!this.playCtx) return;
+    this.playCtx.resume();
+    const o = this.playCtx.createOscillator();
+    const g = this.playCtx.createGain();
+    o.frequency.value = 660;
+    g.gain.setValueAtTime(0.25, this.playCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.playCtx.currentTime + 0.6);
+    o.connect(g).connect(this.outGain);
+    o.start();
+    o.stop(this.playCtx.currentTime + 0.6);
   }
 
   stopPlayback() {
