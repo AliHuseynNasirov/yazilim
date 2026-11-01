@@ -514,7 +514,8 @@ function renderPractice(id) {
   let last = null; // {role, el, open}
   // Şagirdin son dediyi (ekrandakı yazı) — səhv dəftərinə bu yazılır
   let userUtter = '';
-  let userUtterOpen = false;
+  // true olanda şagirdin növbəti sözü YENİ cümlə sayılır (əvvəlki cümləyə yapışmır)
+  let utterClosed = true;
   // Hər yeni cümlə üçün sayğac və yoxlama vəziyyəti
   let utterId = 0;
   let modelLoggedUtter = -1; // model bu cümlə üçün səhv qeyd edib
@@ -523,15 +524,16 @@ function renderPractice(id) {
   let aiTurnText = '';
   let tickedThisUtter = []; // [{i, field}]
   const noteUser = (text, fresh) => {
-    if (fresh || !userUtterOpen) {
+    if (fresh || utterClosed) {
       userUtter = '';
       utterId++;
       aiTurnText = '';
       tickedThisUtter = [];
     }
-    userUtterOpen = !fresh;
+    utterClosed = !!fresh;
     userUtter += text;
   };
+  const closeUtter = () => (utterClosed = true);
   // Kart dərsi üçün qapalı lüğət (səhv deyilmiş sözləri tapmaq üçün)
   const lexicon = d.cards ? buildCardLexicon(d) : null;
   // Ekrandakı yazıda qrammatika və söz səhvlərini tap
@@ -719,8 +721,9 @@ function renderPractice(id) {
     return (
       `REJECTED — not ticked. The learner actually said: "${errs[0].fullWrong}". ` +
       `Mistake: ${errs.map((e) => e.en).join('; ')}. Correct sentence: "${errs[0].fullCorrect}". ` +
-      'The mistake is already saved, do not call log_mistake. Now, OUT LOUD: tell the learner in Azerbaijani: ' +
-      `"${errs.map((e) => e.az).join(' ')}" Then say the correct sentence slowly and ask the learner to repeat it. ` +
+      'The mistake is already saved, do not call log_mistake. Now speak OUT LOUD to the learner: explain the mistake in Azerbaijani ' +
+      `using exactly this content (say it naturally, without any label or prefix, and do not talk about other sentences): ${errs.map((e) => e.az).join(' ')} ` +
+      'Then say the correct sentence slowly and ask the learner to repeat the whole sentence. ' +
       'Only call mark_correct after they repeat it correctly.'
     );
   }
@@ -738,8 +741,9 @@ function renderPractice(id) {
     session.sendText(
       `[App] Grammar check: the learner said "${errs[0].fullWrong}". This is WRONG and you did not correct it: ` +
         `${errs.map((e) => e.en).join('; ')}. Correct sentence: "${errs[0].fullCorrect}". ` +
-        'The mistake is already saved, do not call log_mistake. Now, OUT LOUD: tell the learner in Azerbaijani: ' +
-        `"${errs.map((e) => e.az).join(' ')}" Say the correct sentence slowly and ask the learner to repeat it. ` +
+        'The mistake is already saved, do not call log_mistake. Now speak OUT LOUD to the learner: explain the mistake in Azerbaijani ' +
+        `using exactly this content (say it naturally, without any label or prefix, and do not talk about other sentences): ${errs.map((e) => e.az).join(' ')} ` +
+        'Say the correct sentence slowly and ask the learner to repeat the whole sentence. ' +
         'Do not call mark_correct for it until they repeat it correctly. Then continue from the same place.',
     );
   }
@@ -835,13 +839,14 @@ function renderPractice(id) {
             addText('user', data);
             break;
           case 'aiText':
-            userUtterOpen = false;
+            closeUtter();
             aiTurnText += data;
             if (last && last.role === 'user') last.open = false;
             addText('ai', data);
             break;
           case 'turnComplete':
             if (last) last.open = false;
+            closeUtter();
             if (data && data.audio === 0 && aiTurnText.trim()) sys('🔇 Bu cavabın səsi serverdən gəlmədi.');
             checkAfterTurn();
             break;
@@ -889,6 +894,8 @@ function renderPractice(id) {
       e.preventDefault();
       micBtn.classList.add('hold');
       clearTimeout(releaseTimer);
+      closeUtter();
+      if (last && last.role === 'user') last.open = false;
       session && session.setSending(true);
       setStatus('🔴 Danış… (buraxanda göndərilir)');
     };
@@ -942,6 +949,7 @@ function renderPractice(id) {
       if (last) last.open = false;
       addText('user', b.textContent);
       last.open = false;
+      closeUtter();
       session.sendText(b.dataset.q);
     }),
   );

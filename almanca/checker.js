@@ -67,7 +67,43 @@ function verbRules() {
   }));
 }
 
+// "ich" unudulub: "Komm aus …" → "Ich komme aus …" (bəli/xeyr sualı "Kommst du…?" sayılmır)
+const MISSING_ICH = [
+  ['komm(?:e)?', 'komme', 'country'],
+  ['wohn(?:e)?', 'wohne', 'city'],
+  ['(?:sprech(?:e)?|sprich)', 'spreche', 'language'],
+  ['hei(?:ß|ss)(?:e)?', 'heiße', 'name'],
+  ['lern(?:e)?', 'lerne', null],
+  ['bin', 'bin', 'age'],
+];
+
 const RULES = [
+  ...MISSING_ICH.map(([verb, right, field]) => ({
+    re: new RegExp(`(?:^|(?<=[.!?,;]\\s*))(${verb})(?![\\p{L}])(?!\\s+(?:du|ich)(?![\\p{L}]))`, 'iu'),
+    fix: () => `Ich ${right}`,
+    key: right,
+    field,
+    az: `Cümlədə "ich" (mən) əskikdir: "Ich ${right} …" olmalıdır.`,
+    en: `the subject "ich" is missing: it must be "Ich ${right} …"`,
+  })),
+  // Ön söz: "komme auf/von/nach Deutschland" → "komme aus"
+  {
+    re: rx('(komm\\p{L}*)\\s+(auf|von|vom|nach)'),
+    fix: (m) => `${m[1]} aus`,
+    key: 'aus',
+    field: 'country',
+    az: 'Haradan gəldiyini deyəndə "aus" işlənir: Ich komme aus …',
+    en: 'with "kommen" (origin) use "aus"',
+  },
+  // Ön söz: "wohne auf/nach/im Hamburg" → "wohne in"
+  {
+    re: rx('(wohn\\p{L}*)\\s+(auf|nach|im|am|zu)'),
+    fix: (m) => `${m[1]} in`,
+    key: ' in',
+    field: 'city',
+    az: 'Harada yaşadığını deyəndə "in" işlənir: Ich wohne in …',
+    en: 'with "wohnen" + city use "in"',
+  },
   // Yaş: "ich habe 35 Jahre" → "ich bin 35 Jahre alt"
   {
     re: rx('(ich)\\s+(?:habe?|hab)\\s+([\\p{L}\\d-]+)\\s+jahre?(?:\\s+alt)?'),
@@ -160,16 +196,12 @@ const CORRECT_ARTICLE = /aus\s+der\s+(türkei|schweiz)|aus\s+den\s+usa/iu;
 export function checkSentence(text) {
   const out = [];
   let fixed = text;
-  const seenFields = new Set();
   for (const r of RULES) {
     const m = fixed.match(r.re);
     if (!m) continue;
     if (r.key.startsWith('der ') || r.key.startsWith('den ')) {
       if (CORRECT_ARTICLE.test(m[0])) continue;
     }
-    const field = r.field || `x${out.length}`;
-    if (seenFields.has(field)) continue;
-    seenFields.add(field);
     const replacement = r.fix(m);
     // Böyük hərfi qoru
     const rep = m[0][0] === m[0][0].toUpperCase() ? replacement[0].toUpperCase() + replacement.slice(1) : replacement;
@@ -190,7 +222,7 @@ const NUM_TEEN = ['zehn', 'elf', 'zwölf', 'dreizehn', 'vierzehn', 'fünfzehn', 
 const COMMON = `ja nein und oder aber hallo hi guten tag morgen abend danke bitte schön mein meine meinen name ist
 ich du er sie es wir ihr auch nicht kein keine sehr gut okay ok so jetzt hier heute wie wo woher was wer welche welcher
 welches alt jahre jahr aus in der die das den dem des ein eine einen von beruf tschüss entschuldigung also äh ähm hm mhm
-ach oh na noch einmal langsam wiederholen karte nächste weiter fertig richtig falsch genau super prima toll bin bist sind
+ach oh na auf nach von vom im am um zu komm wohn sprech lern heiß heiss noch einmal langsam wiederholen karte nächste weiter fertig richtig falsch genau super prima toll bin bist sind
 seid heiße heißt heißen komme kommst kommt kommen wohne wohnst wohnt wohnen spreche sprichst spricht sprechen lerne lernst
 lernt lernen habe hast hat haben arbeite arbeitest arbeitet möchte möchtest`;
 

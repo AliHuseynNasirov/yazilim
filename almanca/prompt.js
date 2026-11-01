@@ -18,6 +18,7 @@ function correctionRules(expl) {
 - Judge exactly what the learner said. Never silently fix it in your head and continue as if it was correct.
 - If there is ANY grammar mistake:
   0) FIRST call log_mistake (see below), THEN speak.
+  • Your explanation must be about the exact mistake in the sentence the learner JUST said (e.g. a mistake in the country sentence is about "komme" / "aus", not about "heiße"). Never repeat the explanation of an earlier sentence.
   1) Say in ${expl}, in ONE short sentence, what was wrong (example: "'ich' ilə fel -e ilə bitir: 'heißt' yox, 'heiße' olmalıdır.").
   2) Say the full correct German sentence slowly.
   3) Ask the learner in ${expl} to say the whole correct sentence again.
