@@ -185,7 +185,22 @@ export function azureErrors(result) {
     if (w.error === 'Omission') out.push({ kind: 'omission', word: w.word, az: `"${w.word}" sözü deyilmədi (əskikdir).`, en: `the word "${w.word}" was not said` });
     else if (w.error === 'Insertion') out.push({ kind: 'insertion', word: w.word, az: `"${w.word}" artıq sözdür, cümlədə olmamalıdır.`, en: `the extra word "${w.word}" was said` });
     else if (w.error === 'Mispronunciation' || (w.score != null && w.score < PRON_MIN))
-      out.push({ kind: 'pron', word: w.word, az: explainWord(w), en: `the word "${w.word}" was mispronounced (${w.score}/100)` });
+      out.push({ kind: 'pron', word: w.word, score: w.score, az: explainWord(w), en: `the word "${w.word}" was mispronounced (${w.score}/100)` });
   }
   return out;
+}
+
+/** Səhv dəftəri üçün: cümlədə səhv tələffüz olunan sözləri işarələ, əskik sözləri qeyd et. */
+export function markAzureWrong(sentence, errs) {
+  let t = sentence;
+  const missing = [];
+  for (const e of errs) {
+    if (e.kind === 'pron') {
+      const re = new RegExp(`(^|[^\\p{L}])(${e.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(?![\\p{L}])`, 'iu');
+      t = re.test(t) ? t.replace(re, `$1$2❗(${e.score ?? '?'}/100)`) : `${t} — ${e.word}❗(${e.score ?? '?'}/100)`;
+    } else if (e.kind === 'omission') missing.push(e.word);
+    else if (e.kind === 'insertion') t = `${t} — artıq: ${e.word}`;
+  }
+  if (missing.length) t = `${t} — deyilmədi: ${missing.join(', ')}`;
+  return t;
 }

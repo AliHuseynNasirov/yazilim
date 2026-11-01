@@ -2,7 +2,7 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
-import { assessPronunciation, azureErrors } from './azure.js';
+import { assessPronunciation, azureErrors, markAzureWrong } from './azure.js';
 
 const $app = document.getElementById('app');
 
@@ -652,7 +652,7 @@ function renderPractice(id) {
     const aErr = azErrs(field);
     if (aErr.length) {
       const err = {
-        fullWrong: judgeText() || az.result.text,
+        fullWrong: markAzureWrong(judgeText() || az.result.text, aErr),
         fullCorrect: az.ref,
         az: aErr.map((e) => e.az).join(' '),
         en: aErr.map((e) => e.en).join('; '),
@@ -944,6 +944,8 @@ function renderPractice(id) {
 
   // Səhvi dəftərə yaz + kartı titrət
   function registerMistake(args) {
+    // Səhv və düzgün mətn eynidirsə (tələffüz səhvi) — fərqi göstər
+    if (args.wrong && args.correct && sameText(args.wrong, args.correct)) args = { ...args, wrong: `${args.wrong} — 🔊 tələffüz səhvi` };
     mistakeNote(saveMistake(cat, d, args));
     if (d.cards && cardState[cardIdx]) {
       cardState[cardIdx].mistakes++;
@@ -994,7 +996,7 @@ function renderPractice(id) {
       const aErr = azErrs(az.field);
       if (aErr.length && modelLoggedUtter !== utterId) {
         for (const t of tickedThisUtter) if (t.field === az.field) untick(t.i, t.field);
-        const err = { fullWrong: judgeText() || az.result.text, fullCorrect: az.ref, az: aErr.map((e) => e.az).join(' '), en: aErr.map((e) => e.en).join('; '), field: az.field };
+        const err = { fullWrong: markAzureWrong(judgeText() || az.result.text, aErr), fullCorrect: az.ref, az: aErr.map((e) => e.az).join(' '), en: aErr.map((e) => e.en).join('; '), field: az.field };
         appLog([err]);
         if (noteFail(az.field) >= 3) {
           session.sendText(`[App] Correct sentence: "${az.ref}". The mistake is already saved, do not call log_mistake. ${MOVE_ON}`);
@@ -1114,7 +1116,7 @@ function renderPractice(id) {
           }
           modelLoggedUtter = utterId;
           // Ekrandakı yazı mənalıdırsa onu götür, yoxsa ("40356", gürcü hərfləri) modelin eşitdiyini
-          if (heard && plausibleTranscript(heard)) args = { ...args, wrong: heard };
+          if (heard && plausibleTranscript(heard) && sameText(heard, args.correct) === false) args = { ...args, wrong: heard };
           registerMistake(args);
           if (noteFail(field) >= 3) return `saved. ${MOVE_ON}`;
           return 'saved';
@@ -1355,6 +1357,12 @@ function renderPractice(id) {
       session.sendText(b.dataset.q);
     }),
   );
+}
+
+// İki cümlə (durğu işarələri və böyük hərf nəzərə alınmadan) eynidirmi?
+function sameText(a, b) {
+  const n = (x) => String(x || '').toLowerCase().replace(/[^\p{L}\d]+/gu, ' ').trim();
+  return n(a) === n(b);
 }
 
 // Mətn əsasən latın hərflərindədirmi (almanca / azərbaycanca)?
