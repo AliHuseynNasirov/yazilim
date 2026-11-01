@@ -1159,7 +1159,10 @@ function renderPractice(id) {
             if (!azureOn) break;
             const field = nextField(cardIdx);
             if (!field) break;
-            const a = { pressId, field, ref: SENT[field](d.cards[cardIdx]), done: false, result: null };
+            // Azure üçün rəqəm SÖZLƏ yazılır (sən "fünfunddreißig" deyirsən, "35" yox)
+            const c0 = d.cards[cardIdx];
+            const ref = field === 'age' ? `Ich bin ${c0.ageDe} Jahre alt.` : SENT[field](c0);
+            const a = { pressId, field, ref, done: false, result: null };
             az = a;
             const line = azureLine();
             line.textContent = `🎯 Azure yoxlayır… (${a.ref})`;

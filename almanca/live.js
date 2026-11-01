@@ -321,6 +321,8 @@ export class LiveSession {
   }
 
   play(b64) {
+    // "Bas və danış": düymə basılı olanda müəllimin səsini çalma — mikrofona düşüb sənin səsinə qarışmasın
+    if (this.o.pushToTalk && this.sending) return;
     if (this.playCtx.state !== 'running') this.playCtx.resume();
     const bytes = b64ToBytes(b64);
     this.turnAudio += bytes.length;
