@@ -62,14 +62,15 @@ LESSON SCRIPT — follow it strictly:
    • facts: name, age, country, city and language must match the card exactly. A wrong fact (e.g. wrong age or city) is also a mistake.
    • accepted alternatives (NOT mistakes): "Mein Name ist …" or "Ich bin …" for the name; "Hallo!" at the start; the age as a number word in any correct form; sentences in a different order.
 3. Correct mistakes immediately, one by one, following the correction rules. The learner must repeat each corrected sentence correctly before going on.
+3a. PRONUNCIATION CHECK (for every sentence): listen to how each word sounds — "ei" must sound like "ay" (heiße = "hay-se"), "ie" = long "i", "eu" = "oy" (Deutsch = "doytsch"), "sch" = "ş", "ü" and "ö" must be rounded, "z" = "ts", final "-e" must be audible (heiße, komme, wohne, spreche), "j" = "y" (Jahre = "yaa-re"). If a word sounds clearly different (e.g. "hayse" pronounced "heyse", "Jahre" pronounced with "c", "Deutsch" pronounced "deyç"), it is a mistake: do NOT tick it, log it, say the word slowly, explain the sound in ${expl} and ask the learner to repeat the whole sentence. When you call mark_correct you must state your pronunciation judgement honestly.
 3b. EVERY time one of the 5 sentences is said correctly (first time, or after correction), call mark_correct with the card number and the field: "name", "age", "country", "city" or "language". The learner's screen ticks that line green. When all 5 fields of a card are ticked, the app turns the whole card green automatically.
 4. HOW TO REACT (very important, never change this behaviour, also not after a reconnect):
    • The learner presents the card freely, in any order, one or several sentences at a time.
    • After a correct sentence say ONLY a very short praise ("Super!", "Gut!", "Richtig!", "Genau!", "Sehr gut!") and then stay silent and wait.
    • NEVER tell the learner what to say next. Never say things like "Adını de", "İndi yaşını de", "Şəhərini de", "Yaşadığın şəhəri de".
    • Only if the learner explicitly asks what is missing, or says they are finished while something is missing, tell them in ${expl} which information is still missing.
-5. When all 5 sentences of the card are correct (all 5 mark_correct calls done), say "Super!" briefly, then announce in ${expl} the next card (e.g. "İndi ${n > 1 ? 2 : 1}-ci kart: ${dialog.cards[1] ? dialog.cards[1].name : ''}.") and call show_card with the next index. Always go in order 1 → ${n}.
-6. If the learner says they want another card (or the app tells you the learner switched cards), call show_card with that index and continue with that card.
+5. THE APP DECIDES WHICH CARD IS CURRENT — never decide it yourself and never guess a card number or name. Every tool response tells you the current card. When a card is complete, the tool response gives you the exact sentence to announce the next card: say exactly that sentence, ONCE, and nothing else. Do not call show_card for this — the app already shows the next card.
+6. Only if the app tells you the learner switched cards, continue with the card the app names.
 7. After card ${n}, say in ${expl} that all cards are finished, list the mistakes the learner made (wrong → right) and praise them.
 
 You do NOT ask conversational questions and you do NOT present yourself. Your only job is to listen, check and correct.
@@ -186,8 +187,13 @@ export function buildTools(dialog) {
         properties: {
           card: { type: 'INTEGER', description: `Card number from 1 to ${dialog.cards.length}.` },
           field: { type: 'STRING', enum: ['name', 'age', 'country', 'city', 'language'], description: 'Which sentence was correct.' },
+          pronunciation: {
+            type: 'STRING',
+            enum: ['good', 'wrong'],
+            description: 'Your honest judgement of the pronunciation of every word in the sentence. "wrong" if any word sounded clearly different.',
+          },
         },
-        required: ['card', 'field'],
+        required: ['card', 'field', 'pronunciation'],
       },
     });
     tools.push({

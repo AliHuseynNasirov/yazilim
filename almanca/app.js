@@ -616,11 +616,18 @@ function renderPractice(id) {
     }
   }
 
-  function markField(cardNo, field) {
-    const i = (parseInt(cardNo, 10) || cardIdx + 1) - 1;
+  function markField(cardNo, field, pron) {
+    // Kart nömrəsini model yox, tətbiq bilir: həmişə ekrandakı kart
+    const i = cardIdx;
     const st = cardState[i];
     if (!st || !FIELDS.includes(field)) return 'invalid';
-    if (i !== cardIdx) setActive(i);
+    if (st.done) return `This card is already complete. ${nextCardText(i)}`;
+    if (pron === 'wrong') {
+      return (
+        'NOT TICKED — you judged the pronunciation as wrong, so it is a mistake. Call log_mistake first, then explain in Azerbaijani ' +
+        `which word/sound was wrong, say the word slowly and ask the learner to repeat the whole sentence. Current card: ${i + 1} (${d.cards[i].name}).`
+      );
+    }
     // Yoxlayıcı bu cümlədə səhv tapırsa — ✓ qoyma, modelə düzəltməsini de
     const errs = findErrors().filter((e) => blocks(e, field));
     if (errs.length) {
@@ -630,6 +637,7 @@ function renderPractice(id) {
       return rejectionText(errs);
     }
     setTick(i, field, 'ok');
+    if (st.done) return `ticked ${field}. ${nextCardText(i)}`;
     return `ticked ${field} on card ${i + 1} (${st.fields.size}/5). Say only a very short praise ("Super!"), nothing else. ${stepInfo()} Do not tell the learner the next step — the screen shows it.`;
   }
 
@@ -661,6 +669,22 @@ function renderPractice(id) {
         if (h) h.textContent = on ? `🎤 ${HINT[li.dataset.f]}` : '';
       });
     });
+  }
+  // Azərbaycanca sıra şəkilçisi: 1-ci, 3-cü, 6-cı, 9-cu
+  const ORD = ['', 'ci', 'ci', 'cü', 'cü', 'ci', 'cı', 'ci', 'ci', 'cu'];
+  const ordAz = (n) => `${n}-${ORD[n % 10] || 'cu'}`;
+  const nextUndone = (from) => {
+    const a = cardState.findIndex((x, j) => j > from && !x.done);
+    return a !== -1 ? a : cardState.findIndex((x) => !x.done);
+  };
+  // Kart bitəndə modelə növbəti kartı dəqiq de (öz başına nömrə uydurmasın)
+  function nextCardText(i) {
+    const n = nextUndone(i);
+    if (n === -1) return 'ALL CARDS ARE COMPLETE. Now say in Azerbaijani that all cards are finished, briefly list the mistakes (wrong → right) and praise the learner.';
+    return (
+      `CARD ${i + 1} (${d.cards[i].name}) IS COMPLETE. The app now shows card ${n + 1} (${d.cards[n].name}). ` +
+      `Say exactly this, ONCE, and nothing else: "Super! İndi ${ordAz(n + 1)} kart: ${d.cards[n].name}." Do not call show_card. Then wait for the learner.`
+    );
   }
   function stepInfo() {
     const nf = nextField(cardIdx);
@@ -826,8 +850,13 @@ function renderPractice(id) {
     checkedUtter = utterId;
     const errs = findErrors();
     // Model ✓ qoymağı unudubsa: yazıda tam düzgün deyilən cümlələri özümüz ✓ edək
-    if (d.cards && modelLoggedUtter !== utterId) {
-      for (const f of matchCardSentence(userUtter, d.cards[cardIdx])) if (!errs.some((e) => blocks(e, f))) setTick(cardIdx, f, 'ok');
+    if (d.cards && modelLoggedUtter !== utterId && !cardState[cardIdx].done) {
+      const ci = cardIdx;
+      for (const f of matchCardSentence(userUtter, d.cards[ci])) if (!errs.some((e) => blocks(e, f))) setTick(ci, f, 'ok');
+      if (cardState[ci].done && !errs.length) {
+        session.sendText(`[App] ${nextCardText(ci)}`);
+        return;
+      }
     }
     if (!errs.length) return;
     for (const t of tickedThisUtter) if (errs.some((e) => blocks(e, t.field))) untick(t.i, t.field);
@@ -908,8 +937,10 @@ function renderPractice(id) {
           const field = d.cards ? inferField(args.correct) || inferField(heard) : null;
           // Model təkrar "səhv" deyir, amma yazıda cümlə TAM düzgündürsə — qəbul et (ilişib qalmasın)
           if (field && heard && fails[`${cardIdx}:${field}`] >= 1 && matchCardSentence(heard, d.cards[cardIdx]).includes(field) && !findErrors().some((e) => blocks(e, field))) {
-            setTick(cardIdx, field, 'ok');
+            const ci = cardIdx;
+            setTick(ci, field, 'ok');
             sys('✅ Yoxlama: cümlən düzgün eşidildi — qəbul edildi.');
+            if (cardState[ci].done) return `NOT SAVED — this is NOT a mistake, the learner said it correctly. ${nextCardText(ci)}`;
             return (
               `NOT SAVED — this is NOT a mistake. The speech recognition clearly heard the correct sentence "${heard}". ` +
               'The learner said it correctly. Do not correct it again. Say only "Super!" and wait for the next sentence. The line is already ticked.'
@@ -922,9 +953,15 @@ function renderPractice(id) {
           if (noteFail(field) >= 3) return `saved. ${MOVE_ON}`;
           return 'saved';
         }
-        if (name === 'mark_correct') return markField(args.card, args.field);
+        if (name === 'mark_correct') return markField(args.card, args.field, args.pronunciation);
         if (name === 'show_card') {
-          setActive((parseInt(args.index, 10) || 1) - 1);
+          // Hansı kartın cari olduğunu tətbiq bilir; model səhv nömrə desə, ekranı dəyişmə
+          const want = (parseInt(args.index, 10) || 1) - 1;
+          const expected = cardState[cardIdx].done ? nextUndone(cardIdx) : cardIdx;
+          if (want !== expected && expected !== -1) {
+            return `IGNORED. The current card is card ${expected + 1} (${d.cards[expected].name}). Stay on this card; do not mention any other card.`;
+          }
+          setActive(want);
           return `showing card ${cardIdx + 1}: ${d.cards[cardIdx].name}`;
         }
         return 'unknown function';
