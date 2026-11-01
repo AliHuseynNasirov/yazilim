@@ -282,12 +282,16 @@ export function buildLexicon(extraWords, fieldWords = {}) {
   return { words, field };
 }
 
-const AZ_HINT = /[əğı]|\b(mən|sən|nə|necə|başa|düşmədim|bilmirəm|yenə|bəli|xeyr|salam|sağ ol)\b/iu;
+const AZ_HINT = /[əğıİş]|\b(mən|sən|nə|necə|başa|düşmədim|bilmirəm|yenə|bəli|xeyr|salam|sağ ol)\b/iu;
 
-/** Lüğətdə olmayan sözləri tapır və ən yaxın düzgün sözü təklif edir. */
+/** Lüğətdə olmayan sözləri tapır və ən yaxın düzgün sözü təklif edir.
+ *  Yalnız yazı etibarlı görünəndə işləyir: sözlərin çoxu tanınır və cəmi BİR söz səhvdir.
+ *  Yazı qarışıqdırsa ("İhxa tam") heç nə demir — qərarı müəllimə buraxır. */
 export function checkWords(text, lex) {
   if (!lex || AZ_HINT.test(text)) return [];
   const tokens = text.match(/\p{L}+/gu) || [];
+  const unknown = tokens.filter((t) => normWord(t).length >= 2 && !lex.words.has(normWord(t)));
+  if (unknown.length !== 1 || (tokens.length - unknown.length) / tokens.length < 0.5) return [];
   const out = [];
   for (const tok of tokens) {
     const n = normWord(tok);
@@ -297,14 +301,18 @@ export function checkWords(text, lex) {
     const pn = phon(n);
     for (const [cand, orig] of lex.words) {
       if (Math.abs(cand.length - n.length) > 4) continue;
-      const dist = lev(pn, phon(cand));
+      // Bərabərlikdə kart cümləsinə aid sözə üstünlük ver (heiße, komme, wohne…)
+      const dist = lev(pn, phon(cand)) - (lex.field.has(cand) ? 0.5 : 0);
       if (dist < bestD) {
         bestD = dist;
         best = { cand, orig };
       }
     }
-    const close = best && bestD <= Math.max(2, Math.floor(n.length / 3));
+    // Qısa sözlərdə çox oxşar söz var — yalnız həqiqətən yaxın olanda təklif et
+    const maxD = n.length <= 5 ? 1 : 2;
+    const close = best && n.length >= 3 && Math.ceil(bestD) <= maxD;
     const sugg = close ? best.orig : null;
+    if (!sugg) continue; // oxşar söz yoxdur — yazı səhv ola bilər, müəllimə burax
     const fullCorrect = sugg ? text.replace(tok, tok[0] === tok[0].toUpperCase() ? sugg[0].toUpperCase() + sugg.slice(1) : sugg) : text;
     out.push({
       wrong: tok,

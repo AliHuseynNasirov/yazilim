@@ -150,6 +150,25 @@ export class LiveSession {
         return;
       }
 
+      // Qoşulma hələ alınmamış qopdu:
+      if (!setupDone && e.code !== 1006 && e.code !== 1000) {
+        // köhnə söhbət açarı keçərsizdirsə — eyni modelə açarsız yenidən qoşul
+        if (this.resumeHandle) {
+          this.resumeHandle = null;
+          this.connect();
+          return;
+        }
+        // bu model bu açarla əlçatan deyil və ya ayarları qəbul etmir — növbəti modeli sına
+        if (this.modelIdx < this.models.length - 1) {
+          const skipped = this.model;
+          this.modelIdx++;
+          this.langHint = true;
+          this.emit('modelSkip', { model: skipped, code: e.code, next: this.model });
+          this.connect();
+          return;
+        }
+      }
+
       // 1000 = normal bitmə, 1008 = açar/model qəbul olunmadı — bunları təkrarlamırıq
       const retryable = e.code !== 1000 && e.code !== 1008 && e.code !== 1007;
       if (retryable && this.retries < MAX_RETRIES) {
@@ -158,6 +177,7 @@ export class LiveSession {
         if (this.retries >= 2 && this.modelIdx < this.models.length - 1) {
           this.modelIdx++;
           this.resumeHandle = null;
+          this.langHint = true;
         }
         this.emit('reconnecting', { attempt: this.retries, code: e.code, model: this.model });
         setTimeout(() => !this.closed && this.connect(), 500 * this.retries);

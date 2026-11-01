@@ -7,13 +7,14 @@ const $app = document.getElementById('app');
 
 // Birinci model əsasdır; xəta olsa sıra ilə digərlərinə keçilir.
 // 12-2025 modelində tez-tez 1011 xətası olduğu üçün 09-2025 əsas seçilib.
+// gemini-3.8-live — stabil (preview deyil) model; açarda əlçatan deyilsə, avtomatik növbətiyə keçilir.
 const MODELS = [
+  'gemini-3.8-live',
   'gemini-2.5-flash-native-audio-preview-09-2025',
   'gemini-3.1-flash-live-preview',
   'gemini-2.5-flash-native-audio-preview-12-2025',
-  'gemini-2.5-flash-native-audio-latest',
 ];
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 const VOICES = ['Kore', 'Aoede', 'Leda', 'Zephyr', 'Puck', 'Charon', 'Fenrir', 'Orus'];
 const DEFAULTS = { apiKey: '', model: MODELS[0], voice: 'Kore', explainLang: 'az', mode: 'free' };
 
@@ -445,6 +446,7 @@ function renderSettings() {
     store.set('settings', {
       apiKey: $app.querySelector('#apiKey').value.trim(),
       model: custom || $app.querySelector('#model').value,
+      modelPicked: !!custom || $app.querySelector('#model').value !== MODELS[0],
       voice: $app.querySelector('#voice').value,
       explainLang: $app.querySelector('#explainLang').value,
       mode: $app.querySelector('#mode').value,
@@ -825,7 +827,7 @@ function renderPractice(id) {
 
     session = new LiveSession({
       apiKey: s.apiKey,
-      model: s.model,
+      model: (!s.modelPicked && store.get('workingModel')) || s.model,
       fallbackModels: MODELS,
       // Kart dərsində yalnız almanca: azərbaycanca ipucu "Jahre" sözünü "yağı" kimi yazırdı
       transcriptionLanguages: d.cards ? ['de-DE'] : ['de-DE', 'az-AZ'],
@@ -863,11 +865,16 @@ function renderPractice(id) {
       },
       onEvent(type, data) {
         switch (type) {
+          case 'modelSkip':
+            if (data.model === store.get('workingModel')) store.set('workingModel', null);
+            setStatus(`🔄 ${data.next} yoxlanılır…`);
+            break;
           case 'reconnecting':
             sys(`⚠️ Bağlantı qopdu (kod ${data.code}). Yenidən qoşulur… (${data.attempt})`);
             setStatus('🔄 Yenidən qoşulur…');
             break;
           case 'ready':
+            if (data && data.model) store.set('workingModel', data.model);
             if (data && data.reconnect) {
               setStatus(idleStatus());
               if (data.resumed) {
@@ -879,6 +886,7 @@ function renderPractice(id) {
               break;
             }
             sys('ℹ️ Sənin sözlərinin yazısı avtomatikdir, bəzən səhv dildə görünə bilər. Müəllim isə səsini birbaşa eşidir.');
+            if (data && data.model) sys(`🤖 Model: ${data.model}`);
             started = Date.now();
             startBtn.hidden = true;
             micBtn.hidden = endBtn.hidden = textForm.hidden = quick.hidden = false;
@@ -892,6 +900,9 @@ function renderPractice(id) {
             }, 1000);
             break;
           case 'userText':
+            // "<noise>" kimi texniki işarələri göstərmə
+            data = data.replace(/<[^>]*>/g, '');
+            if (!data.trim() && !(last && last.role === 'user' && last.open)) break;
             if (!practiced) {
               practiced = true;
               const done = store.get('done', {});
