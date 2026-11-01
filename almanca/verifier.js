@@ -6,7 +6,7 @@
 const API = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Sıra ilə sınanır; işləyən yadda qalır. "gemini-flash-latest" — ən son Flash modelinin ləqəbi.
-export const VERIFIER_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+export const VERIFIER_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
 
 // ---- Təlimat (ingiliscə: model ingiliscə təlimatlara daha dəqiq əməl edir) ----
 export const VERIFIER_PROMPT = `You are a VERBATIM SPEECH TRANSCRIBER for a language-learning app. You are NOT a teacher, NOT a corrector, NOT a translator.
@@ -93,9 +93,22 @@ export async function verifyAudio(pcm, apiKey, { preferred, timeoutMs = 8000 } =
   if (!pcm || pcm.length < 16000 * 0.4) return { error: 'səs çox qısa idi' }; // 0.4 saniyədən qısa — boşdur
   const wav = pcmToWavBase64(pcm);
   const models = [...new Set([preferred, ...VERIFIER_MODELS].filter(Boolean))];
-  for (const model of models) {
+  const started = Date.now();
+  let lastErr = 'uyğun model tapılmadı';
+  // Hər model üçün: 503/500 (server yüklüdür) olsa bir dəfə də sına, sonra növbəti modelə keç
+  const attempts = models.flatMap((m) => [m, m]);
+  let fetches = 0;
+  for (let k = 0; k < attempts.length; k++) {
+    const model = attempts[k];
+    const isRetry = k % 2 === 1;
+    // ən çox 3 real sorğu (məs. eyni model 2 dəfə + başqa model 1 dəfə) — ✓ çox gecikməsin
+    if (fetches >= 3) break;
+    if (Date.now() - started > timeoutMs) return { error: 'cavab gecikdi' };
+    if (isRetry && lastErr !== 'busy') continue;
+    if (isRetry) await new Promise((r) => setTimeout(r, 400));
+    fetches++;
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeoutMs);
+    const timer = setTimeout(() => ctl.abort(), Math.max(1000, timeoutMs - (Date.now() - started)));
     try {
       const res = await fetch(`${API}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
         method: 'POST',
@@ -117,9 +130,23 @@ export async function verifyAudio(pcm, apiKey, { preferred, timeoutMs = 8000 } =
       });
       clearTimeout(timer);
       // Model yoxdur / dəstəklənmir → növbəti model
-      if (res.status === 404 || res.status === 400) continue;
-      if (res.status === 429) return { error: 'pulsuz limit doldu (429), bir az sonra yenə işləyəcək' };
+      if (res.status === 404 || res.status === 400) {
+        lastErr = 'uyğun model tapılmadı';
+        continue;
+      }
+      if (res.status === 503 || res.status === 500 || res.status === 502 || res.status === 504) {
+        // model hazırda yüklüdür — təkrar sına, sonra başqa model
+        lastErr = 'busy';
+        continue;
+      }
+      if (res.status === 429) {
+        // bu modelin limiti doldu — başqa modeli sına
+        lastErr = 'pulsuz limit doldu (429)';
+        k++; // eyni modeli təkrar sınama
+        continue;
+      }
       if (!res.ok) return { error: `server xətası (${res.status})` };
+      lastErr = '';
       const json = await res.json();
       const raw = json?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
       const out = JSON.parse(raw);
@@ -134,5 +161,5 @@ export async function verifyAudio(pcm, apiKey, { preferred, timeoutMs = 8000 } =
       return { error: e && e.name === 'AbortError' ? 'cavab gecikdi' : 'internet və ya cavab xətası' };
     }
   }
-  return { error: 'uyğun model tapılmadı' };
+  return { error: lastErr === 'busy' ? 'Google serverləri hazırda yüklüdür (503), bir az sonra yenə işləyəcək' : lastErr };
 }
