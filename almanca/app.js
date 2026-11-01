@@ -2,6 +2,7 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
+import { verifyAudio } from './verifier.js';
 
 const $app = document.getElementById('app');
 
@@ -539,8 +540,16 @@ function renderPractice(id) {
   // Kart dərsi üçün qapalı lüğət (səhv deyilmiş sözləri tapmaq üçün)
   const lexicon = d.cards ? buildCardLexicon(d) : null;
   // Ekrandakı yazıda qrammatika və söz səhvlərini tap
+  // ---- Hərfi yoxlayıcı (Gemini Flash): düymə basılanda deyilən səsin düzəldilməmiş yazısı ----
+  let pressId = 0;
+  let verif = null; // { pressId, done, text, promise }
+  const verifierReady = () => verif && verif.pressId === pressId && verif.done && !!verif.text;
+  const verifierPending = () => verif && verif.pressId === pressId && !verif.done;
+  // Yoxlamalar üçün əsas mətn: yoxlayıcının yazısı varsa o, yoxsa ASR yazısı
+  const judgeText = () => (verifierReady() ? verif.text : userUtter.trim());
+
   const findErrors = () => {
-    const text = userUtter.trim();
+    const text = judgeText();
     if (!text || !looksLatin(text)) return [];
     const errs = [...checkSentence(text), ...checkWords(text, lexicon)];
     if (!errs.length) return errs;
@@ -638,7 +647,8 @@ function renderPractice(id) {
       return rejectionText(errs);
     }
     // Müəllimin hərfi eşitdiyi (yazıya çevirmə "kommet"-i "komme" kimi düzəldir, müəllim isə səsi eşidir)
-    const h = String(heard || '').trim();
+    // Yoxlayıcının yazısı varsa onu, yoxsa müəllimin "heard"-ini yoxla
+    const h = verifierReady() ? verif.text : String(heard || '').trim();
     if (h && plausibleTranscript(h)) {
       const expected = SENT[field](d.cards[i]);
       const gram = checkSentence(h).filter((e) => e.field === field);
@@ -658,7 +668,7 @@ function renderPractice(id) {
       }
     }
     // ✓ yalnız deyilən cümlə kartdakı DÜZGÜN cümlə ilə tam eyni olanda (sonluq, söz, artikl daxil)
-    const said = userUtter.trim();
+    const said = judgeText();
     if (said && plausibleTranscript(said) && !matchCardSentence(said, d.cards[i]).includes(field)) {
       const expected = SENT[field](d.cards[i]);
       const dif = diffWords(said, expected);
@@ -731,6 +741,15 @@ function renderPractice(id) {
     return `Next step on the screen: card ${cardIdx + 1} (${c.name}), "${nf}" — expected sentence: "${SENT[nf](c)}".`;
   }
   // Çatda "Super" əvəzinə qəbul olunan düzgün cümləni göstər
+  function verifierNote(text) {
+    const el = document.createElement('div');
+    el.className = 'heardline verifier';
+    el.textContent = `🔎 Yoxlayıcı eşitdi: ${text}`;
+    chat.appendChild(el);
+    if (last) last.open = false;
+    scroll();
+  }
+
   // Müqayisə üçün: müəllimin (modelin) səsdən hərfi eşitdiyi — ASR yazısının altında göstərilir
   function heardNote(text) {
     const t = String(text || '').trim();
@@ -903,13 +922,17 @@ function renderPractice(id) {
       deferredCheck = true;
       return;
     }
-    if (checkedUtter === utterId || !userUtter.trim()) return;
+    if (verifierPending()) {
+      deferredCheck = true; // yoxlayıcının cavabını gözlə
+      return;
+    }
+    if (checkedUtter === utterId || !judgeText()) return;
     checkedUtter = utterId;
     const errs = findErrors();
     // Model ✓ qoymağı unudubsa: yazıda tam düzgün deyilən cümlələri özümüz ✓ edək
     if (d.cards && modelLoggedUtter !== utterId && !cardState[cardIdx].done) {
       const ci = cardIdx;
-      for (const f of matchCardSentence(userUtter, d.cards[ci])) if (!errs.some((e) => blocks(e, f))) setTick(ci, f, 'ok');
+      for (const f of matchCardSentence(judgeText(), d.cards[ci])) if (!errs.some((e) => blocks(e, f))) setTick(ci, f, 'ok');
       if (cardState[ci].done && !errs.length) {
         session.sendText(`[App] ${nextCardText(ci)}`);
         return;
@@ -993,7 +1016,7 @@ function renderPractice(id) {
         if (name === 'log_mistake') heardNote(args.wrong);
         if (name === 'log_mistake') {
           if (appLoggedUtter === utterId) return 'already saved';
-          const heard = userUtter.trim();
+          const heard = judgeText();
           const field = d.cards ? inferField(args.correct) || inferField(heard) : null;
           // Model təkrar "səhv" deyir, amma yazıda cümlə TAM düzgündürsə — qəbul et (ilişib qalmasın)
           if (field && heard && fails[`${cardIdx}:${field}`] >= 1 && matchCardSentence(heard, d.cards[cardIdx]).includes(field) && !findErrors().some((e) => blocks(e, field))) {
@@ -1016,16 +1039,19 @@ function renderPractice(id) {
         // Yazı modeldən gec gəlir: qərardan əvvəl qısa gözlə ki, cümlənin yazısı tam çatsın
         if (name === 'mark_correct') {
           pendingMarks++;
-          return new Promise((ok) =>
-            setTimeout(() => {
-              pendingMarks--;
-              ok(markField(args.card, args.field, args.pronunciation, args.heard));
-              if (deferredCheck && !pendingMarks) {
-                deferredCheck = false;
-                checkAfterTurn();
-              }
-            }, 900),
-          );
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          // Yoxlayıcı işləyirsə onun cavabını gözlə (ən çox 7 san), yoxsa ASR üçün 0.9 san
+          // (yoxlayıcı tez uğursuz olsa belə ASR yazısı üçün ən azı 0.9 san gözlə)
+          const wait = verifierPending() ? Promise.all([Promise.race([verif.promise, sleep(7000)]), sleep(900)]) : sleep(900);
+          return wait.then(() => {
+            pendingMarks--;
+            const r = markField(args.card, args.field, args.pronunciation, args.heard);
+            if (deferredCheck && !pendingMarks && !verifierPending()) {
+              deferredCheck = false;
+              checkAfterTurn();
+            }
+            return r;
+          });
         }
         if (name === 'show_card') {
           // Hansı kartın cari olduğunu tətbiq bilir; model səhv nömrə desə, ekranı dəyişmə
@@ -1041,6 +1067,25 @@ function renderPractice(id) {
       },
       onEvent(type, data) {
         switch (type) {
+          case 'utterance': {
+            if (!d.cards) break;
+            const v = { pressId, done: false, text: null };
+            verif = v;
+            v.promise = verifyAudio(data, s.apiKey, { preferred: store.get('verifierModel') }).then((r) => {
+              v.done = true;
+              if (r) {
+                store.set('verifierModel', r.model);
+                v.text = r.noise ? '' : r.text;
+                if (v.text) verifierNote(v.text);
+              }
+              if (deferredCheck && !pendingMarks && v.pressId === pressId) {
+                deferredCheck = false;
+                checkAfterTurn();
+              }
+              return v;
+            });
+            break;
+          }
           case 'modelSkip':
             if (data.model === store.get('workingModel')) store.set('workingModel', null);
             setStatus(`🔄 ${data.next} yoxlanılır…`);
@@ -1154,6 +1199,13 @@ function renderPractice(id) {
       clearTimeout(releaseTimer);
       stopWaiting();
       closeUtter();
+      pressId++;
+      // yeni cümlə: yazı gəlməsə də, yoxlamalar yeni cümləyə aid olsun
+      userUtter = '';
+      utterId++;
+      aiTurnText = '';
+      tickedThisUtter = [];
+      utterClosed = false;
       if (last && last.role === 'user') last.open = false;
       session && session.setSending(true);
       setStatus('🔴 Danış… (buraxanda göndərilir)');

@@ -43,6 +43,8 @@ export class LiveSession {
     this.retries = 0;
     this.everReady = false;
     this.turnAudio = 0;
+    // Yoxlayıcı üçün: düymə basılı olanda deyilən səsin surəti
+    this.capture = null;
     // Yazıya çevirmə üçün dil ipucu (almanca əsas, azərbaycanca ikinci)
     this.langHint = true;
     // Yazıya çevirmə "hərfi" rejimdə: eşitdiyini düzəltmədən yazsın ("kommet" → "kommet", "komme" yox)
@@ -262,11 +264,25 @@ export class LiveSession {
       let sum = 0;
       for (let i = 0; i < pcm.length; i += 8) sum += Math.abs(pcm[i]);
       this.emit('level', Math.min(1, (sum / Math.max(1, pcm.length / 8) / 32768) * 6));
+      if (this.capture && (this.sending || isFlush)) this.capture.push(new Int16Array(buf.slice(0)));
       if (this.ready && (this.sending || isFlush)) {
         this.send({
           realtimeInput: { audio: { data: bytesToB64(new Uint8Array(buf)), mimeType: 'audio/pcm;rate=16000' } },
         });
       }
+    }
+    if (isFlush && this.capture) {
+      // Cümlə bitdi: səsi bir parça kimi ver (yoxlayıcıya göndərmək üçün)
+      const parts = this.capture;
+      this.capture = null;
+      const total = parts.reduce((n, p) => n + p.length, 0);
+      const pcm = new Int16Array(total);
+      let o = 0;
+      for (const p of parts) {
+        pcm.set(p, o);
+        o += p.length;
+      }
+      this.emit('utterance', pcm);
     }
     if (isFlush && this.ready) this.sendSilenceAndEnd();
   }
@@ -286,7 +302,10 @@ export class LiveSession {
   setSending(on) {
     if (on === this.sending) return;
     if (on) {
-      if (this.o.pushToTalk) this.stopPlayback();
+      if (this.o.pushToTalk) {
+        this.stopPlayback();
+        this.capture = [];
+      }
       this.sending = true;
       return;
     }
