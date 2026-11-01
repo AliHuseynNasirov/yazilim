@@ -376,3 +376,38 @@ export function plausibleTranscript(text) {
   const latin = letters.filter((ch) => /\p{Script=Latin}/u.test(ch)).length;
   return latin / letters.length >= 0.8;
 }
+
+/** Deyilən cümləni gözlənilən düzgün cümlə ilə müqayisə edir: hansı söz səhvdir / əskikdir.
+ *  Digər cümlələrdən gələn artıq sözlər nəzərə alınmır. */
+export function diffWords(said, expected) {
+  const tok = (s) => s.match(/[\p{L}\d]+/gu) || [];
+  const S = tok(said);
+  const E = tok(expected);
+  const sN = S.map(normWord);
+  const eN = E.map(normWord);
+  const extra = S.map((w, i) => ({ w, n: sN[i] })).filter((x) => !eN.includes(x.n));
+  const pairs = [];
+  const missing = [];
+  E.forEach((w, i) => {
+    if (sN.includes(eN[i])) return;
+    let best = -1;
+    let bestD = Infinity;
+    extra.forEach((x, k) => {
+      const dd = lev(phon(x.n), phon(eN[i]));
+      if (dd < bestD) {
+        bestD = dd;
+        best = k;
+      }
+    });
+    if (best !== -1 && bestD <= Math.max(3, eN[i].length)) {
+      pairs.push([extra[best].w, w]);
+      extra.splice(best, 1);
+    } else missing.push(w);
+  });
+  const az = [
+    ...pairs.map(([x, m]) => `"${x}" yox, "${m}" olmalıdır.`),
+    ...missing.map((m) => `"${m}" sözü əskikdir.`),
+  ].join(' ');
+  const en = [...pairs.map(([x, m]) => `"${x}" must be "${m}"`), ...missing.map((m) => `the word "${m}" is missing`)].join('; ');
+  return { az, en, pairs, missing };
+}

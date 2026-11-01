@@ -1,7 +1,7 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
-import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript } from './checker.js';
+import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
 
 const $app = document.getElementById('app');
 
@@ -628,13 +628,31 @@ function renderPractice(id) {
         `which word/sound was wrong, say the word slowly and ask the learner to repeat the whole sentence. Current card: ${i + 1} (${d.cards[i].name}).`
       );
     }
-    // Yoxlayıcı bu cümlədə səhv tapırsa — ✓ qoyma, modelə düzəltməsini de
-    const errs = findErrors().filter((e) => blocks(e, field));
+    // Yoxlayıcı bu cümlədə qrammatika səhvi tapırsa — ✓ qoyma, modelə düzəltməsini de.
+    // (Söz səhvlərini aşağıda kartdakı düzgün cümlə ilə müqayisə daha dəqiq izah edir.)
+    const errs = findErrors().filter((e) => blocks(e, field) && !e.word);
     if (errs.length) {
       checkedUtter = utterId;
       appLog(errs);
       if (noteFail(field) >= 3) return `REJECTED — not ticked. Correct sentence: "${errs[0].fullCorrect}". The mistake is already saved. ${MOVE_ON}`;
       return rejectionText(errs);
+    }
+    // ✓ yalnız deyilən cümlə kartdakı DÜZGÜN cümlə ilə tam eyni olanda (sonluq, söz, artikl daxil)
+    const said = userUtter.trim();
+    if (said && plausibleTranscript(said) && !matchCardSentence(said, d.cards[i]).includes(field)) {
+      const expected = SENT[field](d.cards[i]);
+      const dif = diffWords(said, expected);
+      const err = {
+        fullWrong: said,
+        fullCorrect: expected,
+        az: dif.az || `Düzgün cümlə belədir: ${expected}`,
+        en: dif.en || `the sentence must be exactly "${expected}"`,
+        field,
+      };
+      checkedUtter = utterId;
+      appLog([err]);
+      if (noteFail(field) >= 3) return `REJECTED — not ticked. Correct sentence: "${expected}". The mistake is already saved. ${MOVE_ON}`;
+      return rejectionText([err]);
     }
     setTick(i, field, 'ok');
     if (st.done) return `ticked ${field}. ${nextCardText(i)}`;
@@ -845,7 +863,14 @@ function renderPractice(id) {
   }
 
   // Müəllimin cavabı bitəndə: buraxılmış səhv varsa, düzəltməsini tələb et
+  // ✓ yoxlaması gözləyirsə, cavab-sonu yoxlamasını ona saxla (düzəliş iki dəfə getməsin)
+  let pendingMarks = 0;
+  let deferredCheck = false;
   function checkAfterTurn() {
+    if (pendingMarks) {
+      deferredCheck = true;
+      return;
+    }
     if (checkedUtter === utterId || !userUtter.trim()) return;
     checkedUtter = utterId;
     const errs = findErrors();
@@ -953,7 +978,20 @@ function renderPractice(id) {
           if (noteFail(field) >= 3) return `saved. ${MOVE_ON}`;
           return 'saved';
         }
-        if (name === 'mark_correct') return markField(args.card, args.field, args.pronunciation);
+        // Yazı modeldən gec gəlir: qərardan əvvəl qısa gözlə ki, cümlənin yazısı tam çatsın
+        if (name === 'mark_correct') {
+          pendingMarks++;
+          return new Promise((ok) =>
+            setTimeout(() => {
+              pendingMarks--;
+              ok(markField(args.card, args.field, args.pronunciation));
+              if (deferredCheck && !pendingMarks) {
+                deferredCheck = false;
+                checkAfterTurn();
+              }
+            }, 900),
+          );
+        }
         if (name === 'show_card') {
           // Hansı kartın cari olduğunu tətbiq bilir; model səhv nömrə desə, ekranı dəyişmə
           const want = (parseInt(args.index, 10) || 1) - 1;
@@ -984,7 +1022,12 @@ function renderPractice(id) {
                 sys('✅ Bağlantı bərpa olundu, qaldığımız yerdən davam edirik.');
               } else {
                 sys(`✅ Yenidən qoşuldu (${data.model}).`);
-                session.sendText(d.cards ? cardResumeText() : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped, with exactly the same rules and behaviour as before.');
+                const sendResume = () =>
+                  session &&
+                  session.sendText(d.cards ? cardResumeText() : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped, with exactly the same rules and behaviour as before.');
+                // ✓ yoxlaması hələ gedirsə, vəziyyəti o bitəndən sonra göndər
+                if (pendingMarks) setTimeout(sendResume, 1000);
+                else sendResume();
               }
               break;
             }

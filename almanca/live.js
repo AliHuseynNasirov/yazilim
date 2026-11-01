@@ -203,16 +203,22 @@ export class LiveSession {
     if (m.goAway) this.emit('goaway', m.goAway);
     if (m.toolCall) {
       // Model funksiya çağırır (səhvi qeyd et, kartı göstər) — dərhal cavab veririk
-      const responses = (m.toolCall.functionCalls || []).map((fc) => {
-        let result = 'ok';
-        try {
-          result = (this.o.onTool && this.o.onTool(fc.name, fc.args || {})) || 'ok';
-        } catch (err) {
-          result = 'error: ' + err.message;
-        }
-        return { id: fc.id, name: fc.name, response: { result } };
+      // onTool Promise qaytara bilər (məs. yazının gəlməsini gözləmək üçün)
+      const wsAtCall = this.ws;
+      Promise.all(
+        (m.toolCall.functionCalls || []).map(async (fc) => {
+          let result = 'ok';
+          try {
+            result = (this.o.onTool && (await this.o.onTool(fc.name, fc.args || {}))) || 'ok';
+          } catch (err) {
+            result = 'error: ' + err.message;
+          }
+          return { id: fc.id, name: fc.name, response: { result } };
+        }),
+      ).then((responses) => {
+        // bağlantı arada qopubsa, köhnə cavabı yeni bağlantıya göndərmə
+        if (this.ws === wsAtCall) this.send({ toolResponse: { functionResponses: responses } });
       });
-      this.send({ toolResponse: { functionResponses: responses } });
       return;
     }
     const sc = m.serverContent;
