@@ -2,6 +2,7 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
+import { assessPronunciation, azureErrors } from './azure.js';
 
 const $app = document.getElementById('app');
 
@@ -411,6 +412,14 @@ function renderSettings() {
       </label>
       <p class="muted small">Pulsuz açarı <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> ünvanından al. Açar yalnız bu telefonda saxlanılır.</p>
 
+      <label>Azure açarı (tələffüz yoxlaması, istəyə görə)
+        <input id="azureKey" type="password" autocomplete="off" placeholder="Azure Speech açarı" value="${esc(s.azureKey || '')}">
+      </label>
+      <label>Azure region
+        <input id="azureRegion" autocomplete="off" placeholder="məs. westeurope" value="${esc(s.azureRegion || '')}">
+      </label>
+      <p class="muted small">Azure portalında Speech resursunun "Keys and Endpoint" bölməsindən: KEY 1 və Location/Region. Boş qalsa, tələffüz yoxlaması sönülüdür. Yalnız kart dərsində və "Bas və danış" rejimində işləyir.</p>
+
       <label>Model
         <select id="model">${[...new Set([s.model, ...MODELS])].map((m) => `<option ${m === s.model ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>
       </label>
@@ -447,6 +456,8 @@ function renderSettings() {
       apiKey: $app.querySelector('#apiKey').value.trim(),
       model: custom || $app.querySelector('#model').value,
       modelPicked: !!custom || $app.querySelector('#model').value !== MODELS[0],
+      azureKey: $app.querySelector('#azureKey').value.trim(),
+      azureRegion: $app.querySelector('#azureRegion').value.trim().toLowerCase().replace(/\s+/g, ''),
       voice: $app.querySelector('#voice').value,
       explainLang: $app.querySelector('#explainLang').value,
       mode: $app.querySelector('#mode').value,
@@ -547,6 +558,13 @@ function renderPractice(id) {
   // Yoxlamalar üçün əsas mətn: yoxlayıcının yazısı varsa o, yoxsa ASR yazısı
   const judgeText = () => (verifierReady() ? verif.text : userUtter.trim());
 
+  // ---- Azure tələffüz yoxlaması (yalnız kart dərsi + "Bas və danış" + açar varsa) ----
+  const azureOn = !!(d.cards && ptt && s.azureKey && s.azureRegion);
+  let az = null; // { pressId, field, ref, done, result, promise }
+  const azPending = () => az && az.pressId === pressId && !az.done;
+  const azReady = (field) => az && az.pressId === pressId && az.done && az.result && az.result.ok && (!field || az.field === field);
+  const azErrs = (field) => (azReady(field) ? azureErrors(az.result) : []);
+
   const findErrors = () => {
     const text = judgeText();
     if (!text || !looksLatin(text)) return [];
@@ -630,6 +648,21 @@ function renderPractice(id) {
     const st = cardState[i];
     if (!st || !FIELDS.includes(field)) return 'invalid';
     if (st.done) return `This card is already complete. ${nextCardText(i)}`;
+    // Azure: bu sətrin cümləsində tələffüz / əskik / artıq söz səhvi varsa — ✓ yoxdur
+    const aErr = azErrs(field);
+    if (aErr.length) {
+      const err = {
+        fullWrong: judgeText() || az.result.text,
+        fullCorrect: az.ref,
+        az: aErr.map((e) => e.az).join(' '),
+        en: aErr.map((e) => e.en).join('; '),
+        field,
+      };
+      checkedUtter = utterId;
+      appLog([err]);
+      if (noteFail(field) >= 3) return `REJECTED — not ticked. Correct sentence: "${az.ref}". The mistake is already saved. ${MOVE_ON}`;
+      return rejectionText([err]);
+    }
     if (pron === 'wrong') {
       return (
         'NOT TICKED — you judged the pronunciation as wrong, so it is a mistake. Call log_mistake first, then explain in Azerbaijani ' +
@@ -740,6 +773,33 @@ function renderPractice(id) {
     return `Next step on the screen: card ${cardIdx + 1} (${c.name}), "${nf}" — expected sentence: "${SENT[nf](c)}".`;
   }
   // Çatda "Super" əvəzinə qəbul olunan düzgün cümləni göstər
+  function azureLine() {
+    const el = document.createElement('div');
+    el.className = 'heardline azure';
+    chat.appendChild(el);
+    if (last) last.open = false;
+    scroll();
+    return el;
+  }
+  // "🎯 Azure eşitdi: … · 72/100" + rəngli söz balları
+  function renderAzure(el, r) {
+    if (!r || !r.ok) {
+      el.textContent = `🎯 Azure: cavab alınmadı — ${r ? r.error : 'naməlum xəta'}`;
+      el.classList.add('fail');
+      return;
+    }
+    const chips = r.words
+      .map((w) => {
+        if (w.error === 'Omission') return `<span class="wchip bad">${esc(w.word)} — deyilmədi</span>`;
+        if (w.error === 'Insertion') return `<span class="wchip bad">${esc(w.word)} — artıq</span>`;
+        const cls = w.score == null ? '' : w.score >= 80 ? 'good' : w.score >= 60 ? 'mid' : 'bad';
+        return `<span class="wchip ${cls}">${esc(w.word)} ${w.score ?? ''}</span>`;
+      })
+      .join(' ');
+    el.innerHTML = `🎯 Azure eşitdi: ${esc(r.text || '—')} · <b>${r.score ?? '?'}/100</b><div class="wchips">${chips}</div>`;
+    scroll();
+  }
+
   function verifierNote(text) {
     const el = document.createElement('div');
     el.className = 'heardline verifier';
@@ -922,17 +982,39 @@ function renderPractice(id) {
       deferredCheck = true;
       return;
     }
-    if (verifierPending()) {
-      deferredCheck = true; // yoxlayıcının cavabını gözlə
+    if (verifierPending() || azPending()) {
+      deferredCheck = true; // yoxlayıcının / Azure-un cavabını gözlə
       return;
     }
     if (checkedUtter === utterId || !judgeText()) return;
     checkedUtter = utterId;
     const errs = findErrors();
+    // Azure səhv tapıb, müəllim isə heç nə deməyibsə — düzəltdir
+    if (d.cards && az && azReady(az.field)) {
+      const aErr = azErrs(az.field);
+      if (aErr.length && modelLoggedUtter !== utterId) {
+        for (const t of tickedThisUtter) if (t.field === az.field) untick(t.i, t.field);
+        const err = { fullWrong: judgeText() || az.result.text, fullCorrect: az.ref, az: aErr.map((e) => e.az).join(' '), en: aErr.map((e) => e.en).join('; '), field: az.field };
+        appLog([err]);
+        if (noteFail(az.field) >= 3) {
+          session.sendText(`[App] Correct sentence: "${az.ref}". The mistake is already saved, do not call log_mistake. ${MOVE_ON}`);
+          return;
+        }
+        sys('🎯 Azure: tələffüzdə səhv var — müəllim indi düzəldəcək.');
+        session.sendText(
+          `[App] Pronunciation check: the learner tried to say "${az.ref}" but made a mistake: ${err.en}. ` +
+            'The mistake is already saved, do not call log_mistake. Now speak OUT LOUD to the learner: explain the mistake in Azerbaijani ' +
+            `using exactly this content (say it naturally, without any label or prefix): ${err.az} ` +
+            'Say the correct word slowly twice, then the whole correct sentence, and ask the learner to repeat the whole sentence. Do not call mark_correct until they say it correctly.',
+        );
+        return;
+      }
+    }
+    const azBlocked = (f) => azErrs(f).length > 0;
     // Model ✓ qoymağı unudubsa: yazıda tam düzgün deyilən cümlələri özümüz ✓ edək
     if (d.cards && modelLoggedUtter !== utterId && !cardState[cardIdx].done) {
       const ci = cardIdx;
-      for (const f of matchCardSentence(judgeText(), d.cards[ci])) if (!errs.some((e) => blocks(e, f))) setTick(ci, f, 'ok');
+      for (const f of matchCardSentence(judgeText(), d.cards[ci])) if (!errs.some((e) => blocks(e, f)) && !azBlocked(f)) setTick(ci, f, 'ok');
       if (cardState[ci].done && !errs.length) {
         session.sendText(`[App] ${nextCardText(ci)}`);
         return;
@@ -1009,6 +1091,7 @@ function renderPractice(id) {
       pushToTalk: ptt,
       systemText: buildSystemPrompt(d, s),
       tools: buildTools(d),
+      capture: azureOn,
       onTool(name, args) {
         stopWaiting();
         // Yalnız göstəriş: müəllimin eşitdiyini çatda göstər (məntiq dəyişmir)
@@ -1019,7 +1102,7 @@ function renderPractice(id) {
           const heard = judgeText();
           const field = d.cards ? inferField(args.correct) || inferField(heard) : null;
           // Model təkrar "səhv" deyir, amma yazıda cümlə TAM düzgündürsə — qəbul et (ilişib qalmasın)
-          if (field && heard && fails[`${cardIdx}:${field}`] >= 1 && matchCardSentence(heard, d.cards[cardIdx]).includes(field) && !findErrors().some((e) => blocks(e, field))) {
+          if (field && heard && fails[`${cardIdx}:${field}`] >= 1 && matchCardSentence(heard, d.cards[cardIdx]).includes(field) && !findErrors().some((e) => blocks(e, field)) && !azErrs(field).length) {
             const ci = cardIdx;
             setTick(ci, field, 'ok');
             sys('✅ Yoxlama: cümlən düzgün eşidildi — qəbul edildi.');
@@ -1042,11 +1125,14 @@ function renderPractice(id) {
           const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           // Yoxlayıcı işləyirsə onun cavabını gözlə (ən çox 7 san), yoxsa ASR üçün 0.9 san
           // (yoxlayıcı tez uğursuz olsa belə ASR yazısı üçün ən azı 0.9 san gözlə)
-          const wait = verifierPending() ? Promise.all([Promise.race([verif.promise, sleep(7000)]), sleep(900)]) : sleep(900);
+          const pend = [sleep(900)];
+          if (verifierPending()) pend.push(Promise.race([verif.promise, sleep(7000)]));
+          if (azPending()) pend.push(Promise.race([az.promise, sleep(7000)]));
+          const wait = Promise.all(pend);
           return wait.then(() => {
             pendingMarks--;
             const r = markField(args.card, args.field, args.pronunciation, args.heard);
-            if (deferredCheck && !pendingMarks && !verifierPending()) {
+            if (deferredCheck && !pendingMarks && !verifierPending() && !azPending()) {
               deferredCheck = false;
               checkAfterTurn();
             }
@@ -1067,6 +1153,26 @@ function renderPractice(id) {
       },
       onEvent(type, data) {
         switch (type) {
+          case 'utterance': {
+            if (!azureOn) break;
+            const field = nextField(cardIdx);
+            if (!field) break;
+            const a = { pressId, field, ref: SENT[field](d.cards[cardIdx]), done: false, result: null };
+            az = a;
+            const line = azureLine();
+            line.textContent = `🎯 Azure yoxlayır… (${a.ref})`;
+            a.promise = assessPronunciation(data, a.ref, s.azureKey, s.azureRegion).then((r) => {
+              a.done = true;
+              a.result = r;
+              renderAzure(line, r);
+              if (deferredCheck && !pendingMarks && a.pressId === pressId && !verifierPending()) {
+                deferredCheck = false;
+                checkAfterTurn();
+              }
+              return a;
+            });
+            break;
+          }
           case 'modelSkip':
             if (data.model === store.get('workingModel')) store.set('workingModel', null);
             setStatus(`🔄 ${data.next} yoxlanılır…`);

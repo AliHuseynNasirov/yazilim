@@ -302,7 +302,11 @@ export class LiveSession {
   setSending(on) {
     if (on === this.sending) return;
     if (on) {
-      if (this.o.pushToTalk) this.stopPlayback();
+      if (this.o.pushToTalk) {
+        this.stopPlayback();
+        // Azure tələffüz yoxlaması üçün bu cümlənin səsini saxla
+        if (this.o.capture) this.capture = [];
+      }
       this.sending = true;
       return;
     }
