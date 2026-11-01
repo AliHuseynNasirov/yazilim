@@ -42,6 +42,8 @@ export class LiveSession {
     this.resumeHandle = null;
     this.retries = 0;
     this.everReady = false;
+    // Yazıya çevirmə üçün dil ipucu (almanca əsas, azərbaycanca ikinci)
+    this.langHint = true;
   }
 
   get model() {
@@ -82,6 +84,7 @@ export class LiveSession {
     this.ws.binaryType = 'arraybuffer';
     const decoder = new TextDecoder();
     const ws = this.ws;
+    let setupDone = false;
 
     ws.onopen = () => {
       const setup = {
@@ -93,7 +96,10 @@ export class LiveSession {
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
         },
         systemInstruction: { parts: [{ text: systemText }] },
-        inputAudioTranscription: {},
+        // Dil ipucu olmasa, sistem dili özü təxmin edir və bəzən gürcü/rus hərfləri ilə yazır
+        inputAudioTranscription: this.langHint
+          ? { languageCodes: this.o.transcriptionLanguages || ['de-DE', 'az-AZ'] }
+          : {},
         outputAudioTranscription: {},
         // Bağlantı qopanda eyni söhbəti davam etdirmək üçün
         sessionResumption: this.resumeHandle ? { handle: this.resumeHandle } : {},
@@ -113,6 +119,7 @@ export class LiveSession {
       } catch {
         return;
       }
+      if (msg.setupComplete) setupDone = true;
       this.handle(msg, resuming);
     };
 
@@ -121,6 +128,13 @@ export class LiveSession {
       this.ready = false;
       if (this.closed) return;
       this.stopPlayback();
+
+      // Model dil ipucunu qəbul etmirsə (1007), ipucusuz yenidən qoşul
+      if (!setupDone && e.code === 1007 && this.langHint) {
+        this.langHint = false;
+        this.connect();
+        return;
+      }
 
       // 1000 = normal bitmə, 1008 = açar/model qəbul olunmadı — bunları təkrarlamırıq
       const retryable = e.code !== 1000 && e.code !== 1008 && e.code !== 1007;

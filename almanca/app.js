@@ -664,9 +664,9 @@ function renderPractice(id) {
       tools: buildTools(d),
       onTool(name, args) {
         if (name === 'log_mistake') {
-          // Modelin "eşitdiyi" yox, ekrandakı yazını (daha dəqiqdir) götür
+          // Ekrandakı yazı düzgün əlifbadadırsa onu götür, yoxsa (gürcü/kiril və s.) modelin eşitdiyini
           const heard = userUtter.trim();
-          if (heard) args = { ...args, wrong: heard };
+          if (heard && looksLatin(heard)) args = { ...args, wrong: heard };
           mistakeNote(saveMistake(cat, d, args));
           if (d.cards && cardState[cardIdx]) {
             cardState[cardIdx].mistakes++;
@@ -833,6 +833,14 @@ function renderPractice(id) {
       session.sendText(b.dataset.q);
     }),
   );
+}
+
+// Mətn əsasən latın hərflərindədirmi (almanca / azərbaycanca)?
+function looksLatin(text) {
+  const letters = text.match(/\p{L}/gu) || [];
+  if (!letters.length) return false;
+  const latin = letters.filter((ch) => /\p{Script=Latin}/u.test(ch)).length;
+  return latin / letters.length >= 0.8;
 }
 
 function closeMessage({ code, reason }) {

@@ -1,5 +1,5 @@
 // Offline üçün tətbiq fayllarını keşləyir. Səsli məşq internet tələb edir.
-const CACHE = 'deutsch-a1-v6';
+const CACHE = 'deutsch-a1-v7';
 const FILES = [
   './', './index.html', './style.css', './app.js', './data.js', './live.js',
   './prompt.js', './pcm-worklet.js', './manifest.json',
