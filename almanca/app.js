@@ -1,7 +1,7 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
-import { checkSentence } from './checker.js';
+import { checkSentence, checkWords, buildLexicon } from './checker.js';
 
 const $app = document.getElementById('app');
 
@@ -532,11 +532,25 @@ function renderPractice(id) {
     userUtterOpen = !fresh;
     userUtter += text;
   };
-  // Ekrandakı yazıda qrammatika səhvlərini tap
+  // Kart dərsi üçün qapalı lüğət (səhv deyilmiş sözləri tapmaq üçün)
+  const lexicon = d.cards ? buildCardLexicon(d) : null;
+  // Ekrandakı yazıda qrammatika və söz səhvlərini tap
   const findErrors = () => {
     const text = userUtter.trim();
-    return text && looksLatin(text) ? checkSentence(text) : [];
+    if (!text || !looksLatin(text)) return [];
+    const errs = [...checkSentence(text), ...checkWords(text, lexicon)];
+    if (!errs.length) return errs;
+    // Bütün düzəlişləri bir düzgün cümlədə birləşdir
+    let fixed = errs.find((e) => !e.word)?.fullCorrect || text;
+    for (const e of errs) {
+      if (!e.word || e.correct === '?') continue;
+      const cap = e.wrong[0] === e.wrong[0].toUpperCase();
+      fixed = fixed.replace(e.wrong, cap ? e.correct[0].toUpperCase() + e.correct.slice(1) : e.correct);
+    }
+    return errs.map((e) => ({ ...e, fullCorrect: fixed }));
   };
+  // Bu səhv həmin sahənin ✓-nu bloklayırmı?
+  const blocks = (e, field) => e.field === field || (e.word && !e.field);
   const setStatus = (t) => (statusEl.textContent = t);
   const scroll = () => (chat.scrollTop = chat.scrollHeight);
 
@@ -595,7 +609,7 @@ function renderPractice(id) {
     if (!st || !FIELDS.includes(field)) return 'invalid';
     if (i !== cardIdx) setActive(i);
     // Yoxlayıcı bu cümlədə səhv tapırsa — ✓ qoyma, modelə düzəltməsini de
-    const errs = findErrors().filter((e) => e.field === field);
+    const errs = findErrors().filter((e) => blocks(e, field));
     if (errs.length) {
       checkedUtter = utterId;
       appLog(errs);
@@ -610,6 +624,24 @@ function renderPractice(id) {
     }
     if (st.fields.size === FIELDS.length && !st.done) completeCard(i);
     return `ticked ${field} on card ${i + 1} (${st.fields.size}/5)`;
+  }
+
+  // Yenidən qoşulanda yeni sessiyaya dəqiq vəziyyəti de ki, çaşmasın
+  function cardResumeText() {
+    const LBL = { name: 'name', age: 'age', country: 'country', city: 'city', language: 'language' };
+    const st = cardState[cardIdx];
+    const c = d.cards[cardIdx];
+    const done = FIELDS.filter((f) => st.fields.has(f)).map((f) => LBL[f]);
+    const missing = FIELDS.filter((f) => !st.fields.has(f)).map((f) => LBL[f]);
+    const finished = cardState.map((x, j) => (x.done ? j + 1 : null)).filter(Boolean);
+    return (
+      '[App] The connection was restarted. You continue the SAME lesson with exactly the same rules and behaviour. ' +
+      `Finished cards: ${finished.length ? finished.join(', ') : 'none'}. Current card: ${cardIdx + 1} (${c.name}). ` +
+      `Already correct on this card: ${done.length ? done.join(', ') : 'nothing yet'}. Still missing: ${missing.join(', ')}. ` +
+      'Do NOT greet, do NOT explain the task again, and do NOT ask the learner for any sentence. ' +
+      `Say only in Azerbaijani: "Bağlantı bərpa olundu. ${c.name} kartından davam edirik." Then stay silent and wait for the learner. ` +
+      'After each correct sentence say only a very short praise ("Super!", "Gut!") — never tell the learner what to say next.'
+    );
   }
 
   function untick(i, field) {
@@ -699,7 +731,7 @@ function renderPractice(id) {
     checkedUtter = utterId;
     const errs = findErrors();
     if (!errs.length) return;
-    for (const t of tickedThisUtter) if (errs.some((e) => e.field === t.field)) untick(t.i, t.field);
+    for (const t of tickedThisUtter) if (errs.some((e) => blocks(e, t.field))) untick(t.i, t.field);
     if (modelLoggedUtter === utterId) return; // model özü düzəldib
     appLog(errs);
     sys('🔎 Yoxlama: cümlədə səhv var — müəllim indi düzəldəcək.');
@@ -775,11 +807,7 @@ function renderPractice(id) {
                 sys('✅ Bağlantı bərpa olundu, qaldığımız yerdən davam edirik.');
               } else {
                 sys(`✅ Yenidən qoşuldu (${data.model}).`);
-                session.sendText(
-                  d.cards
-                    ? `[App] The connection was restarted. Do not repeat the introduction. Continue the lesson with card ${cardIdx + 1} (${d.cards[cardIdx].name}); the learner should present this card now.`
-                    : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped.',
-                );
+                session.sendText(d.cards ? cardResumeText() : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped, with exactly the same rules and behaviour as before.');
               }
               break;
             }
@@ -925,6 +953,26 @@ function looksLatin(text) {
   if (!letters.length) return false;
   const latin = letters.filter((ch) => /\p{Script=Latin}/u.test(ch)).length;
   return latin / letters.length >= 0.8;
+}
+
+// Kart dərsinin lüğəti: kart faktları + nümunə cümlələr + lüğət bölməsi
+function buildCardLexicon(d) {
+  const fw = {
+    name: ['heiße', 'heisse', 'heißen', 'heißt', 'Name'],
+    age: ['bin', 'Jahre', 'Jahr', 'alt'],
+    country: ['komme', 'aus', 'der', 'den'],
+    city: ['wohne', 'in'],
+    language: ['spreche'],
+  };
+  for (const c of d.cards) {
+    fw.name.push(c.name);
+    fw.age.push(c.ageDe);
+    fw.country.push(c.land);
+    fw.city.push(c.city);
+    fw.language.push(c.lang);
+  }
+  const extra = [...d.lines.map((l) => l[1]), ...d.vocab.map((v) => v[0])];
+  return buildLexicon(extra, fw);
 }
 
 function closeMessage({ code, reason }) {

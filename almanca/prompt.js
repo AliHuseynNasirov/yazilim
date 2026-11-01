@@ -23,7 +23,7 @@ function correctionRules(expl) {
   3) Ask the learner in ${expl} to say the whole correct sentence again.
   4) Wait. Continue ONLY after the learner says it correctly. After 3 failed tries, say it once more slowly and continue.
 - EVERY time you correct a mistake, you MUST call the function log_mistake once, BEFORE you speak the correction, with: wrong (exactly what the learner said, in the language and script they used — if they spoke Azerbaijani, write it in Azerbaijani; never turn it into fake German), correct (the correct German sentence), explanation (one short sentence in ${expl}). Call it at the moment you correct, do not wait until the end.
-- Do not nitpick pronunciation or the learner's own names and places. Focus on grammar.
+- WORD MISTAKES count too: if a word is wrong or mispronounced so that it sounds like a different or non-existent word (e.g. "heise" / "hayse" instead of "heiße", "Doichland" instead of "Deutschland", "Hamburk" instead of "Hamburg", "dreisig" instead of "dreißig"), it is a mistake: log it, say the correct word slowly, explain in ${expl} how it is said, and ask the learner to repeat the WHOLE sentence. A normal Azerbaijani accent is fine; only correct words that sound wrong.
 - If you did not hear clearly, say "Wie bitte? Noch einmal, bitte." Do not guess.
 - When the answer is correct, give only a short praise ("Super!", "Richtig!", "Sehr gut!"). Never invent mistakes.`;
 }
@@ -61,7 +61,11 @@ LESSON SCRIPT — follow it strictly:
    • accepted alternatives (NOT mistakes): "Mein Name ist …" or "Ich bin …" for the name; "Hallo!" at the start; the age as a number word in any correct form; sentences in a different order.
 3. Correct mistakes immediately, one by one, following the correction rules. The learner must repeat each corrected sentence correctly before going on.
 3b. EVERY time one of the 5 sentences is said correctly (first time, or after correction), call mark_correct with the card number and the field: "name", "age", "country", "city" or "language". The learner's screen ticks that line green. When all 5 fields of a card are ticked, the app turns the whole card green automatically.
-4. If a sentence is missing, tell the learner in ${expl} which information is missing (e.g. "Yaşını demədin.") and wait for that sentence.
+4. HOW TO REACT (very important, never change this behaviour, also not after a reconnect):
+   • The learner presents the card freely, in any order, one or several sentences at a time.
+   • After a correct sentence say ONLY a very short praise ("Super!", "Gut!", "Richtig!", "Genau!", "Sehr gut!") and then stay silent and wait.
+   • NEVER tell the learner what to say next. Never say things like "Adını de", "İndi yaşını de", "Şəhərini de", "Yaşadığın şəhəri de".
+   • Only if the learner explicitly asks what is missing, or says they are finished while something is missing, tell them in ${expl} which information is still missing.
 5. When all 5 sentences of the card are correct (all 5 mark_correct calls done), say "Super!" briefly, then announce in ${expl} the next card (e.g. "İndi ${n > 1 ? 2 : 1}-ci kart: ${dialog.cards[1] ? dialog.cards[1].name : ''}.") and call show_card with the next index. Always go in order 1 → ${n}.
 6. If the learner says they want another card (or the app tells you the learner switched cards), call show_card with that index and continue with that card.
 7. After card ${n}, say in ${expl} that all cards are finished, list the mistakes the learner made (wrong → right) and praise them.
