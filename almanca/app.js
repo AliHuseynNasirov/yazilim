@@ -731,6 +731,18 @@ function renderPractice(id) {
     return `Next step on the screen: card ${cardIdx + 1} (${c.name}), "${nf}" — expected sentence: "${SENT[nf](c)}".`;
   }
   // Çatda "Super" əvəzinə qəbul olunan düzgün cümləni göstər
+  // Müqayisə üçün: müəllimin (modelin) səsdən hərfi eşitdiyi — ASR yazısının altında göstərilir
+  function heardNote(text) {
+    const t = String(text || '').trim();
+    if (!t) return;
+    const el = document.createElement('div');
+    el.className = 'heardline';
+    el.textContent = `🧑‍🏫 Müəllim eşitdi: ${t}`;
+    chat.appendChild(el);
+    if (last) last.open = false;
+    scroll();
+  }
+
   function acceptedNote(i, field) {
     const el = document.createElement('div');
     el.className = 'okline';
@@ -976,6 +988,9 @@ function renderPractice(id) {
       tools: buildTools(d),
       onTool(name, args) {
         stopWaiting();
+        // Yalnız göstəriş: müəllimin eşitdiyini çatda göstər (məntiq dəyişmir)
+        if (name === 'mark_correct') heardNote(args.heard);
+        if (name === 'log_mistake') heardNote(args.wrong);
         if (name === 'log_mistake') {
           if (appLoggedUtter === utterId) return 'already saved';
           const heard = userUtter.trim();
