@@ -253,7 +253,17 @@ export class LiveSession {
         });
       }
     }
-    if (isFlush && this.ready) this.send({ realtimeInput: { audioStreamEnd: true } });
+    if (isFlush && this.ready) this.sendSilenceAndEnd();
+  }
+
+  // Server cümlənin bitdiyini sükutdan anlayır: düymə buraxılanda ~0.8 san sükut göndər, sonra "bitdi" de
+  sendSilenceAndEnd(seconds = 0.8) {
+    if (!this.ready) return;
+    const zero = bytesToB64(new Uint8Array(3200)); // 1600 nümunə = 0.1 san
+    for (let k = 0; k < Math.round(seconds * 10); k++) {
+      this.send({ realtimeInput: { audio: { data: zero, mimeType: 'audio/pcm;rate=16000' } } });
+    }
+    this.send({ realtimeInput: { audioStreamEnd: true } });
   }
 
   // Mikrofonu aç/bağla. "Bas və danış" rejimində düymə basılı olanda açıqdır.
@@ -268,7 +278,7 @@ export class LiveSession {
     this.sending = false;
     // Buferdə qalan son səsi də göndər, sonra "səs bitdi" de
     if (this.worklet) this.worklet.port.postMessage('flush');
-    else if (this.ready) this.send({ realtimeInput: { audioStreamEnd: true } });
+    else this.sendSilenceAndEnd();
   }
 
   sendText(text) {

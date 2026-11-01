@@ -858,6 +858,23 @@ function renderPractice(id) {
     scroll();
   }
 
+  // Cavab gözləmə qoruyucusu: düymə buraxılandan sonra müəllim susursa, dürt
+  let waitTimers = [];
+  function stopWaiting() {
+    waitTimers.forEach(clearTimeout);
+    waitTimers = [];
+  }
+  function startWaiting() {
+    stopWaiting();
+    waitTimers.push(setTimeout(() => session && session.sendSilenceAndEnd(1.2), 4000));
+    waitTimers.push(
+      setTimeout(() => {
+        if (!session || !session.ready) return;
+        session.sendText('[App] The learner has finished speaking. Respond now to what they just said, following all the rules.');
+      }, 8000),
+    );
+  }
+
   let micOn = true;
   const idleStatus = () => (ptt ? 'Danışmaq üçün 🎙️ düyməsini basılı saxla' : micOn ? '🎧 Dinləyirəm… danış' : '🔇 Mikrofon bağlıdır');
   function updateMic() {
@@ -884,6 +901,7 @@ function renderPractice(id) {
       systemText: buildSystemPrompt(d, s),
       tools: buildTools(d),
       onTool(name, args) {
+        stopWaiting();
         if (name === 'log_mistake') {
           if (appLoggedUtter === utterId) return 'already saved';
           const heard = userUtter.trim();
@@ -961,18 +979,21 @@ function renderPractice(id) {
             addText('user', data);
             break;
           case 'aiText':
+            stopWaiting();
             closeUtter();
             aiTurnText += data;
             if (last && last.role === 'user') last.open = false;
             addText('ai', data);
             break;
           case 'turnComplete':
+            stopWaiting();
             if (last) last.open = false;
             closeUtter();
             if (data && data.audio === 0 && aiTurnText.trim()) sys('🔇 Bu cavabın səsi serverdən gəlmədi.');
             checkAfterTurn();
             break;
           case 'speaking':
+            if (data) stopWaiting();
             setStatus(data ? '🗣️ Müəllim danışır…' : idleStatus());
             break;
           case 'level':
@@ -1016,6 +1037,7 @@ function renderPractice(id) {
       e.preventDefault();
       micBtn.classList.add('hold');
       clearTimeout(releaseTimer);
+      stopWaiting();
       closeUtter();
       if (last && last.role === 'user') last.open = false;
       session && session.setSending(true);
@@ -1028,7 +1050,11 @@ function renderPractice(id) {
       setStatus('⏳ Cavab gözlənilir…');
       // Son söz kəsilməsin deyə düyməni buraxandan sonra bir az da dinlə
       clearTimeout(releaseTimer);
-      releaseTimer = setTimeout(() => session && session.setSending(false), 450);
+      releaseTimer = setTimeout(() => {
+        if (!session) return;
+        session.setSending(false);
+        startWaiting();
+      }, 450);
     };
     micBtn.addEventListener('pointerdown', down);
     micBtn.addEventListener('pointerup', up);
