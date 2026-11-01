@@ -63,6 +63,7 @@ LESSON SCRIPT — follow it strictly:
    • accepted alternatives (NOT mistakes): "Mein Name ist …" or "Ich bin …" for the name; "Hallo!" at the start; the age as a number word in any correct form; sentences in a different order.
 3. Correct mistakes immediately, one by one, following the correction rules. The learner must repeat each corrected sentence correctly before going on.
 3a. PRONUNCIATION CHECK (for every sentence): listen to how each word sounds — "ei" must sound like "ay" (heiße = "hay-se"), "ie" = long "i", "eu" = "oy" (Deutsch = "doytsch"), "sch" = "ş", "ü" and "ö" must be rounded, "z" = "ts", final "-e" must be audible (heiße, komme, wohne, spreche), "j" = "y" (Jahre = "yaa-re"). If a word sounds clearly different (e.g. "hayse" pronounced "heyse", "Jahre" pronounced with "c", "Deutsch" pronounced "deyç"), it is a mistake: do NOT tick it, log it, say the word slowly, explain the sound in ${expl} and ask the learner to repeat the whole sentence. When you call mark_correct you must state your pronunciation judgement honestly.
+3c. VERB ENDINGS: the learner often uses WRONG endings ON PURPOSE to test you (e.g. "kommet", "komm", "kommst", "wohnt", "wohnet", "heißt", "sprecht" instead of komme, wohne, heiße, spreche). Listen to the exact ending of every verb. With "ich" the ending must be exactly "-e" (bin for sein). In mark_correct, write in "heard" exactly what you heard, never the corrected form — the app checks it.
 3b. EVERY time one of the 5 sentences is said correctly (first time, or after correction), call mark_correct with the card number and the field: "name", "age", "country", "city" or "language". The learner's screen ticks that line green. When all 5 fields of a card are ticked, the app turns the whole card green automatically.
 4. HOW TO REACT (very important, never change this behaviour, also not after a reconnect):
    • The learner presents the card freely, in any order, one or several sentences at a time.
@@ -187,13 +188,18 @@ export function buildTools(dialog) {
         properties: {
           card: { type: 'INTEGER', description: `Card number from 1 to ${dialog.cards.length}.` },
           field: { type: 'STRING', enum: ['name', 'age', 'country', 'city', 'language'], description: 'Which sentence was correct.' },
+          heard: {
+            type: 'STRING',
+            description:
+              'EXACTLY what the learner said in this sentence, word by word, as you heard it — including wrong verb endings (e.g. "Ich kommet aus Deutschland", "Ich wohnt in Berlin"). NEVER correct it here.',
+          },
           pronunciation: {
             type: 'STRING',
             enum: ['good', 'wrong'],
             description: 'Your honest judgement of the pronunciation of every word in the sentence. "wrong" if any word sounded clearly different.',
           },
         },
-        required: ['card', 'field', 'pronunciation'],
+        required: ['card', 'field', 'heard', 'pronunciation'],
       },
     });
     tools.push({

@@ -616,7 +616,7 @@ function renderPractice(id) {
     }
   }
 
-  function markField(cardNo, field, pron) {
+  function markField(cardNo, field, pron, heard) {
     // Kart nömrəsini model yox, tətbiq bilir: həmişə ekrandakı kart
     const i = cardIdx;
     const st = cardState[i];
@@ -636,6 +636,26 @@ function renderPractice(id) {
       appLog(errs);
       if (noteFail(field) >= 3) return `REJECTED — not ticked. Correct sentence: "${errs[0].fullCorrect}". The mistake is already saved. ${MOVE_ON}`;
       return rejectionText(errs);
+    }
+    // Müəllimin hərfi eşitdiyi (yazıya çevirmə "kommet"-i "komme" kimi düzəldir, müəllim isə səsi eşidir)
+    const h = String(heard || '').trim();
+    if (h && plausibleTranscript(h)) {
+      const expected = SENT[field](d.cards[i]);
+      const gram = checkSentence(h).filter((e) => e.field === field);
+      if (gram.length || !matchCardSentence(h, d.cards[i]).includes(field)) {
+        const dif = diffWords(h, expected);
+        const err = {
+          fullWrong: h,
+          fullCorrect: expected,
+          az: gram.length ? gram.map((e) => e.az).join(' ') : dif.az || `Düzgün cümlə belədir: ${expected}`,
+          en: gram.length ? gram.map((e) => e.en).join('; ') : dif.en || `the sentence must be exactly "${expected}"`,
+          field,
+        };
+        checkedUtter = utterId;
+        appLog([err]);
+        if (noteFail(field) >= 3) return `REJECTED — not ticked. Correct sentence: "${expected}". The mistake is already saved. ${MOVE_ON}`;
+        return rejectionText([err]);
+      }
     }
     // ✓ yalnız deyilən cümlə kartdakı DÜZGÜN cümlə ilə tam eyni olanda (sonluq, söz, artikl daxil)
     const said = userUtter.trim();
@@ -984,7 +1004,7 @@ function renderPractice(id) {
           return new Promise((ok) =>
             setTimeout(() => {
               pendingMarks--;
-              ok(markField(args.card, args.field, args.pronunciation));
+              ok(markField(args.card, args.field, args.pronunciation, args.heard));
               if (deferredCheck && !pendingMarks) {
                 deferredCheck = false;
                 checkAfterTurn();

@@ -12,11 +12,11 @@ function rx(body) {
 
 // Fel qaydaları: [şəxs, səhv formalar (regex), düzgün forma, sahə, fel adı]
 const VERBS = [
-  ['ich', 'hei(?:ß|ss|s)(?:t|en|st)?', 'heiße', 'name', 'heißen'],
-  ['ich', 'komm(?:st|t|en)?', 'komme', 'country', 'kommen'],
-  ['ich', 'wohn(?:st|t|en)?', 'wohne', 'city', 'wohnen'],
-  ['ich', '(?:sprech(?:st|t|en)?|sprich(?:st|t))', 'spreche', 'language', 'sprechen'],
-  ['ich', 'lern(?:st|t|en)?', 'lerne', null, 'lernen'],
+  ['ich', 'hei(?:ß|ss|s)(?:t|en|st|et)?', 'heiße', 'name', 'heißen'],
+  ['ich', 'komm(?:st|t|en|et)?', 'komme', 'country', 'kommen'],
+  ['ich', 'wohn(?:st|t|en|et)?', 'wohne', 'city', 'wohnen'],
+  ['ich', '(?:sprech(?:st|t|en|et)?|sprich(?:st|t))', 'spreche', 'language', 'sprechen'],
+  ['ich', 'lern(?:st|t|en|et)?', 'lerne', null, 'lernen'],
   ['ich', '(?:hab(?:en|t|st)?|hast|hat)', 'habe', null, 'haben'],
   ['ich', 'arbeit(?:est|et|en)?', 'arbeite', null, 'arbeiten'],
   ['ich', 'möcht(?:est|en)?', 'möchte', null, 'möchten'],
