@@ -968,8 +968,8 @@ function renderPractice(id) {
       apiKey: s.apiKey,
       model: (!s.modelPicked && store.get('workingModel')) || s.model,
       fallbackModels: MODELS,
-      // Kart dərsində yalnız almanca: azərbaycanca ipucu "Jahre" sözünü "yağı" kimi yazırdı
-      transcriptionLanguages: d.cards ? ['de-DE'] : ['de-DE', 'az-AZ'],
+      // Bütün dərslərdə almanca + azərbaycanca: yalnız almanca ipucu səhv sonluqları düzəldirdi ("kommet" → "komme")
+      transcriptionLanguages: ['de-DE', 'az-AZ'],
       voice: s.voice,
       pushToTalk: ptt,
       systemText: buildSystemPrompt(d, s),
