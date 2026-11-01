@@ -2,7 +2,7 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
-import { assessPronunciation, azureErrors, markAzureWrong } from './azure.js';
+import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel } from './azure.js';
 
 const $app = document.getElementById('app');
 
@@ -418,6 +418,13 @@ function renderSettings() {
       <label>Azure region
         <input id="azureRegion" autocomplete="off" placeholder="məs. westeurope" value="${esc(s.azureRegion || '')}">
       </label>
+      <label>Tələffüz sərtliyi (Azure)
+        <select id="pronLevel">
+          <option value="normal" ${(s.pronLevel || 'normal') === 'normal' ? 'selected' : ''}>Normal — söz 60, səs 40</option>
+          <option value="strict" ${s.pronLevel === 'strict' ? 'selected' : ''}>Sərt — söz 75, səs 60</option>
+          <option value="very" ${s.pronLevel === 'very' ? 'selected' : ''}>Çox sərt — söz 85, səs 75</option>
+        </select>
+      </label>
       <p class="muted small">Azure portalında Speech resursunun "Keys and Endpoint" bölməsindən: KEY 1 və Location/Region. Boş qalsa, tələffüz yoxlaması sönülüdür. Yalnız kart dərsində və "Bas və danış" rejimində işləyir.</p>
 
       <label>Model
@@ -457,6 +464,7 @@ function renderSettings() {
       model: custom || $app.querySelector('#model').value,
       modelPicked: !!custom || $app.querySelector('#model').value !== MODELS[0],
       azureKey: $app.querySelector('#azureKey').value.trim(),
+      pronLevel: $app.querySelector('#pronLevel').value,
       azureRegion: $app.querySelector('#azureRegion').value.trim().toLowerCase().replace(/\s+/g, ''),
       voice: $app.querySelector('#voice').value,
       explainLang: $app.querySelector('#explainLang').value,
@@ -563,7 +571,7 @@ function renderPractice(id) {
   let az = null; // { pressId, field, ref, done, result, promise }
   const azPending = () => az && az.pressId === pressId && !az.done;
   const azReady = (field) => az && az.pressId === pressId && az.done && az.result && az.result.ok && (!field || az.field === field);
-  const azErrs = (field) => (azReady(field) ? azureErrors(az.result) : []);
+  const azErrs = (field) => (azReady(field) ? azureErrors(az.result, s.pronLevel || 'normal') : []);
 
   const findErrors = () => {
     const text = judgeText();
@@ -793,7 +801,11 @@ function renderPractice(id) {
         if (w.error === 'Omission') return `<span class="wchip bad">${esc(w.word)} — deyilmədi</span>`;
         if (w.error === 'Insertion') return `<span class="wchip bad">${esc(w.word)} — artıq</span>`;
         const cls = w.score == null ? '' : w.score >= 80 ? 'good' : w.score >= 60 ? 'mid' : 'bad';
-        return `<span class="wchip ${cls}">${esc(w.word)} ${w.score ?? ''}</span>`;
+        // ən zəif səs (fonem) 85-dən aşağıdırsa göstər: "heiße 91 (ei 55)"
+        const wp = worstPhoneme(w);
+        const ph = wp && wp.score < 85 ? ` <small>(${esc(phoneLabel(wp.p))} ${wp.score})</small>` : '';
+        const phCls = wp && wp.score < 60 ? ' bad' : '';
+        return `<span class="wchip ${cls}${phCls}">${esc(w.word)} ${w.score ?? ''}${ph}</span>`;
       })
       .join(' ');
     el.innerHTML = `🎯 Azure eşitdi: ${esc(r.text || '—')} · <b>${r.score ?? '?'}/100</b><div class="wchips">${chips}</div>`;

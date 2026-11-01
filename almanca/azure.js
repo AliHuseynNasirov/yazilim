@@ -159,12 +159,12 @@ const LETTER_AZ = [
   [/ß|ss/, '"ß" "s" kimi oxunur'],
 ];
 
-export function explainWord(w) {
+export function explainWord(w, phonemeMin = 60) {
   const lw = w.word.toLowerCase();
   const say = SAY[lw] ? ` Belə deyilir: ${SAY[lw]}.` : '';
   const worst = [...(w.phonemes || [])].filter((p) => p.score != null).sort((a, b) => a.score - b.score)[0];
   let why = null;
-  if (worst && worst.score < 60) {
+  if (worst && worst.score < Math.max(phonemeMin, 60)) {
     const hit = PHONE_AZ.find(([re]) => re.test(worst.p));
     if (hit) why = hit[1];
   }
@@ -172,20 +172,51 @@ export function explainWord(w) {
     const hit = LETTER_AZ.find(([re]) => re.test(lw));
     why = hit ? hit[1] : 'söz düzgün tələffüz olunmayıb';
   }
-  return `Tələffüz səhvdir: "${w.word}" (${w.score}/100) — ${why}.${say}`;
+  const ph = worst && worst.score < Math.max(phonemeMin, 60) ? `, "${phoneLabel(worst.p)}" səsi ${worst.score}/100` : '';
+  return `Tələffüz səhvdir: "${w.word}" (${w.score}/100${ph}) — ${why}.${say}`;
 }
 
 export const PRON_MIN = 60; // bu baldan aşağı söz = tələffüz səhvi
 
+// Tələffüz sərtliyi: söz balı və ayrıca səs (fonem) balı üçün hədlər
+export const STRICTNESS = {
+  normal: { word: 60, phoneme: 40 },
+  strict: { word: 75, phoneme: 60 },
+  very: { word: 85, phoneme: 75 },
+};
+
+// IPA səsi → oxucu üçün hərf (çatda göstərmək üçün)
+const PHONE_LETTER = [
+  [/aɪ/, 'ei'], [/ɔʏ/, 'eu'], [/aʊ/, 'au'], [/ʃ/, 'sch'], [/ts/, 'z'], [/ç|x/, 'ch'], [/yː|ʏ/, 'ü'], [/øː|œ/, 'ö'],
+  [/iː/, 'ie'], [/ə|ɐ/, '-e'], [/^j$/, 'j'], [/^v$/, 'w'], [/^f$/, 'f/v'], [/^z$/, 's'], [/^ʁ$|^r$/, 'r'],
+];
+export function phoneLabel(p) {
+  const hit = PHONE_LETTER.find(([re]) => re.test(p));
+  return hit ? hit[1] : p;
+}
+export function worstPhoneme(w) {
+  return [...(w.phonemes || [])].filter((p) => p.score != null).sort((a, b) => a.score - b.score)[0] || null;
+}
+
 /** Azure nəticəsindən səhvlər: əskik, artıq, səhv tələffüz. */
-export function azureErrors(result) {
+export function azureErrors(result, level = 'normal') {
   if (!result || !result.ok) return [];
+  const lim = STRICTNESS[level] || STRICTNESS.normal;
   const out = [];
   for (const w of result.words) {
     if (w.error === 'Omission') out.push({ kind: 'omission', word: w.word, az: `"${w.word}" sözü deyilmədi (əskikdir).`, en: `the word "${w.word}" was not said` });
     else if (w.error === 'Insertion') out.push({ kind: 'insertion', word: w.word, az: `"${w.word}" artıq sözdür, cümlədə olmamalıdır.`, en: `the extra word "${w.word}" was said` });
-    else if (w.error === 'Mispronunciation' || (w.score != null && w.score < PRON_MIN))
-      out.push({ kind: 'pron', word: w.word, score: w.score, az: explainWord(w), en: `the word "${w.word}" was mispronounced (${w.score}/100)` });
+    else {
+      // söz balı aşağıdırsa VƏ YA bir səs (fonem) ayrıca zəifdirsə — tələffüz səhvi
+      const wp = worstPhoneme(w);
+      const badWord = w.error === 'Mispronunciation' || (w.score != null && w.score < lim.word);
+      const badPhone = wp && wp.score < lim.phoneme;
+      if (badWord || badPhone) {
+        const az = explainWord(w, badPhone ? lim.phoneme : 60);
+        const ph = badPhone ? `, sound "${wp.p}" ${wp.score}/100` : '';
+        out.push({ kind: 'pron', word: w.word, score: w.score, az, en: `the word "${w.word}" was mispronounced (${w.score}/100${ph})` });
+      }
+    }
   }
   return out;
 }
