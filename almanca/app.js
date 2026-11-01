@@ -2,7 +2,6 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
-import { verifyAudio } from './verifier.js';
 
 const $app = document.getElementById('app');
 
@@ -1068,29 +1067,6 @@ function renderPractice(id) {
       },
       onEvent(type, data) {
         switch (type) {
-          case 'utterance': {
-            if (!d.cards) break;
-            const v = { pressId, done: false, text: null };
-            verif = v;
-            const line = verifierNote('🔎 Yoxlayıcı dinləyir…');
-            v.promise = verifyAudio(data, s.apiKey, { preferred: store.get('verifierModel') }).then((r) => {
-              v.done = true;
-              if (r && !r.error) {
-                store.set('verifierModel', r.model);
-                v.text = r.noise ? '' : r.text;
-                line.textContent = v.text ? `🔎 Yoxlayıcı eşitdi: ${v.text}` : '🔎 Yoxlayıcı: söz eşitmədi (yalnız səs-küy)';
-              } else {
-                line.textContent = `🔎 Yoxlayıcı: cavab alınmadı — ${r ? r.error : 'naməlum xəta'}`;
-                line.classList.add('fail');
-              }
-              if (deferredCheck && !pendingMarks && v.pressId === pressId) {
-                deferredCheck = false;
-                checkAfterTurn();
-              }
-              return v;
-            });
-            break;
-          }
           case 'modelSkip':
             if (data.model === store.get('workingModel')) store.set('workingModel', null);
             setStatus(`🔄 ${data.next} yoxlanılır…`);
@@ -1118,7 +1094,6 @@ function renderPractice(id) {
             }
             sys('ℹ️ Sənin sözlərinin yazısı avtomatikdir, bəzən səhv dildə görünə bilər. Müəllim isə səsini birbaşa eşidir.');
             if (data && data.model) sys(`🤖 Model: ${data.model}`);
-            if (d.cards && !ptt) sys('ℹ️ 🔎 Yoxlayıcı yalnız "Bas və danış" rejimində işləyir (⚙️ Ayarlar → Danışma rejimi).');
             started = Date.now();
             startBtn.hidden = true;
             micBtn.hidden = endBtn.hidden = textForm.hidden = quick.hidden = false;

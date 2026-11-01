@@ -302,10 +302,7 @@ export class LiveSession {
   setSending(on) {
     if (on === this.sending) return;
     if (on) {
-      if (this.o.pushToTalk) {
-        this.stopPlayback();
-        this.capture = [];
-      }
+      if (this.o.pushToTalk) this.stopPlayback();
       this.sending = true;
       return;
     }
