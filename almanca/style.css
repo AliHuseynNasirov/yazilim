@@ -199,3 +199,4 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 .okline { align-self: flex-end; background: #e9f7ef; border: 1px solid #b7e2c6; color: #1b6b3a; font-weight: 600; border-radius: 12px; padding: 6px 10px; font-size: 15px; }
 .heardline { align-self: flex-end; max-width: 85%; font-size: 13px; font-style: italic; color: #4a5470; background: #eef1fb; border: 1px dashed #c3cbe3; border-radius: 10px; padding: 4px 8px; }
 .heardline.verifier { color: #1b4d8a; background: #e8f1ff; border-color: #9ec0f0; font-style: normal; font-weight: 600; }
+.heardline.verifier.fail { color: #8a5a00; background: #fff6e0; border-color: #f0d08a; font-weight: 500; }

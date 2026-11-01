@@ -744,10 +744,11 @@ function renderPractice(id) {
   function verifierNote(text) {
     const el = document.createElement('div');
     el.className = 'heardline verifier';
-    el.textContent = `🔎 Yoxlayıcı eşitdi: ${text}`;
+    el.textContent = text;
     chat.appendChild(el);
     if (last) last.open = false;
     scroll();
+    return el;
   }
 
   // Müqayisə üçün: müəllimin (modelin) səsdən hərfi eşitdiyi — ASR yazısının altında göstərilir
@@ -1071,12 +1072,16 @@ function renderPractice(id) {
             if (!d.cards) break;
             const v = { pressId, done: false, text: null };
             verif = v;
+            const line = verifierNote('🔎 Yoxlayıcı dinləyir…');
             v.promise = verifyAudio(data, s.apiKey, { preferred: store.get('verifierModel') }).then((r) => {
               v.done = true;
-              if (r) {
+              if (r && !r.error) {
                 store.set('verifierModel', r.model);
                 v.text = r.noise ? '' : r.text;
-                if (v.text) verifierNote(v.text);
+                line.textContent = v.text ? `🔎 Yoxlayıcı eşitdi: ${v.text}` : '🔎 Yoxlayıcı: söz eşitmədi (yalnız səs-küy)';
+              } else {
+                line.textContent = `🔎 Yoxlayıcı: cavab alınmadı — ${r ? r.error : 'naməlum xəta'}`;
+                line.classList.add('fail');
               }
               if (deferredCheck && !pendingMarks && v.pressId === pressId) {
                 deferredCheck = false;
@@ -1113,6 +1118,7 @@ function renderPractice(id) {
             }
             sys('ℹ️ Sənin sözlərinin yazısı avtomatikdir, bəzən səhv dildə görünə bilər. Müəllim isə səsini birbaşa eşidir.');
             if (data && data.model) sys(`🤖 Model: ${data.model}`);
+            if (d.cards && !ptt) sys('ℹ️ 🔎 Yoxlayıcı yalnız "Bas və danış" rejimində işləyir (⚙️ Ayarlar → Danışma rejimi).');
             started = Date.now();
             startBtn.hidden = true;
             micBtn.hidden = endBtn.hidden = textForm.hidden = quick.hidden = false;

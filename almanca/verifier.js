@@ -87,10 +87,10 @@ function pcmToWavBase64(pcm) {
 
 /**
  * Səsi hərfi yazıya çevirir.
- * @returns {Promise<{text:string, noise:boolean, confidence:string, model:string}|null>} xəta olsa null
+ * @returns {Promise<{text:string, noise:boolean, confidence:string, model:string}|{error:string}>}
  */
 export async function verifyAudio(pcm, apiKey, { preferred, timeoutMs = 8000 } = {}) {
-  if (!pcm || pcm.length < 16000 * 0.4) return null; // 0.4 saniyədən qısa — boşdur
+  if (!pcm || pcm.length < 16000 * 0.4) return { error: 'səs çox qısa idi' }; // 0.4 saniyədən qısa — boşdur
   const wav = pcmToWavBase64(pcm);
   const models = [...new Set([preferred, ...VERIFIER_MODELS].filter(Boolean))];
   for (const model of models) {
@@ -118,7 +118,8 @@ export async function verifyAudio(pcm, apiKey, { preferred, timeoutMs = 8000 } =
       clearTimeout(timer);
       // Model yoxdur / dəstəklənmir → növbəti model
       if (res.status === 404 || res.status === 400) continue;
-      if (!res.ok) return null; // limit (429) və s. — bu dəfə yoxlayıcısız
+      if (res.status === 429) return { error: 'pulsuz limit doldu (429), bir az sonra yenə işləyəcək' };
+      if (!res.ok) return { error: `server xətası (${res.status})` };
       const json = await res.json();
       const raw = json?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
       const out = JSON.parse(raw);
@@ -128,10 +129,10 @@ export async function verifyAudio(pcm, apiKey, { preferred, timeoutMs = 8000 } =
         confidence: out.confidence || 'medium',
         model,
       };
-    } catch {
+    } catch (e) {
       clearTimeout(timer);
-      return null;
+      return { error: e && e.name === 'AbortError' ? 'cavab gecikdi' : 'internet və ya cavab xətası' };
     }
   }
-  return null;
+  return { error: 'uyğun model tapılmadı' };
 }
