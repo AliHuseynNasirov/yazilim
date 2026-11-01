@@ -816,8 +816,9 @@ function renderPractice(id) {
     }
     const chips = r.words
       .map((w) => {
-        if (w.error === 'Omission') return `<span class="wchip bad">${esc(w.word)} — deyilmədi</span>`;
-        if (w.error === 'Insertion') return `<span class="wchip bad">${esc(w.word)} — artıq</span>`;
+        // yalnız tələffüz balları: "artıq" sözlər göstərilmir, eşidilməyən söz neytral "—"
+        if (w.error === 'Insertion') return '';
+        if (w.error === 'Omission') return `<span class="wchip">${esc(w.word)} —</span>`;
         const cls = w.score == null ? '' : w.score >= 80 ? 'good' : w.score >= 60 ? 'mid' : 'bad';
         // ən zəif səs (fonem) 85-dən aşağıdırsa göstər: "heiße 91 (ei 55)"
         const wp = worstPhoneme(w);

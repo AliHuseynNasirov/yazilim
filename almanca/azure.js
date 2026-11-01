@@ -206,9 +206,10 @@ export function azureErrors(result, level = 'normal') {
   const lim = STRICTNESS[level] || STRICTNESS.normal;
   const out = [];
   for (const w of result.words) {
-    if (w.error === 'Omission') out.push({ kind: 'omission', word: w.word, az: `"${w.word}" sözü deyilmədi (əskikdir).`, en: `the word "${w.word}" was not said` });
-    else if (w.error === 'Insertion') out.push({ kind: 'insertion', word: w.word, az: `"${w.word}" artıq sözdür, cümlədə olmamalıdır.`, en: `the extra word "${w.word}" was said` });
-    else {
+    // Azure yalnız TƏLƏFFÜZÜ qiymətləndirir. "Artıq" / "əskik" söz qərarını müəllim və tətbiqin
+    // öz yoxlaması verir (Azure aksentli nitqdə uydurma "artıq" sözlər tapırdı).
+    if (w.error === 'Omission' || w.error === 'Insertion') continue;
+    {
       // söz balı aşağıdırsa VƏ YA bir səs (fonem) ayrıca zəifdirsə — tələffüz səhvi
       const wp = worstPhoneme(w);
       const badWord = w.error === 'Mispronunciation' || (w.score != null && w.score < lim.word);
