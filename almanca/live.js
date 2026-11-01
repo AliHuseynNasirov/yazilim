@@ -264,17 +264,19 @@ export class LiveSession {
       let sum = 0;
       for (let i = 0; i < pcm.length; i += 8) sum += Math.abs(pcm[i]);
       this.emit('level', Math.min(1, (sum / Math.max(1, pcm.length / 8) / 32768) * 6));
-      if (this.capture && (this.sending || isFlush)) this.capture.push(new Int16Array(buf.slice(0)));
+      if (isFlush) {
+        if (this.flushCapture) this.flushCapture.push(new Int16Array(buf.slice(0)));
+      } else if (this.capture && this.sending) this.capture.push(new Int16Array(buf.slice(0)));
       if (this.ready && (this.sending || isFlush)) {
         this.send({
           realtimeInput: { audio: { data: bytesToB64(new Uint8Array(buf)), mimeType: 'audio/pcm;rate=16000' } },
         });
       }
     }
-    if (isFlush && this.capture) {
-      // Cümlə bitdi: səsi bir parça kimi ver (yoxlayıcıya göndərmək üçün)
-      const parts = this.capture;
-      this.capture = null;
+    if (isFlush && this.flushCapture) {
+      // Cümlə bitdi: həmin düymə basılışının səsini bir parça kimi ver
+      const parts = this.flushCapture;
+      this.flushCapture = null;
       const total = parts.reduce((n, p) => n + p.length, 0);
       const pcm = new Int16Array(total);
       let o = 0;
@@ -311,6 +313,9 @@ export class LiveSession {
       return;
     }
     this.sending = false;
+    // Bu basılışın qeydini bağla (növbəti basılış yeni, boş qeydlə başlayır)
+    this.flushCapture = this.capture;
+    this.capture = null;
     // Buferdə qalan son səsi də göndər, sonra "səs bitdi" de
     if (this.worklet) this.worklet.port.postMessage('flush');
     else this.sendSilenceAndEnd();

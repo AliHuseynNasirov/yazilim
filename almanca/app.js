@@ -560,6 +560,8 @@ function renderPractice(id) {
   // Ekrandakı yazıda qrammatika və söz səhvlərini tap
   // ---- Hərfi yoxlayıcı (Gemini Flash): düymə basılanda deyilən səsin düzəldilməmiş yazısı ----
   let pressId = 0;
+  // hansı basılışın qeydi bağlanır (Azure nəticəsi düzgün cümləyə aid olsun)
+  const flushPress = [];
   let verif = null; // { pressId, done, text, promise }
   const verifierReady = () => verif && verif.pressId === pressId && verif.done && !!verif.text;
   const verifierPending = () => verif && verif.pressId === pressId && !verif.done;
@@ -1168,7 +1170,8 @@ function renderPractice(id) {
       onEvent(type, data) {
         switch (type) {
           case 'utterance': {
-            if (!azureOn) break;
+            const forPress = flushPress.length ? flushPress.shift() : pressId;
+            if (!azureOn || forPress !== pressId) break; // köhnə basılışın qeydi — yoxlamaya ehtiyac yoxdur
             const field = nextField(cardIdx);
             if (!field) break;
             // Azure üçün rəqəm SÖZLƏ yazılır (sən "fünfunddreißig" deyirsən, "35" yox)
@@ -1300,7 +1303,15 @@ function renderPractice(id) {
     const down = (e) => {
       e.preventDefault();
       micBtn.classList.add('hold');
-      clearTimeout(releaseTimer);
+      if (releaseTimer) {
+        // əvvəlki basılışın 0.45 san "quyruğu" bitməmiş yenə basıldı — əvvəlki qeydi indi bağla
+        clearTimeout(releaseTimer);
+        releaseTimer = null;
+        if (session) {
+          flushPress.push(pressId);
+          session.setSending(false);
+        }
+      }
       stopWaiting();
       closeUtter();
       pressId++;
@@ -1322,7 +1333,9 @@ function renderPractice(id) {
       // Son söz kəsilməsin deyə düyməni buraxandan sonra bir az da dinlə
       clearTimeout(releaseTimer);
       releaseTimer = setTimeout(() => {
+        releaseTimer = null;
         if (!session) return;
+        flushPress.push(pressId);
         session.setSending(false);
         startWaiting();
       }, 450);
