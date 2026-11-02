@@ -2,6 +2,7 @@ import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords, normWord } from './checker.js';
+import { renderDrill } from './drill.js';
 import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
 const $app = document.getElementById('app');
@@ -485,6 +486,15 @@ function renderPractice(id) {
   const found = findDialog(id);
   if (!found) return renderHome();
   const { category: cat, dialog: d } = found;
+  // Fel dərsi ayrıca faylda işləyir (kart dərsinin koduna toxunmur)
+  if (d.drill) {
+    return renderDrill({
+      $app, d, cat, store, esc, header, fx, confetti, saveMistake, closeMessage, MODELS, ruleHtml, settings,
+      teardown,
+      setSession: (x) => (session = x),
+      setTimer: (id) => (timerId = id),
+    });
+  }
   const s = settings();
   const ptt = s.mode === 'ptt';
   let cardIdx = 0;

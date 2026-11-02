@@ -210,3 +210,8 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 .heardline .replay { display: block; margin-top: 6px; border: 1px solid #c9b8f2; background: #fff; border-radius: 99px; padding: 3px 10px; font: inherit; font-size: 12px; font-style: normal; color: #3d2a73; }
 .resume-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; background: #eef1fb; border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; margin-bottom: 8px; }
 .resume-bar button { margin-left: auto; border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 4px 10px; font: inherit; font-size: 13px; }
+
+/* Fel dərsi */
+.vbadge { min-width: 86px; height: 42px; padding: 0 8px; border-radius: 10px; background: #1f2a44; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; transition: all .35s ease; }
+.lcard.active .vbadge { height: 64px; font-size: 18px; background: var(--accent); }
+.vcard .lc-fields li .stxt { flex: 1; }

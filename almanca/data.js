@@ -844,6 +844,218 @@ export const CATEGORIES = [
     ],
   },
   {
+    id: 'fel',
+    icon: '🔤',
+    title: 'Fellər: təsrif və suallar',
+    dialogs: [
+      {
+        id: 'fel-1',
+        title: '9 fel: şəxsə görə təsrif + suallar',
+        situation:
+          'Hər fel üçün: əvvəl feli göstərilən şəxslə de (məs. "du lebst"), sonra həmin şəxsdə 3 W-Frage və 3 Satzfrage sualına tam cümlə ilə cavab ver.',
+        ai: 'You are a strict but friendly German teacher running a verb conjugation drill.',
+        user: 'The learner conjugates verbs and answers questions in the given person.',
+        drill: {
+          // Formalar sırası: ich, du, er/sie/es, wir, ihr, sie/Sie
+          verbs: [
+            {
+              inf: 'lernen', az: 'öyrənmək', person: 'ich',
+              forms: ['lerne', 'lernst', 'lernt', 'lernen', 'lernt', 'lernen'],
+              w: [
+                { q: 'Was {vq} {pq}?', a: '{PA} {va} Deutsch.' },
+                { q: 'Wo {vq} {pq} Deutsch?', a: '{PA} {va} in Baku Deutsch.' },
+                { q: 'Wann {vq} {pq} Deutsch?', a: '{PA} {va} am Abend Deutsch.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} Deutsch?', a: 'Ja, {pa} {va} Deutsch.' },
+                { q: '{Vq} {pq} gern?', a: 'Ja, {pa} {va} gern.' },
+                { q: '{Vq} {pq} heute?', a: 'Nein, {pa} {va} heute nicht.' },
+              ],
+            },
+            {
+              inf: 'leben', az: 'yaşamaq (həyat sürmək)', person: 'du',
+              forms: ['lebe', 'lebst', 'lebt', 'leben', 'lebt', 'leben'],
+              w: [
+                { q: 'Wo {vq} {pq}?', a: '{PA} {va} in Baku.' },
+                { q: 'Wie {vq} {pq}?', a: '{PA} {va} gut.' },
+                { q: 'Mit wem {vq} {pq}?', a: '{PA} {va} mit der Familie.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} in Baku?', a: 'Ja, {pa} {va} in Baku.' },
+                { q: '{Vq} {pq} allein?', a: 'Nein, {pa} {va} nicht allein.' },
+                { q: '{Vq} {pq} gern hier?', a: 'Ja, {pa} {va} gern hier.' },
+              ],
+            },
+            {
+              inf: 'wohnen', az: 'yaşamaq (məskunlaşmaq)', person: 'er',
+              forms: ['wohne', 'wohnst', 'wohnt', 'wohnen', 'wohnt', 'wohnen'],
+              w: [
+                { q: 'Wo {vq} {pq}?', a: '{PA} {va} in Berlin.' },
+                { q: 'Wie {vq} {pq}?', a: '{PA} {va} schön.' },
+                { q: 'Mit wem {vq} {pq}?', a: '{PA} {va} mit Freunden.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} in Berlin?', a: 'Ja, {pa} {va} in Berlin.' },
+                { q: '{Vq} {pq} allein?', a: 'Nein, {pa} {va} nicht allein.' },
+                { q: '{Vq} {pq} gern hier?', a: 'Ja, {pa} {va} gern hier.' },
+              ],
+            },
+            {
+              inf: 'hören', az: 'dinləmək, eşitmək', person: 'wir',
+              forms: ['höre', 'hörst', 'hört', 'hören', 'hört', 'hören'],
+              w: [
+                { q: 'Was {vq} {pq} gern?', a: '{PA} {va} gern Musik.' },
+                { q: 'Wann {vq} {pq} Musik?', a: '{PA} {va} am Abend Musik.' },
+                { q: 'Wo {vq} {pq} Musik?', a: '{PA} {va} zu Hause Musik.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} gern Musik?', a: 'Ja, {pa} {va} gern Musik.' },
+                { q: '{Vq} {pq} Radio?', a: 'Nein, {pa} {va} kein Radio.' },
+                { q: '{Vq} {pq} jetzt Musik?', a: 'Ja, {pa} {va} jetzt Musik.' },
+              ],
+            },
+            {
+              inf: 'spielen', az: 'oynamaq', person: 'ihr',
+              forms: ['spiele', 'spielst', 'spielt', 'spielen', 'spielt', 'spielen'],
+              w: [
+                { q: 'Was {vq} {pq} gern?', a: '{PA} {va} gern Fußball.' },
+                { q: 'Wann {vq} {pq} Fußball?', a: '{PA} {va} am Samstag Fußball.' },
+                { q: 'Wo {vq} {pq} Fußball?', a: '{PA} {va} im Park Fußball.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} Fußball?', a: 'Ja, {pa} {va} Fußball.' },
+                { q: '{Vq} {pq} gern Gitarre?', a: 'Nein, {pa} {va} nicht gern Gitarre.' },
+                { q: '{Vq} {pq} heute Tennis?', a: 'Ja, {pa} {va} heute Tennis.' },
+              ],
+            },
+            {
+              inf: 'heißen', az: 'adlanmaq', person: 'sie_pl',
+              forms: ['heiße', 'heißt', 'heißt', 'heißen', 'heißt', 'heißen'],
+              notes: { du: '"heißen": ß-dən sonra yalnız -t əlavə olunur: du heißt' },
+              w: [
+                { q: 'Wie {vq} {pq}?', a: '{PA} {va} Anna und Max.' },
+                { q: 'Wie {vq} {pq} mit Vornamen?', a: '{PA} {va} Anna und Max.' },
+                { q: 'Wie {vq} {pq} mit Nachnamen?', a: '{PA} {va} Müller.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} Müller?', a: 'Ja, {pa} {va} Müller.' },
+                { q: '{Vq} {pq} Schmidt?', a: 'Nein, {pa} {va} nicht Schmidt.' },
+                { q: '{Vq} {pq} Anna und Max?', a: 'Ja, {pa} {va} Anna und Max.' },
+              ],
+            },
+            {
+              inf: 'sprechen', az: 'danışmaq', person: 'du',
+              forms: ['spreche', 'sprichst', 'spricht', 'sprechen', 'sprecht', 'sprechen'],
+              irregular: ['sprich'],
+              notes: {
+                du: '"sprechen" qaydasızdır: du ilə "e" → "i" olur: du sprichst',
+                er: '"sprechen" qaydasızdır: er/sie/es ilə "e" → "i" olur: er spricht',
+                sie_sg: '"sprechen" qaydasızdır: er/sie/es ilə "e" → "i" olur: sie spricht',
+              },
+              w: [
+                { q: 'Welche Sprachen {vq} {pq}?', a: '{PA} {va} Deutsch und Aserbaidschanisch.' },
+                { q: 'Wie gut {vq} {pq} Deutsch?', a: '{PA} {va} ein bisschen Deutsch.' },
+                { q: 'Mit wem {vq} {pq} Deutsch?', a: '{PA} {va} mit Anna Deutsch.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} Deutsch?', a: 'Ja, {pa} {va} Deutsch.' },
+                { q: '{Vq} {pq} Englisch?', a: 'Nein, {pa} {va} kein Englisch.' },
+                { q: '{Vq} {pq} gut Russisch?', a: 'Ja, {pa} {va} gut Russisch.' },
+              ],
+            },
+            {
+              inf: 'geben', az: 'vermək', person: 'er',
+              forms: ['gebe', 'gibst', 'gibt', 'geben', 'gebt', 'geben'],
+              irregular: ['gib'],
+              notes: {
+                du: '"geben" qaydasızdır: du ilə "e" → "i" olur: du gibst',
+                er: '"geben" qaydasızdır: er/sie/es ilə "e" → "i" olur: er gibt',
+                sie_sg: '"geben" qaydasızdır: er/sie/es ilə "e" → "i" olur: sie gibt',
+              },
+              w: [
+                { q: 'Was {vq} {pq} Anna?', a: '{PA} {va} Anna ein Buch.' },
+                { q: 'Wem {vq} {pq} das Buch?', a: '{PA} {va} Anna das Buch.' },
+                { q: 'Wann {vq} {pq} Anna das Buch?', a: '{PA} {va} Anna heute das Buch.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} Anna das Buch?', a: 'Ja, {pa} {va} Anna das Buch.' },
+                { q: '{Vq} {pq} Max den Stift?', a: 'Nein, {pa} {va} Max den Stift nicht.' },
+                { q: '{Vq} {pq} Ali die Tasche?', a: 'Ja, {pa} {va} Ali die Tasche.' },
+              ],
+            },
+            {
+              inf: 'haben', az: 'malik olmaq ("var")', person: 'sie_sg',
+              forms: ['habe', 'hast', 'hat', 'haben', 'habt', 'haben'],
+              irregular: ['ha'],
+              notes: {
+                du: '"haben" qaydasızdır: du hast',
+                er: '"haben" qaydasızdır: er/sie/es hat',
+                sie_sg: '"haben" qaydasızdır: sie (o) hat',
+              },
+              w: [
+                { q: 'Wann {vq} {pq} Zeit?', a: '{PA} {va} am Sonntag Zeit.' },
+                { q: 'Wie viele Geschwister {vq} {pq}?', a: '{PA} {va} zwei Geschwister.' },
+                { q: 'Was {vq} {pq} in der Tasche?', a: '{PA} {va} ein Buch in der Tasche.' },
+              ],
+              s: [
+                { q: '{Vq} {pq} Kinder?', a: 'Nein, {pa} {va} keine Kinder.' },
+                { q: '{Vq} {pq} heute Zeit?', a: 'Ja, {pa} {va} heute Zeit.' },
+                { q: '{Vq} {pq} ein Auto?', a: 'Nein, {pa} {va} kein Auto.' },
+              ],
+            },
+          ],
+        },
+        lines: [
+          ['A', 'lernen — ich', 'Feli "ich" ilə de'],
+          ['B', 'ich lerne', 'mən öyrənirəm'],
+          ['A', 'Was lernst du?', 'Nə öyrənirsən? (W-Frage)'],
+          ['B', 'Ich lerne Deutsch.', 'Alman dili öyrənirəm.'],
+          ['A', 'Lernst du gern?', 'Öyrənməyi xoşlayırsan? (Satzfrage)'],
+          ['B', 'Ja, ich lerne gern.', 'Bəli, xoşlayıram.'],
+        ],
+        rule: {
+          title: 'Fel şəxsə görə + sual növləri',
+          focus: 'Present tense conjugation of lernen, leben, wohnen, hören, spielen, heißen, sprechen, geben, haben; answering W-questions and yes/no questions with the correct verb form in position 2.',
+          text: [
+            'Fel şəxsə görə dəyişir: <b>ich -e, du -st, er/sie/es -t, wir -en, ihr -t, sie/Sie -en</b>.',
+            'Qaydasız fellər: <b>sprechen</b> → du sprichst, er spricht; <b>geben</b> → du gibst, er gibt; <b>haben</b> → du hast, er hat; <b>heißen</b> → du heißt.',
+            '<b>W-Frage</b> (Wo? Was? Wann? Wie?…) — cavabda fel <b>2-ci yerdə</b>: <i>Ich lebe in Baku.</i>',
+            '<b>Satzfrage</b> (bəli/xeyr sualı, fel əvvəldə: <i>Lebst du in Baku?</i>) — cavab <b>Ja / Nein</b> ilə başlayır: <i>Ja, ich lebe in Baku.</i> / <i>Nein, ich lebe nicht in Baku.</i>',
+            'Sual "du" ilə verilirsə, cavab "ich" ilə olur; "ihr" ilə verilirsə, cavab "wir" ilə. Ekranda hansı şəxslə cavab verəcəyin yazılır.',
+          ],
+          tables: [
+            {
+              head: ['', 'ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'],
+              rows: [
+                ['lernen', 'lerne', 'lernst', 'lernt', 'lernen', 'lernt', 'lernen'],
+                ['leben', 'lebe', 'lebst', 'lebt', 'leben', 'lebt', 'leben'],
+                ['wohnen', 'wohne', 'wohnst', 'wohnt', 'wohnen', 'wohnt', 'wohnen'],
+                ['hören', 'höre', 'hörst', 'hört', 'hören', 'hört', 'hören'],
+                ['spielen', 'spiele', 'spielst', 'spielt', 'spielen', 'spielt', 'spielen'],
+                ['heißen', 'heiße', 'heißt', 'heißt', 'heißen', 'heißt', 'heißen'],
+                ['sprechen', 'spreche', 'sprichst', 'spricht', 'sprechen', 'sprecht', 'sprechen'],
+                ['geben', 'gebe', 'gibst', 'gibt', 'geben', 'gebt', 'geben'],
+                ['haben', 'habe', 'hast', 'hat', 'haben', 'habt', 'haben'],
+              ],
+            },
+          ],
+          tips: ['Cavabın qalan hissəsi sərbəstdir (Baku, Berlin…). Yoxlanan: şəxs əvəzliyi, felin forması və felin yeri.'],
+        },
+        vocab: [
+          ['lernen', 'öyrənmək'],
+          ['leben', 'yaşamaq (həyat sürmək)'],
+          ['wohnen', 'yaşamaq (məskunlaşmaq)'],
+          ['hören', 'dinləmək'],
+          ['spielen', 'oynamaq'],
+          ['heißen', 'adlanmaq'],
+          ['sprechen', 'danışmaq'],
+          ['geben', 'vermək'],
+          ['haben', 'malik olmaq'],
+        ],
+      },
+    ],
+  },
+  {
     id: 'serbest',
     icon: '🎯',
     title: 'Sərbəst məşq',
