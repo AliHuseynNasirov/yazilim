@@ -208,3 +208,5 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 .wchip.mid { background: #fff1c7; color: #7a5600; }
 .wchip.bad { background: #fde0de; color: #9b1c15; font-weight: 700; }
 .heardline .replay { display: block; margin-top: 6px; border: 1px solid #c9b8f2; background: #fff; border-radius: 99px; padding: 3px 10px; font: inherit; font-size: 12px; font-style: normal; color: #3d2a73; }
+.resume-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; background: #eef1fb; border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; margin-bottom: 8px; }
+.resume-bar button { margin-left: auto; border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 4px 10px; font: inherit; font-size: 13px; }

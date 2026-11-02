@@ -557,6 +557,16 @@ function renderPractice(id) {
     userUtter += text;
   };
   const closeUtter = () => (utterClosed = true);
+  // ASR yazısı yoxlama üçün yararlıdırmı? Azərbaycan hərfləri varsa ("Yuxarıda Elena") — almanca səhv tanınıb
+  // Amma cümlədə almanca sözlər də varsa ("Ich komme aus İsveç") — bu, əsl səhvdir, yoxlanmalıdır.
+  const DE_ANCHORS = new Set(['ich', 'bin', 'heisse', 'heiße', 'heiß', 'komme', 'aus', 'wohne', 'in', 'spreche', 'jahre', 'alt', 'mein', 'name', 'ist']);
+  const asrUsable = (t) => {
+    if (!t || !plausibleTranscript(t)) return false;
+    if (!/[əğıİşç]/i.test(t)) return true;
+    const anchors = (t.toLowerCase().match(/\p{L}+/gu) || []).filter((w) => DE_ANCHORS.has(w)).length;
+    return anchors >= 2;
+  };
+
   // Kart dərsi üçün qapalı lüğət (səhv deyilmiş sözləri tapmaq üçün)
   const lexicon = d.cards ? buildCardLexicon(d) : null;
   // Ekrandakı yazıda qrammatika və söz səhvlərini tap
@@ -590,13 +600,13 @@ function renderPractice(id) {
     const errs = azureErrors(az.result, s.pronLevel || 'normal');
     const text = userUtter.trim();
     // ASR yazısı yoxdursa və ya qarışıqdırsa — Azure-a güvən; varsa, yalnız deyilmiş sözlərin tələffüzü
-    if (!text || !plausibleTranscript(text)) return errs;
+    if (!text || !asrUsable(text)) return errs;
     return errs.filter((e) => wordSaid(e.word, text));
   };
 
   const findErrors = () => {
     const text = judgeText();
-    if (!text || !looksLatin(text)) return [];
+    if (!text || !looksLatin(text) || !asrUsable(text)) return [];
     const errs = [...checkSentence(text), ...checkWords(text, lexicon)];
     if (!errs.length) return errs;
     // Bütün düzəlişləri bir düzgün cümlədə birləşdir
@@ -642,7 +652,26 @@ function renderPractice(id) {
 
   // ---- Kartlar: alt-alta, hər düzgün cümlədə ✓, kart bitəndə yaşıl + ulduz ----
   const FIELDS = ['name', 'age', 'country', 'city', 'language'];
-  const cardState = (d.cards || []).map(() => ({ fields: new Set(), mistakes: 0, done: false }));
+  const FIELDS_ALL = FIELDS;
+  const cardState = (d.cards || []).map(() => ({ fields: new Set(), skipped: new Set(), mistakes: 0, done: false }));
+  // Təkrar mərhələsi: bütün kartlar bitəndən sonra alınmayan (!) cümlələr düzgün deyilənə qədər
+  let reviewMode = false;
+  let reviewQ = []; // [{ i, field }]
+  const FIELD_AZ = { name: 'adı', age: 'yaşı', country: 'ölkəsi', city: 'şəhəri', language: 'dili' };
+  const skippedList = () => cardState.flatMap((st, i) => FIELDS_ALL.filter((f) => st.skipped.has(f)).map((field) => ({ i, field })));
+  // İrəliləyişi yadda saxla (çıxıb qayıdanda qaldığın yerdən davam)
+  const PKEY = `cardProgress.${d.id}`;
+  let restored = false;
+  function saveProgress() {
+    if (!d.cards) return;
+    store.set(PKEY, {
+      cardIdx,
+      reviewMode,
+      reviewQ,
+      cards: cardState.map((st) => ({ fields: [...st.fields], skipped: [...st.skipped], mistakes: st.mistakes, done: st.done })),
+    });
+  }
+  const hasProgress = () => cardState.some((st) => st.fields.size || st.done);
   const cardEls = [...$app.querySelectorAll('.lcard')];
   const starsFor = (st) => (st.mistakes === 0 ? 3 : st.mistakes <= 2 ? 2 : 1);
 
@@ -655,6 +684,7 @@ function renderPractice(id) {
   }
 
   function setActive(i, fromUser) {
+    if (fromUser && reviewMode) return; // təkrar mərhələsində kartı tətbiq seçir
     if (fromUser) {
       // kart dəyişdi: köhnə karta aid gözləyən yoxlamaları ləğv et
       az = null;
@@ -664,6 +694,7 @@ function renderPractice(id) {
     cardIdx = Math.max(0, Math.min(d.cards.length - 1, i));
     cardEls.forEach((el, j) => el.classList.toggle('active', j === cardIdx));
     updateStep();
+    saveProgress();
     // Yalnız kart siyahısını sürüşdür (bütün səhifəni yox)
     setTimeout(() => {
       const list = $app.querySelector('#cardList');
@@ -681,7 +712,13 @@ function renderPractice(id) {
     const i = cardIdx;
     const st = cardState[i];
     if (!st || !FIELDS.includes(field)) return 'invalid';
-    if (st.done) return `This card is already complete. ${nextCardText(i)}`;
+    if (reviewMode) {
+      const it = reviewQ[0];
+      if (!it) return 'The review is complete.';
+      if (field !== it.field || i !== it.i) {
+        return `NOT TICKED. In the review phase the current sentence is card ${it.i + 1} (${d.cards[it.i].name}): "${SENT[it.field](d.cards[it.i])}". Wait for exactly that sentence.`;
+      }
+    } else if (st.done) return `This card is already complete. ${nextCardText(i)}`;
     // Azure: bu sətrin cümləsində tələffüz / əskik / artıq söz səhvi varsa — ✓ yoxdur
     const aErr = azErrs(field);
     if (aErr.length) {
@@ -735,7 +772,7 @@ function renderPractice(id) {
     }
     // ✓ yalnız deyilən cümlə kartdakı DÜZGÜN cümlə ilə tam eyni olanda (sonluq, söz, artikl daxil)
     const said = judgeText();
-    if (said && plausibleTranscript(said) && !matchCardSentence(said, d.cards[i]).includes(field)) {
+    if (said && asrUsable(said) && !matchCardSentence(said, d.cards[i]).includes(field)) {
       const expected = SENT[field](d.cards[i]);
       const dif = diffWords(said, expected);
       const err = {
@@ -751,6 +788,7 @@ function renderPractice(id) {
       return rejectionText([err]);
     }
     setTick(i, field, 'ok');
+    if (reviewMode) return reviewAdvance();
     if (st.done) return `ticked ${field}. ${nextCardText(i)}`;
     return `ticked ${field} on card ${i + 1} (${st.fields.size}/5). Say only a very short praise ("Super!"), nothing else. ${stepInfo()} Do not tell the learner the next step — the screen shows it.`;
   }
@@ -770,7 +808,8 @@ function renderPractice(id) {
   function updateStep() {
     if (!d.cards) return;
     cardEls.forEach((el, j) => {
-      const nf = j === cardIdx && !cardState[j].done ? nextField(j) : null;
+      const it = reviewQ[0];
+      const nf = reviewMode ? (it && it.i === j ? it.field : null) : j === cardIdx && !cardState[j].done ? nextField(j) : null;
       el.querySelectorAll('.lc-fields li').forEach((li) => {
         const on = li.dataset.f === nf;
         li.classList.toggle('now', on);
@@ -794,13 +833,59 @@ function renderPractice(id) {
   // Kart bitəndə modelə növbəti kartı dəqiq de (öz başına nömrə uydurmasın)
   function nextCardText(i) {
     const n = nextUndone(i);
-    if (n === -1) return 'ALL CARDS ARE COMPLETE. Now say in Azerbaijani that all cards are finished, briefly list the mistakes (wrong → right) and praise the learner.';
+    if (n === -1) {
+      const q = skippedList();
+      if (q.length) return reviewStartText(q[0]);
+      return 'ALL CARDS ARE COMPLETE. Now say in Azerbaijani that all cards are finished, briefly list the mistakes (wrong → right) and praise the learner.';
+    }
     return (
       `CARD ${i + 1} (${d.cards[i].name}) IS COMPLETE. The app now shows card ${n + 1} (${d.cards[n].name}). ` +
       `Say exactly this, ONCE, and nothing else: "Super! İndi ${ordAz(n + 1)} kart: ${d.cards[n].name}." Do not call show_card. Then wait for the learner.`
     );
   }
+  // ---- Təkrar mərhələsi ----
+  function reviewStartText(it) {
+    const c = d.cards[it.i];
+    return (
+      'ALL CARDS ARE DONE, but some sentences were not said correctly (marked "!"). REVIEW PHASE starts now: ' +
+      `the app shows card ${it.i + 1} (${c.name}) and highlights the sentence "${SENT[it.field](c)}". ` +
+      `Say in Azerbaijani exactly this, ONCE: "Bütün kartlar bitdi! İndi alınmayan cümlələri təkrar edək. ${c.name} kartı — ${FIELD_AZ[it.field]}." Then wait. ` +
+      'In the review phase there is NO limit of tries: correct every mistake as usual until the learner says it correctly. Do not call show_card.'
+    );
+  }
+  function startReview() {
+    reviewQ = skippedList();
+    if (!reviewQ.length) return false;
+    reviewMode = true;
+    setActive(reviewQ[0].i);
+    sys('🔁 Təkrar mərhələsi: alınmayan cümlələri indi düzgün deyənə qədər təkrar edirik.');
+    saveProgress();
+    return true;
+  }
+  // Təkrar cümləsi düzgün deyildi → növbəti, ya da oyun bitdi
+  function reviewAdvance() {
+    reviewQ.shift();
+    saveProgress();
+    if (reviewQ.length) {
+      const it = reviewQ[0];
+      const c = d.cards[it.i];
+      setTimeout(() => setActive(it.i), 600);
+      return (
+        `ticked. Next review sentence: card ${it.i + 1} (${c.name}) — "${SENT[it.field](c)}". ` +
+        `Say in Azerbaijani exactly this, ONCE: "Super! İndi ${c.name} kartı — ${FIELD_AZ[it.field]}." Then wait.`
+      );
+    }
+    reviewMode = false;
+    updateStep();
+    setTimeout(showTrophy, 900);
+    return 'ticked. ALL SENTENCES ARE NOW CORRECT — the whole game is finished. Say in Azerbaijani warmly that the game is finished, praise the learner, and briefly name the sentences that were practised again.';
+  }
+
   function stepInfo() {
+    if (reviewMode && reviewQ[0]) {
+      const it = reviewQ[0];
+      return `Review phase: current sentence card ${it.i + 1} (${d.cards[it.i].name}) — "${SENT[it.field](d.cards[it.i])}".`;
+    }
     const nf = nextField(cardIdx);
     if (!nf) return 'This card is complete.';
     const c = d.cards[cardIdx];
@@ -889,23 +974,27 @@ function renderPractice(id) {
 
   function setTick(i, field, kind) {
     const st = cardState[i];
-    if (!st || st.done) return;
+    // bitmiş kartda yalnız təkrar mərhələsində "!" → "✓" çevrilə bilər
+    if (!st || (st.done && !(kind === 'ok' && st.skipped.has(field)))) return;
     const li = cardEls[i].querySelector(`[data-f="${field}"]`);
     if (kind === 'ok') {
       fails[`${i}:${field}`] = 0;
       if (st.fields.has(field) && !li.classList.contains('skip')) return;
       li.classList.remove('skip');
       li.classList.add('ok');
+      st.skipped.delete(field);
       tickedThisUtter.push({ i, field });
       fx.ding();
       acceptedNote(i, field);
     } else {
       if (st.fields.has(field)) return;
       li.classList.add('skip');
+      st.skipped.add(field);
     }
     st.fields.add(field);
-    if (st.fields.size === FIELDS.length) completeCard(i);
+    if (st.fields.size === FIELDS.length && !st.done) completeCard(i);
     updateStep();
+    saveProgress();
   }
 
   // Eyni cümlədə ard-arda səhv sayı; 3-cü dəfədən sonra ilişib qalmamaq üçün keçirik
@@ -918,6 +1007,7 @@ function renderPractice(id) {
       failedUtter[k] = utterId;
       fails[k] = (fails[k] || 0) + 1;
     }
+    if (reviewMode) return 0; // təkrar mərhələsində limit yoxdur — düzgün deyənə qədər
     if (fails[k] >= 3) {
       setTick(cardIdx, field, 'skip');
       sys('⚠️ Bu cümlə 3 dəfə alınmadı — 📒 dəftərə yazıldı, sonra yenə məşq edərsən. Davam edirik.');
@@ -936,6 +1026,15 @@ function renderPractice(id) {
     const done = FIELDS.filter((f) => st.fields.has(f)).map((f) => LBL[f]);
     const missing = FIELDS.filter((f) => !st.fields.has(f)).map((f) => LBL[f]);
     const finished = cardState.map((x, j) => (x.done ? j + 1 : null)).filter(Boolean);
+    if (reviewMode && reviewQ[0]) {
+      const it = reviewQ[0];
+      const rc = d.cards[it.i];
+      return (
+        '[App] The connection was restarted. You continue the SAME lesson with exactly the same rules. All cards are done; this is the REVIEW PHASE ' +
+        `(no limit of tries). Current review sentence: card ${it.i + 1} (${rc.name}) — "${SENT[it.field](rc)}". ` +
+        `Do NOT greet or explain. Say only in Azerbaijani: "Davam edirik. ${rc.name} kartı — ${FIELD_AZ[it.field]}." Then wait silently.`
+      );
+    }
     return (
       '[App] The connection was restarted. You continue the SAME lesson with exactly the same rules and behaviour. ' +
       `Finished cards: ${finished.length ? finished.join(', ') : 'none'}. Current card: ${cardIdx + 1} (${c.name}). ` +
@@ -951,12 +1050,14 @@ function renderPractice(id) {
     if (!st || st.done || !st.fields.has(field)) return;
     st.fields.delete(field);
     setTimeout(updateStep, 0);
+    setTimeout(saveProgress, 0);
     cardEls[i].querySelector(`[data-f="${field}"]`).classList.remove('ok');
   }
 
   function completeCard(i) {
     const st = cardState[i];
     st.done = true;
+    saveProgress();
     const stars = starsFor(st);
     const el = cardEls[i];
     el.classList.add('done', 'flash');
@@ -977,6 +1078,11 @@ function renderPractice(id) {
   }
 
   function finishAll() {
+    if (startReview()) return; // əvvəl alınmayan cümlələri təkrar et
+    showTrophy();
+  }
+  function showTrophy() {
+    store.set(PKEY, null); // oyun bitdi — növbəti dəfə əvvəldən
     const total = cardState.reduce((n, x) => n + starsFor(x), 0);
     confetti(null, 120);
     const ov = document.createElement('div');
@@ -994,7 +1100,44 @@ function renderPractice(id) {
   }
 
   if (d.cards) {
-    setActive(0);
+    // Saxlanmış irəliləyişi bərpa et
+    const saved = store.get(PKEY, null);
+    if (saved && Array.isArray(saved.cards) && saved.cards.length === cardState.length) {
+      saved.cards.forEach((sc, i) => {
+        const st = cardState[i];
+        st.fields = new Set(sc.fields || []);
+        st.skipped = new Set(sc.skipped || []);
+        st.mistakes = sc.mistakes || 0;
+        st.done = !!sc.done;
+        cardEls[i].querySelectorAll('.lc-fields li').forEach((li) => {
+          const f = li.dataset.f;
+          li.classList.toggle('skip', st.skipped.has(f));
+          li.classList.toggle('ok', st.fields.has(f) && !st.skipped.has(f));
+        });
+        if (st.done) {
+          const stars = starsFor(st);
+          cardEls[i].classList.add('done');
+          cardEls[i].querySelector('.lc-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+        }
+      });
+      reviewMode = !!saved.reviewMode;
+      reviewQ = Array.isArray(saved.reviewQ) ? saved.reviewQ : [];
+      restored = hasProgress();
+      updateScore();
+    }
+    setActive(restored ? (reviewMode && reviewQ[0] ? reviewQ[0].i : saved.cardIdx || 0) : 0);
+    if (restored) {
+      const bar = document.createElement('div');
+      bar.className = 'resume-bar';
+      bar.innerHTML = `↩️ Qaldığın yerdən davam: <b>${esc(d.cards[cardIdx].name)}</b> <button type="button" id="restartCards">🔄 Yenidən başla</button>`;
+      $app.querySelector('#cardList').before(bar);
+      bar.querySelector('#restartCards').addEventListener('click', () => {
+        if (!confirm('Kartlar əvvəldən başlasın? (Səhv dəftəri silinmir)')) return;
+        store.set(PKEY, null);
+        teardown();
+        renderPractice(d.id);
+      });
+    }
     cardEls.forEach((el, i) => el.addEventListener('click', () => i !== cardIdx && setActive(i, true)));
   }
 
@@ -1005,6 +1148,7 @@ function renderPractice(id) {
     mistakeNote(saveMistake(cat, d, args));
     if (d.cards && cardState[cardIdx]) {
       cardState[cardIdx].mistakes++;
+      saveProgress();
       fx.oops();
       cardEls[cardIdx].classList.remove('shake');
       void cardEls[cardIdx].offsetWidth;
@@ -1048,7 +1192,7 @@ function renderPractice(id) {
     checkedUtter = utterId;
     const errs = findErrors();
     // Azure səhv tapıb, müəllim isə heç nə deməyibsə — düzəltdir
-    if (d.cards && az && azReady(az.field) && az.cardIdx === cardIdx && !cardState[cardIdx].fields.has(az.field)) {
+    if (d.cards && az && azReady(az.field) && az.cardIdx === cardIdx && (reviewMode || !cardState[cardIdx].fields.has(az.field))) {
       const aErr = azErrs(az.field);
       if (aErr.length && modelLoggedUtter !== utterId) {
         for (const t of tickedThisUtter) if (t.field === az.field) untick(t.i, t.field);
@@ -1069,6 +1213,15 @@ function renderPractice(id) {
       }
     }
     const azBlocked = (f) => azErrs(f).length > 0;
+    // Təkrar mərhələsi: müəllim ✓ qoymağı unudubsa, yazıda düzgündürsə özümüz qəbul edək
+    if (reviewMode && reviewQ[0] && modelLoggedUtter !== utterId) {
+      const it = reviewQ[0];
+      if (it.i === cardIdx && asrUsable(judgeText()) && matchCardSentence(judgeText(), d.cards[it.i]).includes(it.field) && !errs.some((e) => blocks(e, it.field)) && !azBlocked(it.field)) {
+        setTick(it.i, it.field, 'ok');
+        session.sendText(`[App] ${reviewAdvance()}`);
+        return;
+      }
+    }
     // Model ✓ qoymağı unudubsa: yazıda tam düzgün deyilən cümlələri özümüz ✓ edək
     if (d.cards && modelLoggedUtter !== utterId && !cardState[cardIdx].done) {
       const ci = cardIdx;
@@ -1172,7 +1325,7 @@ function renderPractice(id) {
           }
           modelLoggedUtter = utterId;
           // Ekrandakı yazı mənalıdırsa onu götür, yoxsa ("40356", gürcü hərfləri) modelin eşitdiyini
-          if (heard && plausibleTranscript(heard) && sameText(heard, args.correct) === false) args = { ...args, wrong: heard };
+          if (heard && asrUsable(heard) && sameText(heard, args.correct) === false) args = { ...args, wrong: heard };
           registerMistake(args);
           if (noteFail(field) >= 3) return `saved. ${MOVE_ON}`;
           return 'saved';
@@ -1214,7 +1367,7 @@ function renderPractice(id) {
           case 'utterance': {
             const forPress = flushPress.length ? flushPress.shift() : pressId;
             if (!azureOn || forPress !== pressId) break; // köhnə basılışın qeydi — yoxlamaya ehtiyac yoxdur
-            const field = nextField(cardIdx);
+            const field = reviewMode ? reviewQ[0] && reviewQ[0].field : nextField(cardIdx);
             if (!field) break;
             // Azure üçün rəqəm SÖZLƏ yazılır (sən "fünfunddreißig" deyirsən, "35" yox)
             const c0 = d.cards[cardIdx];
@@ -1269,7 +1422,19 @@ function renderPractice(id) {
             micBtn.hidden = endBtn.hidden = textForm.hidden = quick.hidden = false;
             updateMic();
             setStatus(idleStatus());
-            session.sendText(START_MESSAGE);
+            if (d.cards && hasProgress()) {
+              // Əvvəlki irəliləyiş var — əvvəldən başlama, qaldığın yerdən davam et
+              const c = d.cards[cardIdx];
+              const base = cardResumeText().replace(
+                'The connection was restarted.',
+                'The learner continues a lesson started earlier; the progress was saved.',
+              );
+              session.sendText(
+                reviewMode
+                  ? base
+                  : base.replace(`"Bağlantı bərpa olundu. ${c.name} kartından davam edirik."`, `"Xoş gəldin! ${c.name} kartından davam edirik."`),
+              );
+            } else session.sendText(START_MESSAGE);
             timerId = setInterval(() => {
               const sec = Math.floor((Date.now() - started) / 1000);
               timerEl.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
