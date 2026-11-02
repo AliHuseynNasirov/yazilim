@@ -462,7 +462,8 @@ function renderSettings() {
     store.set('settings', {
       apiKey: $app.querySelector('#apiKey').value.trim(),
       model: custom || $app.querySelector('#model').value,
-      modelPicked: !!custom || $app.querySelector('#model').value !== MODELS[0],
+      // Ayarlarda seçilən model həmişə birinci sınanır (əlçatan deyilsə, növbəti modelə keçilir)
+      modelPicked: true,
       azureKey: $app.querySelector('#azureKey').value.trim(),
       pronLevel: $app.querySelector('#pronLevel').value,
       azureRegion: $app.querySelector('#azureRegion').value.trim().toLowerCase().replace(/\s+/g, ''),
@@ -471,6 +472,7 @@ function renderSettings() {
       mode: $app.querySelector('#mode').value,
       v: SETTINGS_VERSION,
     });
+    store.set('workingModel', null);
     history.length > 1 ? history.back() : (location.hash = '#/');
   });
   $app.querySelector('#reset').addEventListener('click', () => {
