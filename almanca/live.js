@@ -198,7 +198,9 @@ export class LiveSession {
       }
 
       // 1000 = normal bitmə, 1008 = açar/model qəbul olunmadı — bunları təkrarlamırıq
-      const retryable = e.code !== 1000 && e.code !== 1008 && e.code !== 1007;
+      // Gözlənilməz HƏR qopma (1000 daxil — Google sessiya vaxtı bitəndə 1000 ilə bağlayır) bərpa olunur.
+      // Yalnız açar/ayar xətaları (1008, 1007) dərsi dayandırır.
+      const retryable = e.code !== 1008 && e.code !== 1007;
       if (retryable && this.retries < MAX_RETRIES) {
         this.retries++;
         // 2-ci uğursuzluqdan sonra ehtiyat modelə keç (köhnə söhbət açarı yeni modeldə işləmir)
@@ -270,14 +272,18 @@ export class LiveSession {
     if (sc.outputTranscription && sc.outputTranscription.text) {
       this.flushIn();
       this._outBuf = (this._outBuf || '') + sc.outputTranscription.text;
+      this.turnText = (this.turnText || 0) + sc.outputTranscription.text.length;
       this.emit('aiText', sc.outputTranscription.text);
     }
-    if (sc.interrupted) this.L('kəsildi', 'müəllimin sözü kəsildi');
+    if (sc.interrupted) this.L('kəsildi', `müəllimin sözü kəsildi (${(this.turnAudio / 48000).toFixed(1)} san səs gəlmişdi)`);
     if (sc.turnComplete) {
+      this.silentRun = 0;
       this.flushIn();
+      if (this.turnAudio) this.L('müəllim səsi', `${(this.turnAudio / 48000).toFixed(1)} san`);
       this.flushOut();
       this.retries = 0; // uğurlu cavab — sayğacı sıfırla
-      this.emit('turnComplete', { audio: this.turnAudio });
+      this.emit('turnComplete', { audio: this.turnAudio, text: this.turnText || 0 });
+      this.turnText = 0;
       this.turnAudio = 0;
     }
   }
@@ -366,7 +372,21 @@ export class LiveSession {
     this.turnAudio += bytes.length;
     const pcm = new Int16Array(bytes.buffer, 0, bytes.byteLength >> 1);
     const f = new Float32Array(pcm.length);
-    for (let i = 0; i < pcm.length; i++) f[i] = pcm[i] / 32768;
+    let sum = 0;
+    for (let i = 0; i < pcm.length; i++) {
+      f[i] = pcm[i] / 32768;
+      sum += f[i] * f[i];
+    }
+    // Model bəzən cümlədən sonra uzun SÜKUT göndərir (onlarla saniyə). 1.2 san-dən uzun sükutu çalmırıq:
+    // "Müəllim danışır" vəziyyəti bitir və şagird dərhal danışa bilir.
+    const rms = Math.sqrt(sum / Math.max(1, f.length));
+    if (rms < 0.004) {
+      this.silentRun = (this.silentRun || 0) + f.length / 24000;
+      if (this.silentRun > 1.2) {
+        if (!this.sources.size) this.emit('speaking', false);
+        return;
+      }
+    } else this.silentRun = 0;
     const buf = this.playCtx.createBuffer(1, f.length, 24000);
     buf.copyToChannel(f, 0);
     const s = this.playCtx.createBufferSource();

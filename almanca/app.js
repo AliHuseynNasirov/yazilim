@@ -852,7 +852,7 @@ function renderPractice(id) {
     }
     return (
       `CARD ${i + 1} (${d.cards[i].name}) IS COMPLETE. The app now shows card ${n + 1} (${d.cards[n].name}). ` +
-      `Say exactly this, ONCE, and nothing else: "Super! İndi ${ordAz(n + 1)} kart: ${d.cards[n].name}." Do not call show_card. Then wait for the learner.`
+      `Say exactly this, ONCE, and nothing else: "Super! İndi ${ordAz(n + 1)} kart: ${d.cards[n].name}." Do not call show_card. Then end your turn immediately (do not produce silence or filler).`
     );
   }
   // ---- Təkrar mərhələsi ----
@@ -861,7 +861,7 @@ function renderPractice(id) {
     return (
       'ALL CARDS ARE DONE, but some sentences were not said correctly (marked "!"). REVIEW PHASE starts now: ' +
       `the app shows card ${it.i + 1} (${c.name}) and highlights the sentence "${SENT[it.field](c)}". ` +
-      `Say in Azerbaijani exactly this, ONCE: "Bütün kartlar bitdi! İndi alınmayan cümlələri təkrar edək. ${c.name} kartı — ${FIELD_AZ[it.field]}." Then wait. ` +
+      `Say in Azerbaijani exactly this, ONCE: "Bütün kartlar bitdi! İndi alınmayan cümlələri təkrar edək. ${c.name} kartı — ${FIELD_AZ[it.field]}." Then end your turn immediately (do not produce silence or filler). ` +
       'In the review phase there is NO limit of tries: correct every mistake as usual until the learner says it correctly. Do not call show_card.'
     );
   }
@@ -884,7 +884,7 @@ function renderPractice(id) {
       setTimeout(() => setActive(it.i), 600);
       return (
         `ticked. Next review sentence: card ${it.i + 1} (${c.name}) — "${SENT[it.field](c)}". ` +
-        `Say in Azerbaijani exactly this, ONCE: "Super! İndi ${c.name} kartı — ${FIELD_AZ[it.field]}." Then wait.`
+        `Say in Azerbaijani exactly this, ONCE: "Super! İndi ${c.name} kartı — ${FIELD_AZ[it.field]}." Then end your turn immediately (do not produce silence or filler).`
       );
     }
     reviewMode = false;
@@ -1028,7 +1028,7 @@ function renderPractice(id) {
   }
   const MOVE_ON =
     'This was already the 3rd try for this sentence, so do NOT ask for it again: say the correct sentence one last time slowly, ' +
-    'then say in Azerbaijani "Bunu sonra yenə məşq edərik, davam edək." and wait silently for the next sentence.';
+    'then say in Azerbaijani "Bunu sonra yenə məşq edərik, davam edək." and end your turn immediately.';
 
   // Yenidən qoşulanda yeni sessiyaya dəqiq vəziyyəti de ki, çaşmasın
   function cardResumeText() {
@@ -1044,7 +1044,7 @@ function renderPractice(id) {
       return (
         '[App] The connection was restarted. You continue the SAME lesson with exactly the same rules. All cards are done; this is the REVIEW PHASE ' +
         `(no limit of tries). Current review sentence: card ${it.i + 1} (${rc.name}) — "${SENT[it.field](rc)}". ` +
-        `Do NOT greet or explain. Say only in Azerbaijani: "Davam edirik. ${rc.name} kartı — ${FIELD_AZ[it.field]}." Then wait silently.`
+        `Do NOT greet or explain. Say only in Azerbaijani: "Davam edirik. ${rc.name} kartı — ${FIELD_AZ[it.field]}." Then end your turn immediately (do not produce silence or filler).`
       );
     }
     return (
@@ -1052,7 +1052,7 @@ function renderPractice(id) {
       `Finished cards: ${finished.length ? finished.join(', ') : 'none'}. Current card: ${cardIdx + 1} (${c.name}). ` +
       `Already correct on this card: ${done.length ? done.join(', ') : 'nothing yet'}. Still missing: ${missing.join(', ')}. ` +
       'Do NOT greet, do NOT explain the task again, and do NOT ask the learner for any sentence. ' +
-      `Say only in Azerbaijani: "Bağlantı bərpa olundu. ${c.name} kartından davam edirik." Then stay silent and wait for the learner. ` +
+      `Say only in Azerbaijani: "Bağlantı bərpa olundu. ${c.name} kartından davam edirik." Then end your turn immediately (do not produce silence or filler). ` +
       'After each correct sentence say only a very short praise ("Super!", "Gut!") — never tell the learner what to say next.'
     );
   }
@@ -1334,7 +1334,7 @@ function renderPractice(id) {
             if (cardState[ci].done) return `NOT SAVED — this is NOT a mistake, the learner said it correctly. ${nextCardText(ci)}`;
             return (
               `NOT SAVED — this is NOT a mistake. The speech recognition clearly heard the correct sentence "${heard}". ` +
-              'The learner said it correctly. Do not correct it again. Say only "Super!" and wait for the next sentence. The line is already ticked.'
+              'The learner said it correctly. Do not correct it again. Say only "Super!" and end your turn immediately. The line is already ticked.'
             );
           }
           modelLoggedUtter = utterId;
@@ -1412,7 +1412,8 @@ function renderPractice(id) {
             setStatus('🔄 Yenidən qoşulur…');
             break;
           case 'ready':
-            if (data && data.model) store.set('workingModel', data.model);
+            // yalnız İLK qoşulmanın modelini yadda saxla (dərs ortasında ehtiyat modelə keçid yadda qalmasın)
+            if (data && data.model && !data.reconnect) store.set('workingModel', data.model);
             if (data && data.reconnect) {
               setStatus(idleStatus());
               if (data.resumed) {
@@ -1480,7 +1481,6 @@ function renderPractice(id) {
             stopWaiting();
             if (last) last.open = false;
             closeUtter();
-            if (data && data.audio === 0 && aiTurnText.trim()) sys('🔇 Bu cavabın səsi serverdən gəlmədi.');
             checkAfterTurn();
             break;
           case 'speaking':

@@ -46,7 +46,8 @@ export function stepContent(v, step) {
     return {
       kind,
       question: null,
-      taskAz: `İndi "${v.inf}" felini "${P.pron}" ilə de.`,
+      // daxildə « » — müəllimə verilən təlimatda dırnaq içində dırnaq olmasın (model çaşıb təkrarlayırdı)
+      taskAz: `İndi «${v.inf}» felini «${P.pron}» ilə de.`,
       example: `${P.pron} ${formOf(v, v.person)}`,
     };
   }

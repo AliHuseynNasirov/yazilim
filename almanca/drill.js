@@ -232,8 +232,8 @@ export function renderDrill(ctx) {
   function sayText(c) {
     const v = V[c.v];
     const sc = stepContent(v, c.step);
-    if (sc.kind === 'conj') return `say in ${expl} exactly this, ONCE: "${sc.taskAz}" Then wait.`;
-    return `ask exactly this German question, ONCE, slowly: "${sc.question}" Then wait.`;
+    if (sc.kind === 'conj') return `say in ${expl} exactly this, ONCE: "${sc.taskAz}" Then end your turn immediately (do not produce silence or filler).`;
+    return `ask exactly this German question, ONCE, slowly: "${sc.question}" Then end your turn immediately (do not produce silence or filler).`;
   }
   function stateText() {
     const c = cur();
@@ -302,7 +302,7 @@ export function renderDrill(ctx) {
       return `THE WHOLE DRILL IS FINISHED. Say in ${expl} warmly that all 9 verbs are done and praise the learner.`;
     }
     const newVerb = !c || n.v !== c.v;
-    const intro = newVerb && !reviewMode ? `Say in ${expl}: "Növbəti fel: ${V[n.v].inf}." Then ` : 'Then ';
+    const intro = newVerb && !reviewMode ? `Say in ${expl}: «Növbəti fel: ${V[n.v].inf}.» Then ` : 'Then ';
     return `${intro}${sayText(n)}`;
   }
 
@@ -399,7 +399,8 @@ export function renderDrill(ctx) {
       onEvent(type, data) {
         switch (type) {
           case 'ready':
-            if (data && data.model) store.set('workingModel', data.model);
+            // yalnız İLK qoşulmanın modelini yadda saxla (dərs ortasında ehtiyat modelə keçid yadda qalmasın)
+            if (data && data.model && !data.reconnect) store.set('workingModel', data.model);
             if (data && data.reconnect) {
               setStatus(idleStatus());
               sys(data.resumed ? '✅ Bağlantı bərpa olundu.' : `✅ Yenidən qoşuldu (${data.model}).`);
