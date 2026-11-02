@@ -105,7 +105,7 @@ export function renderDrill(ctx) {
   };
   $app.innerHTML = `
     ${header(`🔤 ${esc(d.title)}`, `#/d/${d.id}`)}
-    <main class="practice cards-mode">
+    <main class="practice cards-mode drill-mode">
       <details class="rule-mini"><summary>📘 ${esc(d.rule.title)}</summary><div class="rule">${ctx.ruleHtml(d.rule)}</div></details>
       <div class="score-bar"><span id="scDone">✅ 0/${V.length}</span><span id="scErr">❌ 0</span></div>
       ${hasProgress() ? `<div class="resume-bar">↩️ Qaldığın yerdən davam <button type="button" id="restartDrill">🔄 Yenidən başla</button></div>` : ''}
@@ -129,7 +129,7 @@ export function renderDrill(ctx) {
       </div>
       <div id="chat" class="chat"><div class="sys">${s.apiKey ? 'Başlamaq üçün aşağıdakı düyməyə bas.' : '🔑 Əvvəlcə <a href="#/settings">Ayarlar</a>-da API açarını yaz.'}</div></div>
       <div class="controls">
-        <div class="status"><span id="status">Hazır</span><span id="timer"></span></div>
+        <div class="status"><span id="status">Hazır</span><span><button id="logBtn" type="button" class="mini-btn" title="Jurnal">📋</button> <span id="timer"></span></span></div>
         <div class="meter"><span id="level"></span></div>
         <div class="buttons">
           <button class="btn primary big" id="startBtn" ${s.apiKey ? '' : 'disabled'}>▶️ Başla</button>
@@ -140,7 +140,6 @@ export function renderDrill(ctx) {
           <input id="textIn" placeholder="Və ya yaz… (almanca)" autocomplete="off">
           <button class="btn">➤</button>
         </form>
-        <div class="quick"><button id="logBtn" type="button">📋 Jurnal</button></div>
       </div>
     </main>`;
 
@@ -210,11 +209,17 @@ export function renderDrill(ctx) {
     $app.querySelector('#scDone').textContent = `✅ ${V.filter((_, i) => verbDone(i) && !status[i].includes('skip')).length}/${V.length}`;
     $app.querySelector('#scErr').textContent = `❌ ${mistakes}`;
     if (c) {
+      // Siyahını işıqlanan ADDIMA sürüşdür (kiçik ekranda kartın başı yox, cari sətir görünsün)
       setTimeout(() => {
         const list = $app.querySelector('#cardList');
         const el = cardEls[c.v];
-        if (list && el) list.scrollTo({ top: Math.max(0, el.offsetTop - 80), behavior: 'smooth' });
-      }, 300);
+        const li = el && el.querySelector('.lc-fields li.now');
+        if (!list || !el) return;
+        const lr = list.getBoundingClientRect();
+        const r = (li || el).getBoundingClientRect();
+        const target = list.scrollTop + (r.top - lr.top) - (li ? 70 : 8);
+        list.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      }, 420);
     }
   }
   paint();
@@ -409,6 +414,7 @@ export function renderDrill(ctx) {
               break;
             }
             if (data && data.model) sys(`🤖 Model: ${data.model}`);
+            { const rb = $app.querySelector('.resume-bar'); if (rb) rb.remove(); }
             started = Date.now();
             startBtn.hidden = true;
             micBtn.hidden = endBtn.hidden = textForm.hidden = false;

@@ -222,3 +222,12 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 /* Kart siyahısının sonunda boşluq (son kart yuxarı sürüşə bilsin) — padding yox, ayrıca element:
    padding siyahının kiçilməsinə mane olurdu və 🎙️ düyməsini ekrandan aşağı itələyirdi */
 .card-list::after { content: ''; flex: none; height: 35vh; }
+/* Fel dərsi: kiçik ekranda addım cədvəlinə daha çox yer */
+.drill-mode .chat { max-height: 20vh; }
+.drill-mode .lcard.active .vbadge { height: 46px; font-size: 16px; }
+.drill-mode .lc-fields li { padding: 4px 0; font-size: 14px; }
+.mini-btn { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 0 6px; font-size: 13px; line-height: 20px; }
+/* Fel kartında 7 uzun sətir var — açıq kartın hündürlük limitini artır (yoxsa son sətirlər kəsilirdi) */
+.drill-mode .lcard.active .lc-fields { max-height: 1000px; }
+/* Boş qalan ipucu elementi sətri sıxmasın (cari olmayan sətirlərdə gizlət) */
+.lc-fields li:not(.now) .hint { display: none; }
