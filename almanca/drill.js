@@ -347,7 +347,8 @@ export function renderDrill(ctx) {
     if (!bad && pron === 'wrong') bad = { ok: false, az: 'Tələffüz səhvdir.', en: 'the teacher judged the pronunciation as wrong', wrong: sources[0] || '' };
 
     if (!bad) {
-      addLine('okline', `✅ ${sc.example}`);
+      // yaşıl sətirdə nümunə yox, şagirdin DEDİYİ cümlə görünsün
+      addLine('okline', `✅ ${sources[0] || sc.example}`);
       return `CORRECT. Say only a very short praise ("Super!"). ${advance('ok')}`;
     }
     logMistake(bad.wrong || '—', sc.example, bad.az);
