@@ -3,6 +3,7 @@ import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords, normWord } from './checker.js';
 import { renderDrill } from './drill.js';
+import { dlog, showLogOverlay } from './log.js';
 import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
 const $app = document.getElementById('app');
@@ -530,6 +531,7 @@ function renderPractice(id) {
           <button data-q="Hilfe! Was kann ich sagen?">🆘 Kömək</button>
           <button data-q="Başa düşmədim, azərbaycanca izah et.">❓ İzah et</button>
           <button id="soundTest" type="button">🔊 Səsi yoxla</button>
+          <button id="logBtn" type="button">📋 Jurnal</button>
         </div>
       </div>
     </main>`;
@@ -1295,6 +1297,7 @@ function renderPractice(id) {
   }
 
   startBtn.addEventListener('click', async () => {
+    dlog.start(`${d.title} · ${s.mode} · Azure ${azureOn ? 'açıq' : 'sönük'}`);
     fx.init();
     startBtn.disabled = true;
     setStatus('Qoşulur…');
@@ -1313,6 +1316,7 @@ function renderPractice(id) {
       systemText: buildSystemPrompt(d, s),
       tools: buildTools(d),
       capture: azureOn,
+      log: (k, x) => dlog.add(k, x),
       onTool(name, args) {
         stopWaiting();
         // Yalnız göstəriş: müəllimin eşitdiyini çatda göstər (məntiq dəyişmir)
@@ -1389,6 +1393,7 @@ function renderPractice(id) {
             a.promise = assessPronunciation(data, a.ref, s.azureKey, s.azureRegion).then((r) => {
               a.done = true;
               a.result = r;
+              dlog.add('Azure', r && r.ok ? `${r.score}/100 · ${r.words.map((w) => `${w.word} ${w.score ?? '-'}${w.error && w.error !== 'None' ? ' ' + w.error : ''}`).join(', ')} · eşitdi: ${r.text}` : `xəta: ${r ? r.error : '?'}`);
               renderAzure(line, r, a.pcm);
               if (deferredCheck && !pendingMarks && a.pressId === pressId && !verifierPending()) {
                 deferredCheck = false;
@@ -1590,6 +1595,7 @@ function renderPractice(id) {
     inp.value = '';
   });
 
+  $app.querySelector('#logBtn').addEventListener('click', () => showLogOverlay($app));
   $app.querySelector('#soundTest').addEventListener('click', () => {
     if (session) session.testTone();
     sys('🔊 Siqnal çaldı. Eşitmədinsə: telefonun yan düyməsi ilə səsi artır (musiqi/media səsi) və səssiz rejimi söndür.');

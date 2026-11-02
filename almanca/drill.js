@@ -12,6 +12,7 @@ import { LiveSession } from './live.js';
 import { plausibleTranscript, normWord } from './checker.js';
 import { assessPronunciation, azureErrors, worstPhoneme, phoneLabel } from './azure.js';
 import { PERSONS, STEPS, stepKind, stepContent, checkAnswer, formOf } from './drill-core.js';
+import { dlog, showLogOverlay } from './log.js';
 
 const LANG = { az: 'Azerbaijani', tr: 'Turkish', de: 'very simple German' };
 
@@ -139,6 +140,7 @@ export function renderDrill(ctx) {
           <input id="textIn" placeholder="Və ya yaz… (almanca)" autocomplete="off">
           <button class="btn">➤</button>
         </form>
+        <div class="quick"><button id="logBtn" type="button">📋 Jurnal</button></div>
       </div>
     </main>`;
 
@@ -151,6 +153,7 @@ export function renderDrill(ctx) {
   const endBtn = $app.querySelector('#endBtn');
   const textForm = $app.querySelector('#textForm');
   const cardEls = [...$app.querySelectorAll('.vcard')];
+  $app.querySelector('#logBtn').addEventListener('click', () => showLogOverlay($app));
   const setStatus = (t) => (statusEl.textContent = t);
   const scroll = () => (chat.scrollTop = chat.scrollHeight);
   let session = null;
@@ -366,6 +369,7 @@ export function renderDrill(ctx) {
   const idleStatus = () => (ptt ? 'Danışmaq üçün 🎙️ düyməsini basılı saxla' : micOn ? '🎧 Dinləyirəm… danış' : '🔇 Mikrofon bağlıdır');
 
   startBtn.addEventListener('click', async () => {
+    dlog.start(`${d.title} · ${s.mode} · Azure ${azureOn ? 'açıq' : 'sönük'}`);
     fx.init();
     startBtn.disabled = true;
     setStatus('Qoşulur…');
@@ -380,6 +384,7 @@ export function renderDrill(ctx) {
       pushToTalk: ptt,
       capture: azureOn,
       systemText: drillPrompt(d, expl),
+      log: (k, x) => dlog.add(k, x),
       tools: TOOLS,
       onTool(name, args) {
         stopWaiting();
@@ -435,6 +440,7 @@ export function renderDrill(ctx) {
             a.promise = assessPronunciation(data, ref, s.azureKey, s.azureRegion).then((r) => {
               a.done = true;
               a.result = r;
+              dlog.add('Azure', r && r.ok ? `${r.score}/100 · ${r.words.map((w) => `${w.word} ${w.score ?? '-'}`).join(', ')}` : `xəta: ${r ? r.error : '?'}`);
               if (!r || !r.ok) {
                 line.textContent = `🎯 Azure: cavab alınmadı — ${r ? r.error : 'xəta'}`;
                 line.classList.add('fail');
@@ -568,6 +574,7 @@ export function renderDrill(ctx) {
     addText('user', t);
     last.open = false;
     submittedPress = pressId;
+    dlog.add('yazılı cavab', t);
     session.sendText(`[App] The learner TYPED this answer: "${t}". ${judge(t, 'good')}`);
     inp.value = '';
   });

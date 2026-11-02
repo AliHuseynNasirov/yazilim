@@ -55,6 +55,21 @@ export class LiveSession {
     return this.models[this.modelIdx];
   }
 
+  // Jurnal (problemləri analiz etmək üçün)
+  L(kind, text) {
+    try {
+      if (this.o.log) this.o.log(kind, text);
+    } catch {}
+  }
+  flushIn() {
+    if (this._inBuf) this.L('ASR (sən)', this._inBuf.trim());
+    this._inBuf = '';
+  }
+  flushOut() {
+    if (this._outBuf) this.L('müəllim dedi', this._outBuf.trim());
+    this._outBuf = '';
+  }
+
   emit(type, data) {
     this.o.onEvent && this.o.onEvent(type, data);
   }
@@ -126,6 +141,7 @@ export class LiveSession {
         contextWindowCompression: { slidingWindow: {} },
       };
       if (tools && tools.length) setup.tools = [{ functionDeclarations: tools }];
+      this.L('qoşulma', `${this.model}${this.resumeHandle ? ' (söhbət bərpası)' : ''}`);
       this.send({ setup });
     };
 
@@ -144,6 +160,7 @@ export class LiveSession {
 
     ws.onclose = (e) => {
       if (ws !== this.ws) return;
+      this.L('bağlantı bağlandı', `kod ${e.code} ${e.reason || ''}`);
       this.ready = false;
       if (this.closed) return;
       this.stopPlayback();
@@ -200,6 +217,7 @@ export class LiveSession {
 
   handle(m, resuming) {
     if (m.setupComplete) {
+      this.L('hazır', this.model);
       this.ready = true;
       const wasReady = this.everReady;
       this.everReady = true;
@@ -213,6 +231,8 @@ export class LiveSession {
     }
     if (m.goAway) this.emit('goaway', m.goAway);
     if (m.toolCall) {
+      this.flushIn();
+      for (const fc of m.toolCall.functionCalls || []) this.L('müəllim→tətbiq', `${fc.name} ${JSON.stringify(fc.args || {})}`);
       // Model funksiya çağırır (səhvi qeyd et, kartı göstər) — dərhal cavab veririk
       // onTool Promise qaytara bilər (məs. yazının gəlməsini gözləmək üçün)
       const wsAtCall = this.ws;
@@ -227,6 +247,7 @@ export class LiveSession {
           return { id: fc.id, name: fc.name, response: { result } };
         }),
       ).then((responses) => {
+        for (const r of responses) this.L('tətbiq→müəllim (cavab)', r.response.result);
         // bağlantı arada qopubsa, köhnə cavabı yeni bağlantıya göndərmə
         if (this.ws === wsAtCall) this.send({ toolResponse: { functionResponses: responses } });
       });
@@ -242,9 +263,19 @@ export class LiveSession {
     for (const p of parts) {
       if (p.inlineData && p.inlineData.data) this.play(p.inlineData.data);
     }
-    if (sc.inputTranscription && sc.inputTranscription.text) this.emit('userText', sc.inputTranscription.text);
-    if (sc.outputTranscription && sc.outputTranscription.text) this.emit('aiText', sc.outputTranscription.text);
+    if (sc.inputTranscription && sc.inputTranscription.text) {
+      this._inBuf = (this._inBuf || '') + sc.inputTranscription.text;
+      this.emit('userText', sc.inputTranscription.text);
+    }
+    if (sc.outputTranscription && sc.outputTranscription.text) {
+      this.flushIn();
+      this._outBuf = (this._outBuf || '') + sc.outputTranscription.text;
+      this.emit('aiText', sc.outputTranscription.text);
+    }
+    if (sc.interrupted) this.L('kəsildi', 'müəllimin sözü kəsildi');
     if (sc.turnComplete) {
+      this.flushIn();
+      this.flushOut();
       this.retries = 0; // uğurlu cavab — sayğacı sıfırla
       this.emit('turnComplete', { audio: this.turnAudio });
       this.turnAudio = 0;
@@ -303,6 +334,7 @@ export class LiveSession {
   // Serverin avtomatik nitq aşkarlaması həmişə açıqdır (əl ilə rejim 1011 xətasına səbəb olurdu).
   setSending(on) {
     if (on === this.sending) return;
+    this.L('mikrofon', on ? 'basıldı' : 'buraxıldı');
     if (on) {
       if (this.o.pushToTalk) {
         this.stopPlayback();
@@ -322,6 +354,7 @@ export class LiveSession {
   }
 
   sendText(text) {
+    this.L('tətbiq→müəllim', text);
     this.send({ clientContent: { turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true } });
   }
 
