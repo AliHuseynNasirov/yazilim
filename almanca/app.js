@@ -1,7 +1,7 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
-import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords } from './checker.js';
+import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords, normWord } from './checker.js';
 import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
 const $app = document.getElementById('app');
@@ -573,7 +573,24 @@ function renderPractice(id) {
   let az = null; // { pressId, field, ref, done, result, promise }
   const azPending = () => az && az.pressId === pressId && !az.done;
   const azReady = (field) => az && az.pressId === pressId && az.done && az.result && az.result.ok && (!field || az.field === field);
-  const azErrs = (field) => (azReady(field) ? azureErrors(az.result, s.pronLevel || 'normal') : []);
+  // Söz yazıda (ASR) varmı? Yoxdursa — başqa söz deyilib (fakt/söz səhvi), tələffüz səhvi deyil
+  const wordSaid = (word, text) => {
+    const toks = (text.match(/[\p{L}\d]+/gu) || []).map(normWord);
+    const w = normWord(word);
+    if (toks.includes(w)) return true;
+    const c = d.cards && d.cards[az.cardIdx];
+    // yaş: "fünfunddreißig" = "35" = "fünf und dreißig"
+    if (c && w === normWord(c.ageDe)) return toks.includes(String(c.age)) || toks.join('').includes(w);
+    return false;
+  };
+  const azErrs = (field) => {
+    if (!azReady(field) || az.cardIdx !== cardIdx) return [];
+    const errs = azureErrors(az.result, s.pronLevel || 'normal');
+    const text = userUtter.trim();
+    // ASR yazısı yoxdursa və ya qarışıqdırsa — Azure-a güvən; varsa, yalnız deyilmiş sözlərin tələffüzü
+    if (!text || !plausibleTranscript(text)) return errs;
+    return errs.filter((e) => wordSaid(e.word, text));
+  };
 
   const findErrors = () => {
     const text = judgeText();
@@ -636,6 +653,11 @@ function renderPractice(id) {
   }
 
   function setActive(i, fromUser) {
+    if (fromUser) {
+      // kart dəyişdi: köhnə karta aid gözləyən yoxlamaları ləğv et
+      az = null;
+      deferredCheck = false;
+    }
     if (!d.cards) return;
     cardIdx = Math.max(0, Math.min(d.cards.length - 1, i));
     cardEls.forEach((el, j) => el.classList.toggle('active', j === cardIdx));
@@ -1024,7 +1046,7 @@ function renderPractice(id) {
     checkedUtter = utterId;
     const errs = findErrors();
     // Azure səhv tapıb, müəllim isə heç nə deməyibsə — düzəltdir
-    if (d.cards && az && azReady(az.field)) {
+    if (d.cards && az && azReady(az.field) && az.cardIdx === cardIdx && !cardState[cardIdx].fields.has(az.field)) {
       const aErr = azErrs(az.field);
       if (aErr.length && modelLoggedUtter !== utterId) {
         for (const t of tickedThisUtter) if (t.field === az.field) untick(t.i, t.field);
@@ -1195,7 +1217,7 @@ function renderPractice(id) {
             // Azure üçün rəqəm SÖZLƏ yazılır (sən "fünfunddreißig" deyirsən, "35" yox)
             const c0 = d.cards[cardIdx];
             const ref = field === 'age' ? `Ich bin ${c0.ageDe} Jahre alt.` : SENT[field](c0);
-            const a = { pressId, field, ref, done: false, result: null, pcm: data };
+            const a = { pressId, field, ref, done: false, result: null, pcm: data, cardIdx };
             az = a;
             const line = azureLine();
             line.textContent = `🎯 Azure yoxlayır… (${a.ref})`;
@@ -1225,6 +1247,8 @@ function renderPractice(id) {
               setStatus(idleStatus());
               if (data.resumed) {
                 sys('✅ Bağlantı bərpa olundu, qaldığımız yerdən davam edirik.');
+                // yaddaş qalsa da, çaşmasın deyə dəqiq vəziyyəti xatırlat
+                if (d.cards) setTimeout(() => session && session.ready && session.sendText(cardResumeText()), pendingMarks ? 1000 : 0);
               } else {
                 sys(`✅ Yenidən qoşuldu (${data.model}).`);
                 const sendResume = () =>
