@@ -3,6 +3,7 @@ import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
 import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords, normWord } from './checker.js';
 import { renderDrill } from './drill.js';
+import { renderScramble } from './scramble.js';
 import { dlog, showLogOverlay } from './log.js';
 import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
@@ -368,7 +369,7 @@ function renderDialog(id) {
         </div>
       </section>
       <div class="sticky-cta">
-        <a class="btn primary big" href="#/practice/${d.id}">🎙️ Səsli məşqə başla</a>
+        <a class="btn primary big" href="#/practice/${d.id}">${d.scramble ? '🧩 Məşqə başla' : '🎙️ Səsli məşqə başla'}</a>
       </div>
     </main>`;
 
@@ -487,6 +488,8 @@ function renderPractice(id) {
   const found = findDialog(id);
   if (!found) return renderHome();
   const { category: cat, dialog: d } = found;
+  // Dağınıq sual cümlələri: səssiz, ayrıca faylda
+  if (d.scramble) return renderScramble({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
   // Fel dərsi ayrıca faylda işləyir (kart dərsinin koduna toxunmur)
   if (d.drill) {
     return renderDrill({

@@ -1056,6 +1056,74 @@ export const CATEGORIES = [
     ],
   },
   {
+    id: 'sual',
+    icon: '🧩',
+    title: 'Sual cümlələri qurmaq',
+    dialogs: [
+      {
+        id: 'sual-1',
+        title: 'Dağınıq sözlərdən sual qur',
+        situation:
+          'Hər turda 25 dağınıq sual cümləsi (W-Frage və Satzfrage). Sözlərə ardıcıl toxunub düzgün sualı qur. Hər sözün altında azərbaycanca tərcüməsi var. Növbəti turda cümlələr təkrar olunmur.',
+        scramble: true,
+        lines: [
+          ['A', 'Wie heißt du?', 'Sənin adın nədir?'],
+          ['B', 'Ich heiße Leyla.', 'Mənim adım Leyladır.'],
+          ['A', 'Woher kommst du?', 'Haradansan?'],
+          ['B', 'Ich komme aus Aserbaidschan.', 'Azərbaycandanam.'],
+          ['A', 'Wohnst du in Baku?', 'Bakıda yaşayırsan?'],
+          ['B', 'Ja, ich wohne in Baku.', 'Bəli, Bakıda yaşayıram.'],
+          ['A', 'Sprichst du Deutsch?', 'Almanca danışırsan?'],
+          ['B', 'Ja, ein bisschen.', 'Bəli, bir az.'],
+        ],
+        rule: {
+          title: 'Sualda felin yeri',
+          text: [
+            '<b>W-Frage</b> (sual sözü ilə): sual sözü 1-ci yerdə, <b>FEL 2-ci yerdə</b>, sonra şəxs. Məs.: <i>Wo wohnst du?</i>',
+            '<b>Satzfrage</b> (bəli / xeyr sualı): <b>FEL 1-ci yerdə</b>, sonra şəxs. Məs.: <i>Wohnst du in Berlin?</i>',
+            'Hər iki sualda şəxs (du, er, Anna…) felin <b>dərhal arxasınca</b> gəlir. Felin sonluğu şəxsə uyğun olmalıdır: du wohn<b>st</b>, er wohn<b>t</b>, ihr wohn<b>t</b>, Sie wohn<b>en</b>.',
+          ],
+          tables: [
+            {
+              head: ['1', '2', '3', '…'],
+              rows: [
+                ['Wo', 'wohnst', 'du', '?'],
+                ['Was', 'trinkt', 'Anna', 'gern?'],
+                ['Wohnst', 'du', 'in Berlin', '?'],
+                ['Spricht', 'er', 'Deutsch', '?'],
+              ],
+            },
+            {
+              head: ['Sual sözü', 'Tərcümə'],
+              rows: [
+                ['wo', 'harada'],
+                ['woher', 'haradan'],
+                ['wie', 'necə'],
+                ['was', 'nə'],
+                ['wann', 'nə vaxt'],
+                ['welche', 'hansı'],
+                ['wie alt / wie viele', 'neçə yaş / neçə'],
+              ],
+            },
+          ],
+          tips: ['Bəzi sözlərdə iki düzgün sıra var: "Trinkst du gern Tee?" və "Trinkst du Tee gern?" — hər ikisi qəbul olunur.'],
+        },
+        vocab: [
+          ['wo', 'harada'],
+          ['woher', 'haradan'],
+          ['wie', 'necə'],
+          ['was', 'nə'],
+          ['wann', 'nə vaxt'],
+          ['welche', 'hansı'],
+          ['wie alt', 'neçə yaş'],
+          ['wie viele', 'neçə (sayca)'],
+          ['wie lange', 'nə qədər vaxt'],
+          ['gern', 'xoşlayaraq'],
+        ],
+      },
+    ],
+  },
+  {
     id: 'serbest',
     icon: '🎯',
     title: 'Sərbəst məşq',
