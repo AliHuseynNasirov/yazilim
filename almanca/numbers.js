@@ -215,12 +215,13 @@ export function renderNumbers(ctx) {
     $pause.addEventListener('click', () => {
       if (state === 'paused') {
         $pause.textContent = '⏸ Fasilə';
+        $in.focus();
+        // cari rəqəm artıq yoxlanıbsa növbətiyə keç, yoxsa onu yenidən de
+        if (results.length > idx) return next();
         $in.value = '';
         play();
-        $in.focus();
         return;
       }
-      if (state === 'fb') return; // rəy göstərilərkən gözlə
       clearTimers();
       speakSeq++;
       if ('speechSynthesis' in window) speechSynthesis.cancel();
