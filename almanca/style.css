@@ -264,3 +264,28 @@ th { background: var(--brand); color: #fff; font-weight: 600; }
 .sc-wrong { margin: 6px 0; padding-left: 20px; }
 .sc-wrong li { margin: 2px 0; }
 .sc-answer + .sc-result { margin-top: 14px; }
+
+/* ---------- Rəqəm dinləmə ---------- */
+.nm h3 { font-size: 15px; margin: 14px 0 6px; }
+.nm .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.nm-card { margin: 16px 0; padding: 18px 16px; border-radius: var(--radius); background: #fff; border: 3px solid #c9cfdc; text-align: center; transition: background .2s, border-color .2s; }
+.nm-card.listening { border-color: #2f62c9; }
+.nm-card.waiting { border-color: #2f62c9; }
+.nm-card.ok { border-color: var(--ok); background: #e5f6ec; }
+.nm-card.bad { border-color: #e05555; background: #fdeaea; }
+.nm-ear { font-size: 40px; line-height: 1; cursor: pointer; user-select: none; }
+.nm-card.listening .nm-ear { animation: nmPulse .6s ease-in-out infinite alternate; }
+@keyframes nmPulse { from { transform: scale(1); } to { transform: scale(1.18); } }
+.nm-in { display: block; width: 100%; max-width: 220px; margin: 12px auto 8px; padding: 10px; font: 700 40px/1.1 system-ui, sans-serif; text-align: center; border: 2px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); }
+.nm-in:focus { outline: none; border-color: #2f62c9; }
+.nm-timer { height: 6px; max-width: 220px; margin: 0 auto 10px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.nm-timer span { display: block; height: 100%; width: 100%; background: #2f62c9; }
+.nm-fb { min-height: 48px; font-size: 18px; }
+.nm-card.ok .nm-fb { color: #13603a; }
+.nm-card.bad .nm-fb { color: #8a1f1f; }
+.nm-fb .small { margin-top: 4px; font-size: 13px; }
+.nm-ctrl { display: flex; gap: 8px; justify-content: center; }
+.nm-wrong { display: flex; flex-wrap: wrap; gap: 8px; }
+.nm-endcta { display: flex; flex-direction: column; gap: 8px; }
+.nm-endcta .btn { margin: 0 auto; width: 100%; max-width: 688px; }
+main.nm { padding-bottom: 210px; }

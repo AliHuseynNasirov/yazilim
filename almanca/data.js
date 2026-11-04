@@ -1124,6 +1124,74 @@ export const CATEGORIES = [
     ],
   },
   {
+    id: 'dinle',
+    icon: '🔢',
+    title: 'Rəqəmlər: dinlə və yaz',
+    dialogs: [
+      {
+        id: 'dinle-1',
+        title: 'Rəqəmləri eşidib yaz',
+        situation:
+          'Tətbiq təsadüfi rəqəmləri almanca deyir (0–100), sən 1–2 saniyə ərzində rəqəmlə yazırsan. Düzgün → yaşıl, səhv → qırmızı. Dinləmə bacarığını gücləndirir.',
+        numbers: true,
+        lines: [
+          ['A', 'Wie alt bist du?', 'Neçə yaşın var?'],
+          ['B', 'Ich bin fünfundzwanzig Jahre alt.', 'Mənim 25 yaşım var.'],
+          ['A', 'Wie ist deine Telefonnummer?', 'Telefon nömrən neçədir?'],
+          ['B', 'Null, eins, sieben, drei, vier, acht.', '0, 1, 7, 3, 4, 8.'],
+          ['A', 'Was kostet das?', 'Bu neçəyədir?'],
+          ['B', 'Das kostet siebenundneunzig Euro.', 'Bu 97 avrodur.'],
+        ],
+        rule: {
+          title: 'Almanca rəqəmlər',
+          text: [
+            '13–19: tək + <b>zehn</b>: drei<b>zehn</b> (13), vier<b>zehn</b> (14). Diqqət: <b>sechzehn</b> (16), <b>siebzehn</b> (17).',
+            '21–99: <b>əvvəl TƏK, sonra ONLUQ</b>, arada <b>und</b>: fünf<b>und</b>zwanzig = 5 + 20 = <b>25</b>. Ona görə 25 ilə 52-ni qarışdırmaq asandır!',
+            '<b>eins</b> → 21-də <b>ein</b>undzwanzig olur. 30 = drei<b>ß</b>ig (z yox, ß).',
+          ],
+          tables: [
+            {
+              head: ['', '', '', ''],
+              rows: [
+                ['0 null', '1 eins', '2 zwei', '3 drei'],
+                ['4 vier', '5 fünf', '6 sechs', '7 sieben'],
+                ['8 acht', '9 neun', '10 zehn', '11 elf'],
+                ['12 zwölf', '13 dreizehn', '16 sechzehn', '17 siebzehn'],
+              ],
+            },
+            {
+              head: ['Onluq', 'Almanca'],
+              rows: [
+                ['20', 'zwanzig'],
+                ['30', 'dreißig'],
+                ['40', 'vierzig'],
+                ['50', 'fünfzig'],
+                ['60', 'sechzig'],
+                ['70', 'siebzig'],
+                ['80', 'achtzig'],
+                ['90', 'neunzig'],
+                ['100', 'hundert'],
+              ],
+            },
+          ],
+          tips: ['Əvvəl yavaş tempdə (3–5 san) başla, alışdıqca 2 və 1 saniyəyə keç.'],
+        },
+        vocab: [
+          ['einundzwanzig', '21'],
+          ['fünfundzwanzig', '25'],
+          ['zweiundfünfzig', '52'],
+          ['dreißig', '30'],
+          ['sechzehn', '16'],
+          ['siebzehn', '17'],
+          ['sechzig', '60'],
+          ['siebzig', '70'],
+          ['siebenundneunzig', '97'],
+          ['hundert', '100'],
+        ],
+      },
+    ],
+  },
+  {
     id: 'serbest',
     icon: '🎯',
     title: 'Sərbəst məşq',
