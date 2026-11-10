@@ -12,7 +12,7 @@ export const CATEGORIES = [
         id: 'tanisliq-1',
         title: 'Özün haqqında: sual-cavab',
         situation:
-          'Anna səndən adını, haradan olduğunu, harada yaşadığını, yaşını, dillərini və peşəni soruşur. Sonra sən ondan soruşursan, sonda növbə ilə danışırsınız.',
+          'Anna səndən adını, haradan olduğunu, harada yaşadığını, yaşını, dillərini və peşəni soruşur. Sonra sən ondan soruşursan, sonda növbə ilə danışırsınız. Sonda ünvanını, telefon nömrəni və bir dostunun (Max) nömrəsinin səndə olub-olmadığını soruşur.',
         ai: 'You are Anna, a friendly German woman meeting the learner for the first time. Use informal "du".',
         user: 'The learner plays themselves and gives true information about themselves.',
         persona: [
@@ -23,6 +23,9 @@ export const CATEGORIES = [
           'Speaks: Deutsch, Englisch und ein bisschen Türkisch',
           'Learns: Spanisch',
           'Job: Lehrerin',
+          'Address: Bergstraße 12, Berlin (say: "Bergstraße zwölf")',
+          'Phone number: 0176 3458 — say the digits one by one: null, eins, sieben, sechs, drei, vier, fünf, acht',
+          'Has the phone number of her friend Max: 015 2903 — null, eins, fünf, zwei, neun, null, drei',
         ],
         topics: [
           { az: 'Ad', q: 'Wie heißt du?', a: 'Ich heiße …', ai: 'Ich heiße Anna.' },
@@ -32,6 +35,9 @@ export const CATEGORIES = [
           { az: 'Danışdığı dillər', q: 'Welche Sprachen sprichst du?', a: 'Ich spreche …', ai: 'Ich spreche Deutsch, Englisch und ein bisschen Türkisch.' },
           { az: 'Öyrəndiyi dil', q: 'Was lernst du?', a: 'Ich lerne …', ai: 'Ich lerne Spanisch.' },
           { az: 'Peşə', q: 'Was bist du von Beruf?', a: 'Ich bin … von Beruf. / Ich bin Student.', ai: 'Ich bin Lehrerin von Beruf.' },
+          { az: 'Ünvan', q: 'Wie ist deine Adresse?', a: 'Meine Adresse ist … (küçə + nömrə, şəhər)', ai: 'Meine Adresse ist Bergstraße zwölf, Berlin.' },
+          { az: 'Telefon nömrəsi', q: 'Wie ist deine Telefonnummer?', a: 'Meine Telefonnummer ist … (rəqəmləri bir-bir de)', ai: 'Meine Telefonnummer ist null, eins, sieben, sechs, drei, vier, fünf, acht.' },
+          { az: 'Kiminsə nömrəsi', q: 'Hast du die Telefonnummer von Max?', a: 'Ja, ich habe die Nummer. Sie ist … / Nein, ich habe die Nummer nicht.', ai: 'Ja, die Nummer von Max ist null, eins, fünf, zwei, neun, null, drei.' },
         ],
         phases: [
           {
@@ -62,17 +68,26 @@ export const CATEGORIES = [
           ['B', 'Ich bin zweiundzwanzig Jahre alt. Und wie alt bist du?', '22 yaşım var. Bəs sənin neçə yaşın var?'],
           ['A', 'Ich bin achtundzwanzig. Welche Sprachen sprichst du?', '28 yaşım var. Hansı dillərdə danışırsan?'],
           ['B', 'Ich spreche Aserbaidschanisch und Russisch. Und du?', 'Azərbaycanca və rusca danışıram. Bəs sən?'],
+          ['A', 'Ich spreche Deutsch, Englisch und ein bisschen Türkisch. Wie ist deine Adresse?', 'Almanca, ingiliscə və bir az türkcə danışıram. Ünvanın nədir?'],
+          ['B', 'Meine Adresse ist Nizamistraße zehn, Baku. Und wie ist deine Adresse?', 'Mənim ünvanım Nizami küçəsi 10, Bakıdır. Bəs sənin ünvanın nədir?'],
+          ['A', 'Meine Adresse ist Bergstraße zwölf, Berlin. Wie ist deine Telefonnummer?', 'Mənim ünvanım Berqştrasse 12, Berlindir. Telefon nömrən neçədir?'],
+          ['B', 'Meine Telefonnummer ist null, fünf, null, drei, zwei, eins, vier. Und deine?', 'Mənim telefon nömrəm 0503214-dür. Bəs səninki?'],
+          ['A', 'Null, eins, sieben, sechs, drei, vier, fünf, acht. Hast du die Telefonnummer von Max?', '0176 3458. Maksın telefon nömrəsi səndə var?'],
+          ['B', 'Nein, ich habe die Nummer nicht. Hast du die Nummer von Max?', 'Xeyr, nömrə məndə yoxdur. Maksın nömrəsi səndə var?'],
+          ['A', 'Ja, die Nummer von Max ist null, eins, fünf, zwei, neun, null, drei.', 'Bəli, Maksın nömrəsi 015 2903-dür.'],
         ],
         rule: {
           title: 'Fel şəxsə görə: sual "du" ilə → cavab "ich" ilə',
           focus:
-            'Verb conjugation ich vs. du (heißen, kommen, wohnen, lernen, sein, sprechen); forming W-questions with "du" (verb in position 2) and answering with "ich".',
+            'Verb conjugation ich vs. du (heißen, kommen, wohnen, lernen, sein, sprechen); forming W-questions with "du" (verb in position 2) and answering with "ich". Also: asking for an address and a phone number ("Wie ist deine Adresse / Telefonnummer?" → "Meine Adresse / Telefonnummer ist …", digits said one by one) and the yes/no question "Hast du die Telefonnummer von Max?" → "Ja, ich habe die Nummer. Sie ist …" / "Nein, ich habe die Nummer nicht." (verb haben: ich habe / du hast).',
           text: [
             'Ən vacib qayda: <b>sual "du" ilə</b> verilir, <b>cavab "ich" ilə</b>. Fel də dəyişir: <i>Wie heiß<b>t</b> du? → Ich heiß<b>e</b> …</i>',
             'Qaydalı fellərdə: <b>ich → -e</b>, <b>du → -st</b>. Məsələn: ich wohn<b>e</b> / du wohn<b>st</b>, ich lern<b>e</b> / du lern<b>st</b>.',
             'Qaydasız fellər: <b>sein</b>: ich bin / du bist. <b>sprechen</b>: ich spreche / du spr<b>i</b>chst. <b>heißen</b>: du heißt (-st yox, sadəcə -t).',
             'Sualın quruluşu: <b>sual sözü + FEL + du</b>: <i>Wo wohnst du?</i> Fel həmişə 2-ci yerdə durur.',
             'Eyni sualı qarşı tərəfə qaytarmaq: <i>Und du?</i> və ya tam formada: <i>Und wo wohnst du?</i>',
+            'Ünvan və telefon: <b>Wie ist deine Adresse?</b> → <i>Meine Adresse ist Nizamistraße 10, Baku.</i> · <b>Wie ist deine Telefonnummer?</b> → <i>Meine Telefonnummer ist null, fünf, null …</i> (rəqəmlər bir-bir deyilir). Sualda <b>deine</b> (sənin), cavabda <b>meine</b> (mənim).',
+            'Kiminsə nömrəsini soruşmaq — bəli/xeyr sualı, <b>FEL əvvəldə</b>: <b>Hast du die Telefonnummer von Max?</b> (Maksın nömrəsi səndə var?) → <i>Ja, ich habe die Nummer. Sie ist …</i> / <i>Nein, ich habe die Nummer nicht.</i> Fel <b>haben</b>: ich hab<b>e</b> / du ha<b>st</b>.',
           ],
           tables: [
             {
@@ -84,6 +99,7 @@ export const CATEGORIES = [
                 ['lernen', 'lerne', 'lernst', 'lernt'],
                 ['sein', 'bin', 'bist', 'ist'],
                 ['sprechen', 'spreche', 'sprichst', 'spricht'],
+                ['haben', 'habe', 'hast', 'hat'],
               ],
             },
             {
@@ -96,11 +112,15 @@ export const CATEGORIES = [
                 ['Welche Sprachen sprichst du?', 'Ich spreche …'],
                 ['Was lernst du?', 'Ich lerne …'],
                 ['Was bist du von Beruf?', 'Ich bin … von Beruf.'],
+                ['Wie ist deine Adresse?', 'Meine Adresse ist …'],
+                ['Wie ist deine Telefonnummer?', 'Meine Telefonnummer ist …'],
+                ['Hast du die Telefonnummer von Max?', 'Ja, ich habe die Nummer. Sie ist … / Nein, ich habe die Nummer nicht.'],
               ],
             },
           ],
           tips: [
             'Tez-tez edilən səhvlər: ❌ Ich heißt → ✅ Ich heiße · ❌ Wo wohnen du? → ✅ Wo wohnst du? · ❌ Wie alt du bist? → ✅ Wie alt bist du? · ❌ Ich habe 22 Jahre → ✅ Ich bin 22 Jahre alt · ❌ Du sprechst → ✅ Du sprichst',
+            'Ünvan/nömrə səhvləri: ❌ Wie ist dein Adresse? → ✅ Wie ist deine Adresse? · ❌ Wo ist deine Telefonnummer? → ✅ Wie ist deine Telefonnummer? · ❌ Du hast die Nummer von Max? → ✅ Hast du die Nummer von Max? · ❌ Ich habe nicht die Nummer → ✅ Ich habe die Nummer nicht',
           ],
         },
         vocab: [
@@ -113,6 +133,14 @@ export const CATEGORIES = [
           ['lernen', 'öyrənmək'],
           ['der Beruf', 'peşə'],
           ['Und du?', 'Bəs sən?'],
+          ['die Adresse', 'ünvan'],
+          ['die Straße', 'küçə'],
+          ['die Telefonnummer', 'telefon nömrəsi'],
+          ['die Nummer', 'nömrə'],
+          ['mein / meine', 'mənim'],
+          ['dein / deine', 'sənin'],
+          ['haben', 'malik olmaq (… var)'],
+          ['von Max', 'Maksın (die Nummer von Max)'],
         ],
       },
       {
