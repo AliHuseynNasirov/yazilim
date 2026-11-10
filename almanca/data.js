@@ -12,7 +12,7 @@ export const CATEGORIES = [
         id: 'tanisliq-1',
         title: 'Özün haqqında: sual-cavab',
         situation:
-          'Anna səndən adını, haradan olduğunu, harada yaşadığını, yaşını, dillərini və peşəni soruşur. Sonra sən ondan soruşursan, sonda növbə ilə danışırsınız. Sonda ünvanını, telefon nömrəni və bir dostunun (Max) nömrəsinin səndə olub-olmadığını soruşur.',
+          'Anna səndən adını, haradan olduğunu, harada yaşadığını, yaşını, dillərini və peşəni soruşur. Sonra sən ondan soruşursan, sonda növbə ilə danışırsınız. Sonda ünvanını, telefon nömrəni və bir dostunun (Max) nömrəsinin səndə olub-olmadığını soruşur. Əhvalını da soruşur: "Wie geht\'s dir?"',
         ai: 'You are Anna, a friendly German woman meeting the learner for the first time. Use informal "du".',
         user: 'The learner plays themselves and gives true information about themselves.',
         persona: [
@@ -23,12 +23,14 @@ export const CATEGORIES = [
           'Speaks: Deutsch, Englisch und ein bisschen Türkisch',
           'Learns: Spanisch',
           'Job: Lehrerin',
+          'How she is: good — "Mir geht\'s gut, danke."',
           'Address: Bergstraße 12, Berlin (say: "Bergstraße zwölf")',
           'Phone number: 0176 3458 — say the digits one by one: null, eins, sieben, sechs, drei, vier, fünf, acht',
           'Has the phone number of her friend Max: 015 2903 — null, eins, fünf, zwei, neun, null, drei',
         ],
         topics: [
           { az: 'Ad', q: 'Wie heißt du?', a: 'Ich heiße …', ai: 'Ich heiße Anna.' },
+          { az: 'Əhval', q: "Wie geht's dir?", a: "Mir geht's gut, danke. / Es geht. / Nicht so gut.", ai: "Mir geht's gut, danke." },
           { az: 'Haradan', q: 'Woher kommst du?', a: 'Ich komme aus …', ai: 'Ich komme aus Deutschland, aus Hamburg.' },
           { az: 'Harada yaşayır', q: 'Wo wohnst du?', a: 'Ich wohne in …', ai: 'Ich wohne in Berlin.' },
           { az: 'Yaş', q: 'Wie alt bist du?', a: 'Ich bin … Jahre alt.', ai: 'Ich bin achtundzwanzig Jahre alt.' },
@@ -58,6 +60,9 @@ export const CATEGORIES = [
           },
         ],
         lines: [
+          ['A', "Hallo! Wie geht's dir?", 'Salam! Necəsən?'],
+          ['B', "Mir geht's gut, danke. Und dir?", 'Yaxşıyam, sağ ol. Bəs sən?'],
+          ['A', 'Danke, auch gut!', 'Sağ ol, mən də yaxşıyam!'],
           ['A', 'Wie heißt du?', 'Adın nədir?'],
           ['B', 'Ich heiße Ali. Und wie heißt du?', 'Mənim adım Əlidir. Bəs sənin adın nədir?'],
           ['A', 'Ich heiße Anna. Woher kommst du?', 'Mənim adım Annadır. Haradansan?'],
@@ -79,7 +84,7 @@ export const CATEGORIES = [
         rule: {
           title: 'Fel şəxsə görə: sual "du" ilə → cavab "ich" ilə',
           focus:
-            'Verb conjugation ich vs. du (heißen, kommen, wohnen, lernen, sein, sprechen); forming W-questions with "du" (verb in position 2) and answering with "ich". Also: asking for an address and a phone number ("Wie ist deine Adresse / Telefonnummer?" → "Meine Adresse / Telefonnummer ist …", digits said one by one) and the yes/no question "Hast du die Telefonnummer von Max?" → "Ja, ich habe die Nummer. Sie ist …" / "Nein, ich habe die Nummer nicht." (verb haben: ich habe / du hast).',
+            'Verb conjugation ich vs. du (heißen, kommen, wohnen, lernen, sein, sprechen); forming W-questions with "du" (verb in position 2) and answering with "ich". Also: asking for an address and a phone number ("Wie ist deine Adresse / Telefonnummer?" → "Meine Adresse / Telefonnummer ist …", digits said one by one) and the yes/no question "Hast du die Telefonnummer von Max?" → "Ja, ich habe die Nummer. Sie ist …" / "Nein, ich habe die Nummer nicht." (verb haben: ich habe / du hast). Also: "Wie geht\'s dir?" (= "Wie geht es dir?") → "Mir geht\'s gut, danke." / "Es geht." / "Nicht so gut." — the answer starts with "Mir" (not "Ich"); asking back: "Und dir?" (not "Und du?").',
           text: [
             'Ən vacib qayda: <b>sual "du" ilə</b> verilir, <b>cavab "ich" ilə</b>. Fel də dəyişir: <i>Wie heiß<b>t</b> du? → Ich heiß<b>e</b> …</i>',
             'Qaydalı fellərdə: <b>ich → -e</b>, <b>du → -st</b>. Məsələn: ich wohn<b>e</b> / du wohn<b>st</b>, ich lern<b>e</b> / du lern<b>st</b>.',
@@ -87,6 +92,7 @@ export const CATEGORIES = [
             'Sualın quruluşu: <b>sual sözü + FEL + du</b>: <i>Wo wohnst du?</i> Fel həmişə 2-ci yerdə durur.',
             'Eyni sualı qarşı tərəfə qaytarmaq: <i>Und du?</i> və ya tam formada: <i>Und wo wohnst du?</i>',
             'Ünvan və telefon: <b>Wie ist deine Adresse?</b> → <i>Meine Adresse ist Nizamistraße 10, Baku.</i> · <b>Wie ist deine Telefonnummer?</b> → <i>Meine Telefonnummer ist null, fünf, null …</i> (rəqəmlər bir-bir deyilir). Sualda <b>deine</b> (sənin), cavabda <b>meine</b> (mənim).',
+            'Əhval: <b>Wie geht\'s dir?</b> (= Wie geht es dir? — Necəsən?) → <i>Mir geht\'s gut, danke.</i> (yaxşıyam) · <i>Es geht.</i> (elədir, pis deyil) · <i>Nicht so gut.</i> (çox yaxşı deyil). Cavab <b>Mir</b> ilə başlayır, <b>Ich</b> ilə yox! Qarşı tərəfdən soruşmaq: <b>Und dir?</b> ("Und du?" yox).',
             'Kiminsə nömrəsini soruşmaq — bəli/xeyr sualı, <b>FEL əvvəldə</b>: <b>Hast du die Telefonnummer von Max?</b> (Maksın nömrəsi səndə var?) → <i>Ja, ich habe die Nummer. Sie ist …</i> / <i>Nein, ich habe die Nummer nicht.</i> Fel <b>haben</b>: ich hab<b>e</b> / du ha<b>st</b>.',
           ],
           tables: [
@@ -106,6 +112,7 @@ export const CATEGORIES = [
               head: ['Sual (du)', 'Cavab (ich)'],
               rows: [
                 ['Wie heißt du?', 'Ich heiße …'],
+                ["Wie geht's dir?", "Mir geht's gut, danke. Und dir?"],
                 ['Woher kommst du?', 'Ich komme aus …'],
                 ['Wo wohnst du?', 'Ich wohne in …'],
                 ['Wie alt bist du?', 'Ich bin … Jahre alt.'],
@@ -121,6 +128,7 @@ export const CATEGORIES = [
           tips: [
             'Tez-tez edilən səhvlər: ❌ Ich heißt → ✅ Ich heiße · ❌ Wo wohnen du? → ✅ Wo wohnst du? · ❌ Wie alt du bist? → ✅ Wie alt bist du? · ❌ Ich habe 22 Jahre → ✅ Ich bin 22 Jahre alt · ❌ Du sprechst → ✅ Du sprichst',
             'Ünvan/nömrə səhvləri: ❌ Wie ist dein Adresse? → ✅ Wie ist deine Adresse? · ❌ Wo ist deine Telefonnummer? → ✅ Wie ist deine Telefonnummer? · ❌ Du hast die Nummer von Max? → ✅ Hast du die Nummer von Max? · ❌ Ich habe nicht die Nummer → ✅ Ich habe die Nummer nicht',
+            "Əhval səhvləri: ❌ Wie geht's du? → ✅ Wie geht's dir? · ❌ Ich bin gut / Ich geht gut → ✅ Mir geht's gut · ❌ Und du? (bu sualda) → ✅ Und dir?",
           ],
         },
         vocab: [
@@ -141,6 +149,12 @@ export const CATEGORIES = [
           ['dein / deine', 'sənin'],
           ['haben', 'malik olmaq (… var)'],
           ['von Max', 'Maksın (die Nummer von Max)'],
+          ["Wie geht's dir?", 'Necəsən?'],
+          ["Mir geht's gut.", 'Yaxşıyam.'],
+          ['Es geht.', 'Elədir (pis deyil).'],
+          ['Nicht so gut.', 'Çox yaxşı deyil.'],
+          ['Und dir?', 'Bəs sən? (Wie geht\'s dir? sualında)'],
+          ['danke', 'sağ ol'],
         ],
       },
       {
