@@ -9,7 +9,7 @@
 // 3 uğursuz cəhd → "!" və növbəti addım; bütün fellərdən sonra "!" olanlar limitsiz təkrar olunur.
 
 import { LiveSession } from './live.js';
-import { plausibleTranscript, normWord } from './checker.js';
+import { plausibleTranscript, normWord, isRepeatRequest } from './checker.js';
 import { assessPronunciation, azureErrors, worstPhoneme, phoneLabel } from './azure.js';
 import { PERSONS, STEPS, stepKind, stepContent, checkAnswer, formOf } from './drill-core.js';
 import { dlog, showLogOverlay } from './log.js';
@@ -35,8 +35,9 @@ YOUR JOB — follow it strictly:
 3. If the response says the answer is wrong: explain the mistake in ${expl} using the content the app gives you (naturally, without any label or prefix), say the correct example slowly, and ask the learner to say it again. Do not tick anything yourself.
 4. If the response says it is correct: say only a very short praise ("Super!", "Richtig!") and then exactly what the response tells you to say next.
 5. Messages starting with "[App]" come from the app: follow them silently.
-6. Do not answer questions that are not about this drill. If the learner asks about the grammar of the current verb, explain briefly in ${expl} and repeat the current question.
-7. Speak German slowly and clearly. Keep everything short.
+6. If the learner asks you to repeat ("Kannst du das bitte wiederholen?", "Noch einmal, bitte", "Wie bitte?", "təkrar et", even with an accent like "Konnst du das widerholen"), this is NOT an answer: do NOT call submit_answer, just say the current question or task again slowly, exactly the same words, and wait.
+7. Do not answer questions that are not about this drill. If the learner asks about the grammar of the current verb, explain briefly in ${expl} and repeat the current question.
+8. Speak German slowly and clearly. Keep everything short.
 
 VERB ENDINGS (for your explanations): ich -e, du -st, er/sie/es -t, wir -en, ihr -t, sie/Sie -en. Irregular: du sprichst / er spricht, du gibst / er gibt, du hast / er hat, du heißt.
 In W-question answers the verb is in position 2 ("Ich lebe in Baku."). Yes/no questions are answered with "Ja, …" or "Nein, …".`;
@@ -395,6 +396,12 @@ export function renderDrill(ctx) {
       onTool(name, args) {
         stopWaiting();
         if (name !== 'submit_answer') return 'unknown function';
+        // "Kannst du das bitte wiederholen?" — cavab deyil, cəhd sayılmır
+        if (cur() && isRepeatRequest(args.heard || userUtter)) {
+          submittedPress = pressId;
+          sys('🔁 Təkrar xahişi — cəhd sayılmır.');
+          return `Not an answer: the learner asked you to repeat. It does not count as an attempt. Do not explain anything, just ${sayText(cur())}`;
+        }
         if (args.heard) addLine('heardline', `🧑‍🏫 Müəllim eşitdi: ${args.heard}`);
         submittedPress = pressId;
         // ASR yazısı və Azure gec gəlir — qərardan əvvəl qısa gözlə
@@ -483,7 +490,7 @@ export function renderDrill(ctx) {
             stopWaiting();
             if (last) last.open = false;
             // Müəllim submit_answer çağırmağı unudubsa: yazı etibarlıdırsa özümüz yoxlayaq
-            if (pressId > 0 && submittedPress !== pressId && asrUsable(userUtter.trim()) && cur()) {
+            if (pressId > 0 && submittedPress !== pressId && asrUsable(userUtter.trim()) && cur() && !isRepeatRequest(userUtter)) {
               submittedPress = pressId;
               session.sendText(`[App] ${judge('', 'good')}`);
             }

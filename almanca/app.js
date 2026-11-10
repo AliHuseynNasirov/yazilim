@@ -1,7 +1,7 @@
 import { CATEGORIES, findCategory, findDialog } from './data.js';
 import { LiveSession } from './live.js';
 import { buildSystemPrompt, buildTools, START_MESSAGE } from './prompt.js';
-import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords, normWord } from './checker.js';
+import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField, plausibleTranscript, diffWords, normWord, isRepeatRequest } from './checker.js';
 import { renderDrill } from './drill.js';
 import { renderScramble } from './scramble.js';
 import { renderNumbers } from './numbers.js';
@@ -532,7 +532,7 @@ function renderPractice(id) {
           <button class="btn">➤</button>
         </form>
         <div class="quick" id="quick" hidden>
-          <button data-q="Wie bitte? Noch einmal, langsam bitte.">🔁 Təkrar et</button>
+          <button data-q="Wie bitte? Noch einmal, langsam bitte." data-repeat="1">🔁 Təkrar et</button>
           <button data-q="Hilfe! Was kann ich sagen?">🆘 Kömək</button>
           <button data-q="Başa düşmədim, azərbaycanca izah et.">❓ İzah et</button>
           <button id="soundTest" type="button">🔊 Səsi yoxla</button>
@@ -641,13 +641,16 @@ function renderPractice(id) {
   const scroll = () => (chat.scrollTop = chat.scrollHeight);
 
   function addText(role, text) {
+    let fresh = false;
     if (!last || last.role !== role || !last.open) {
       const el = document.createElement('div');
       el.className = `msg ${role}`;
       chat.appendChild(el);
       last = { role, el, open: true, raw: '' };
+      fresh = true;
     }
     last.raw += text;
+    convTrack(role, last.raw, fresh);
     // Yazıya çevirmə alınmayıbsa ("40356", gürcü hərfləri) mənasız mətn göstərmə
     if (role === 'user' && !plausibleTranscript(last.raw)) {
       last.el.textContent = '🎙️ (səsin yazıya çevrilmədi — müəllim səsini eşidir)';
@@ -665,6 +668,51 @@ function renderPractice(id) {
     chat.appendChild(el);
     last = null;
     scroll();
+  }
+
+  // ---- Söhbət yaddaşı (kart dərsindən başqa dərslər): bağlantı kəsiləndə qaldığı yerdən davam üçün ----
+  const CKEY = `convLog.${d.id}`;
+  const convOn = !d.cards;
+  let convLog = convOn ? store.get(CKEY, []) : [];
+  if (!Array.isArray(convLog)) convLog = [];
+  let convEntry = null;
+  function convTrack(role, raw, fresh) {
+    if (!convOn) return;
+    if (fresh || !convEntry) {
+      convEntry = { r: role === 'ai' ? 'T' : 'L', t: '' };
+      convLog.push(convEntry);
+      if (convLog.length > 80) convLog = convLog.slice(-60);
+    }
+    convEntry.t = raw;
+    store.set(CKEY, convLog);
+  }
+  const hasConv = () => convOn && convLog.some((e) => e && e.r === 'T' && String(e.t || '').trim());
+  function convResumeText(intro, sayAz) {
+    const lines = convLog
+      .map((e) => ({ r: e.r, t: String(e.t || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() }))
+      .filter((e) => e.t)
+      .slice(-40)
+      .map((e) => `${e.r === 'T' ? 'Teacher (you)' : 'Learner'}: ${e.t.slice(0, 400)}`)
+      .join('\n');
+    return (
+      `[App] ${intro} You continue the SAME lesson with exactly the same rules and behaviour. ` +
+      `This is the conversation so far (the learner's lines come from automatic speech recognition and may contain recognition errors):\n${lines}\n\n` +
+      'Do NOT greet, do NOT introduce yourself or the lesson again, and do NOT start again from the beginning. ' +
+      'Find the exact point where the conversation stopped (for example which phase and which topic) and continue from there with the same plan. ' +
+      `First say only this in Azerbaijani: "${sayAz}" Then repeat your last question (if the learner already answered it correctly, continue with the next step) and end your turn.`
+    );
+  }
+  if (hasConv()) {
+    const bar = document.createElement('div');
+    bar.className = 'resume-bar conv';
+    bar.innerHTML = '↩️ Dərs <b>qaldığın yerdən</b> davam edəcək <button type="button" id="restartConv">🔄 Yenidən başla</button>';
+    chat.before(bar);
+    bar.querySelector('#restartConv').addEventListener('click', () => {
+      if (!confirm('Dərs əvvəldən başlasın? (Səhv dəftəri silinmir)')) return;
+      store.set(CKEY, null);
+      teardown();
+      renderPractice(d.id);
+    });
   }
 
   // ---- Kartlar: alt-alta, hər düzgün cümlədə ✓, kart bitəndə yaşıl + ulduz ----
@@ -1207,6 +1255,8 @@ function renderPractice(id) {
     }
     if (checkedUtter === utterId || !judgeText()) return;
     checkedUtter = utterId;
+    // "Kannst du das bitte wiederholen?" — cavab deyil, yoxlanmır
+    if (isRepeatRequest(judgeText())) return;
     const errs = findErrors();
     // Azure səhv tapıb, müəllim isə heç nə deməyibsə — düzəltdir
     if (d.cards && az && azReady(az.field) && az.cardIdx === cardIdx && (reviewMode || !cardState[cardIdx].fields.has(az.field))) {
@@ -1429,7 +1479,13 @@ function renderPractice(id) {
                 sys(`✅ Yenidən qoşuldu (${data.model}).`);
                 const sendResume = () =>
                   session &&
-                  session.sendText(d.cards ? cardResumeText() : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped, with exactly the same rules and behaviour as before.');
+                  session.sendText(
+                    d.cards
+                      ? cardResumeText()
+                      : hasConv()
+                        ? convResumeText('The connection was lost and restarted.', 'Bağlantı bərpa olundu, qaldığımız yerdən davam edirik.')
+                        : '[App] The connection was restarted. Do not repeat the introduction. Briefly say in Azerbaijani that we continue, then continue the lesson from where it stopped, with exactly the same rules and behaviour as before.',
+                  );
                 // ✓ yoxlaması hələ gedirsə, vəziyyəti o bitəndən sonra göndər
                 if (pendingMarks) setTimeout(sendResume, 1000);
                 else sendResume();
@@ -1455,7 +1511,19 @@ function renderPractice(id) {
                   ? base
                   : base.replace(`"Bağlantı bərpa olundu. ${c.name} kartından davam edirik."`, `"Xoş gəldin! ${c.name} kartından davam edirik."`),
               );
-            } else session.sendText(START_MESSAGE);
+            } else if (hasConv()) {
+              // Əvvəlki söhbət yadda qalıb — əvvəldən başlama, qaldığın yerdən davam et
+              { const rb = $app.querySelector('.resume-bar.conv'); if (rb) rb.remove(); }
+              sys('↩️ Qaldığın yerdən davam edirik.');
+              session.sendText(convResumeText('The learner continues this lesson after the connection was closed.', 'Xoş gəldin! Qaldığımız yerdən davam edirik.'));
+            } else {
+              if (convOn) {
+                convLog = [];
+                convEntry = null;
+                store.set(CKEY, convLog);
+              }
+              session.sendText(START_MESSAGE);
+            }
             timerId = setInterval(() => {
               const sec = Math.floor((Date.now() - started) / 1000);
               timerEl.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
@@ -1611,8 +1679,17 @@ function renderPractice(id) {
       if (last) last.open = false;
       addText('user', b.textContent);
       last.open = false;
+      if (b.dataset.repeat && convEntry) {
+        convEntry.t = '(asked you to repeat your last sentence)';
+        store.set(CKEY, convLog);
+      }
       closeUtter();
-      session.sendText(b.dataset.q);
+      session.sendText(
+        b.dataset.repeat
+          ? '[App] The learner pressed the "repeat" button: they did not understand. This is NOT an answer — do not judge it and do not call any function. ' +
+              'Say again, slowly and clearly, the last German question or sentence you said, with exactly the same words, then end your turn and wait.'
+          : b.dataset.q,
+      );
     }),
   );
 }

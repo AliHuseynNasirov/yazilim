@@ -26,6 +26,10 @@ function correctionRules(expl) {
 - EVERY time you correct a mistake, you MUST call the function log_mistake once, BEFORE you speak the correction, with: wrong (exactly what the learner said, in the language and script they used — if they spoke Azerbaijani, write it in Azerbaijani; never turn it into fake German), correct (the correct German sentence), explanation (one short sentence in ${expl}). Call it at the moment you correct, do not wait until the end.
 - WORD MISTAKES count too: if a word is wrong or mispronounced so that it sounds like a different or non-existent word (e.g. "heise" / "hayse" instead of "heiße", "Doichland" instead of "Deutschland", "Hamburk" instead of "Hamburg", "dreisig" instead of "dreißig"), it is a mistake: log it, say the correct word slowly, explain in ${expl} how it is said, and ask the learner to repeat the WHOLE sentence. A normal Azerbaijani accent is fine; only correct words that sound wrong.
 - If you did not hear clearly, say "Wie bitte? Noch einmal, bitte." Do not guess.
+- A REQUEST TO REPEAT IS NOT AN ANSWER. If the learner asks you to repeat — e.g. "Kannst du das bitte wiederholen?", "Können Sie das wiederholen?", "Noch einmal, bitte", "Wie bitte?", "Langsamer, bitte", "Ich verstehe nicht", or in Azerbaijani "təkrar et", "bir də de", "başa düşmədim", "eşitmədim" — even if it is said with mistakes or a strong accent (e.g. "Konnst du das bitte widerholen") — then:
+  • do NOT treat it as the answer to your question, do NOT judge or correct it, do NOT call log_mistake or any other function, and do NOT move on to the next step;
+  • simply say again, slowly and clearly, the LAST thing you said before it (your last question, or your last answer if the learner had asked you something), with exactly the same words — if your last turn had several sentences, repeat the German question/sentence the learner has to react to;
+  • then end your turn and wait for the learner's real answer.
 - When the answer is correct, give only a short praise ("Super!", "Richtig!", "Sehr gut!"). Never invent mistakes.
 
 ${endingRules(expl)}

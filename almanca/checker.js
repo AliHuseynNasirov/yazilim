@@ -411,3 +411,12 @@ export function diffWords(said, expected) {
   const en = [...pairs.map(([x, m]) => `"${x}" must be "${m}"`), ...missing.map((m) => `the word "${m}" is missing`)].join('; ');
   return { az, en, pairs, missing };
 }
+
+// Şagird müəllimdən təkrar etməsini xahiş edir ("Kannst du das bitte wiederholen?", "Wie bitte?", "təkrar et") —
+// bu, cavab deyil. Vurğu ilə deyilsə də tanınır ("Konnst du das bitte widerholen").
+const REPEAT_RE = /(w[iy]e?d[ae]r ?h[oö]l|noch ?(ein|ain)? ?mal|wie ?bitte|langsam|versteh\w* (ich )?(das )?nicht|nicht verstanden|t[əe]krar|bir d[əe] (de|söylə|soyle)|başa düşmədim|basa dusmedim|anlamadım|anlamadim|eşitmədim|esitmedim)/i;
+export function isRepeatRequest(text) {
+  const t = String(text || '').trim();
+  if (!t || t.length > 80) return false;
+  return REPEAT_RE.test(t);
+}
