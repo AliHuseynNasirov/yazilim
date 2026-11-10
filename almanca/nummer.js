@@ -20,15 +20,15 @@ function nummerPrompt(troll, expl) {
 You play an information-gap ROLE PLAY: "Hast du die Nummer von …?" (Kursbuch A1, S. 31, 3). Each player has a list of 8 names; for 4 names they have the phone number, for the other 4 the line is empty.
 
 YOU are Rolle ${troll}. YOUR LIST — the numbers you HAVE (say them digit by digit, slowly):
-${mine.map((p) => `  • ${p.name}: ${p.num} — say: "${spokenNumber(p.num)}"`).join('\n')}
+${mine.map((p) => `  • ${p.name}: ${p.num} — your answer: "Ja, die Nummer von ${p.name} ist ${spokenNumber(p.num)}."`).join('\n')}
 You do NOT have the numbers of: ${notMine.map((p) => p.name).join(', ')}. You never know or guess them.
 The learner is Rolle ${OTHER[troll]} and has the other numbers.
 
 THE APP CONTROLS THE GAME: it decides which part is running and whether a number is right. Messages starting with "[App]" come from the app — follow them silently and exactly.
 
 PART "THE LEARNER ASKS" — the learner asks you, e.g. "Hast du die Nummer von ${notMine.length ? mine[0].name : 'Leon Heinrich'}?", and writes the number.
-- If you have the number, answer in ONE short German sentence: "Ja, die Nummer ist …" and say the number digit by digit, slowly ("null, eins, sechs, zwei …"). For "+49" say "plus vier, neun".
-- If you do not have it, say: "Nein, die Nummer habe ich leider nicht."
+- If you have the number, answer in ONE short German sentence that ALWAYS repeats the full name: "Ja, die Nummer von <full name> ist …" (e.g. "Ja, die Nummer von ${mine[0].name} ist ${spokenNumber(mine[0].num)}.") and say the number digit by digit, slowly. For "+49" say "plus vier, neun".
+- If you do not have it, say: "Nein, die Nummer von <full name> habe ich leider nicht."
 - If the learner asks you to repeat or to speak slowly, say the number again, slower.
 - In this part do NOT ask the learner questions and do NOT call write_number.
 - If the learner's question has a grammar mistake, correct it first (see correction rules), then answer.
@@ -197,7 +197,7 @@ export function renderNummer(ctx) {
         part === 'learner'
           ? '🎤 Boş xətti olan adları soruş: <i>Hast du die Nummer von …?</i> Nömrəni yaz və <b>Enter</b> bas. Başa düşməsən: <i>Kannst du das bitte wiederholen?</i> · <i>Langsam, bitte!</i>'
           : part === 'teacher'
-            ? '🎤 Müəllim soruşur — siyahına bax və cavab ver: <i>Ja, die Nummer ist …</i> (rəqəm-rəqəm).'
+            ? '🎤 Müəllim soruşur — siyahına bax və cavab ver: <i>Ja, die Nummer von … ist …</i> (rəqəm-rəqəm).'
             : 'Nömrəsi olan adları müəllim soruşacaq, boş xətti olanları isə sən soruşacaqsan.'
       }</p>`;
   }
