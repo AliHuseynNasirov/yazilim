@@ -6,7 +6,7 @@ const LANG = {
   de: 'very simple German',
 };
 
-function correctionRules(expl) {
+export function correctionRules(expl) {
   return `CORRECTION RULES (MOST IMPORTANT — the learner struggles with verb forms by person, asking questions and answering):
 - Listen very carefully to EVERY word the learner says, especially:
   • the verb ending for the person: ich -e, du -st, er/sie/es -t, wir -en, ihr -t, sie/Sie -en;

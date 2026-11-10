@@ -5,6 +5,7 @@ import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField,
 import { renderDrill } from './drill.js';
 import { renderScramble } from './scramble.js';
 import { renderNumbers } from './numbers.js';
+import { renderAnmeldung } from './anmeldung.js';
 import { dlog, showLogOverlay } from './log.js';
 import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
@@ -492,6 +493,15 @@ function renderPractice(id) {
   // Dağınıq sual cümlələri: səssiz, ayrıca faylda
   if (d.scramble) return renderScramble({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
   if (d.numbers) return renderNumbers({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
+  // Anmeldung rol oyunu: ayrıca faylda
+  if (d.anmeldung) {
+    return renderAnmeldung({
+      $app, d, cat, store, esc, header, fx, confetti, saveMistake, closeMessage, MODELS, ruleHtml, settings,
+      teardown,
+      setSession: (x) => (session = x),
+      setTimer: (id) => (timerId = id),
+    });
+  }
   // Fel dərsi ayrıca faylda işləyir (kart dərsinin koduna toxunmur)
   if (d.drill) {
     return renderDrill({
