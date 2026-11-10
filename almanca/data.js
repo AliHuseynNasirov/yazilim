@@ -348,6 +348,59 @@ export const CATEGORIES = [
           ['Kannst du das bitte wiederholen?', 'Təkrar edə bilərsən?'],
         ],
       },
+      {
+        id: 'nummer-1',
+        title: 'Hast du die Nummer von …? (Rolle A / B)',
+        situation:
+          'Telefon nömrələri oyunu (Kursbuch A1, S. 31, 3). Təsadüfi seçilir: sən Rolle A və ya B olursan, müəllim o biri rolu oynayır. Hər kəsin siyahısında 8 ad var: 4-nün nömrəsi var, 4-ü boşdur. Növbə ilə soruşursunuz: "Hast du die Nummer von …?" — biri deyir, o biri yazır, düz/səhv dərhal göstərilir.',
+        nummer: true,
+        ai: 'You play a role in an information-gap role play: asking for phone numbers.',
+        user: 'The learner plays Rolle A or Rolle B.',
+        lines: [
+          ['A', 'Hast du die Nummer von Anna Weber?', 'Anna Veberin nömrəsi səndə var?'],
+          ['B', 'Ja, die Nummer ist null, eins, sieben, sechs – fünf, fünf, fünf, eins, zwei, drei, vier.', 'Bəli, nömrə 0176 5551234-dür.'],
+          ['A', 'Langsam, bitte! Kannst du das bitte wiederholen?', 'Yavaş, zəhmət olmasa! Təkrar edə bilərsən?'],
+          ['B', 'Null, eins, sieben, sechs – fünf, fünf, fünf, eins, zwei, drei, vier.', '0176 5551234.'],
+          ['A', 'Danke! Hast du auch die Nummer von Max Bauer?', 'Sağ ol! Maks Bauerin nömrəsi də səndə var?'],
+          ['B', 'Nein, die Nummer habe ich leider nicht.', 'Xeyr, təəssüf ki, o nömrə məndə yoxdur.'],
+          ['B', 'Hast du die Nummer von Eva Klein?', 'Eva Kleynin nömrəsi səndə var?'],
+          ['A', 'Ja, klar. Die Nummer ist plus vier, neun – drei, null – eins, zwei, drei, vier, fünf, sechs, sieben.', 'Bəli, əlbəttə. Nömrə +49 30 1234567-dir.'],
+        ],
+        rule: {
+          title: 'Telefon nömrəsini soruşmaq və demək',
+          focus:
+            'Information-gap role play: "Hast du die Nummer von …?" (yes/no question, verb first, haben: du hast), answering "Ja, die Nummer ist …" / "Nein, die Nummer habe ich (leider) nicht.", saying phone numbers digit by digit, "+49" = "plus vier neun", asking to repeat / to speak slowly.',
+          text: [
+            '<b>Oyun:</b> sən Rolle A və ya B olursan (təsadüfi). Siyahında nömrəsi OLAN adları qarşı tərəf soruşur, sən deyirsən. Nömrəsi OLMAYAN (boş xətt) adları sən soruşursan və yazırsan. Sonra növbə dəyişir.',
+            'Sual — bəli/xeyr sualı, <b>FEL əvvəldə</b>: <b>Hast du die Nummer von …?</b> (… nömrəsi səndə var?)',
+            'Cavab: <i>Ja, die Nummer ist …</i> / <i>Ja, klar. Die Nummer ist …</i> · <i>Nein, die Nummer habe ich leider nicht.</i>',
+            'Telefon nömrəsi <b>rəqəm-rəqəm</b> deyilir: 0162 = <i>null, eins, sechs, zwei</i>. <b>+49</b> (Almaniya kodu) = <i>plus vier, neun</i>.',
+            'Başa düşmədinsə: <i>Kannst du das bitte wiederholen?</i> · <i>Langsam, bitte!</i> · <i>Noch einmal, bitte.</i>',
+          ],
+          tables: [
+            {
+              head: ['Rəqəm', 'Almanca'],
+              rows: [
+                ['0 / 1 / 2', 'null / eins / zwei'],
+                ['3 / 4 / 5', 'drei / vier / fünf'],
+                ['6 / 7 / 8 / 9', 'sechs / sieben / acht / neun'],
+                ['+49', 'plus vier, neun'],
+              ],
+            },
+          ],
+          tips: ['Tez-tez edilən səhvlər: ❌ Du hast die Nummer von …? → ✅ Hast du die Nummer von …? · ❌ Ich habe nicht die Nummer → ✅ Die Nummer habe ich nicht · ❌ Hast du Nummer von …? → ✅ Hast du die Nummer von …?'],
+        },
+        vocab: [
+          ['die Nummer', 'nömrə'],
+          ['die Telefonnummer', 'telefon nömrəsi'],
+          ['Hast du die Nummer von …?', '… nömrəsi səndə var?'],
+          ['Ja, klar.', 'Bəli, əlbəttə.'],
+          ['leider', 'təəssüf ki'],
+          ['Langsam, bitte!', 'Yavaş, zəhmət olmasa!'],
+          ['Noch einmal, bitte.', 'Bir daha, zəhmət olmasa.'],
+          ['plus vier neun (+49)', 'Almaniyanın telefon kodu'],
+        ],
+      },
     ],
   },
   {

@@ -330,3 +330,10 @@ main.nm { padding-bottom: 210px; }
 .anm-mode .anm-tabs button { padding: 6px; }
 .anm-mode .resume-bar { margin-bottom: 6px; }
 .anm-mode .chat { max-height: 16vh; }
+
+/* ---------- "Hast du die Nummer von …?" ---------- */
+.num-paper { background: #fff6d8; border-color: #e8d9a8; }
+.num-paper .anm-row, .num-paper .anm-row:has(.anm-note), .num-paper .anm-cols { grid-template-columns: 112px 1fr 1fr; }
+.num-paper .anm-row { border-bottom-color: #efe4c0; }
+.num-paper .anm-val.hand { font-family: inherit; color: var(--ink); font-size: 14px; letter-spacing: .3px; }
+.num-paper .anm-row .anm-inwrap { grid-column: 2 / 4; }
