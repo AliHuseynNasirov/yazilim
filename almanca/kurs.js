@@ -173,7 +173,7 @@ function partHint(u, key) {
   if (key === 'listen') return `${u.listening.length} çalışma: dinlə və yaz / seç`;
   if (key === 'read') return u.reading.map((r) => r.title).join(' · ');
   if (key === 'write') return `${u.writing.length} çalışma: cümlə qur, tərcümə et, mesaj yaz`;
-  if (key === 'speak') return `${u.speaking.length} səsli dərs (müəllimlə)`;
+  if (key === 'speak') return `${u.speaking.filter((id) => findDialog(id)).length} səsli dərs və oyun (müəllimlə)`;
   if (key === 'phon') return u.phon.title;
   return `20 sual · keçid balı ${pct(PASS)}%`;
 }
