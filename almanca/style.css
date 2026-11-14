@@ -337,3 +337,55 @@ main.nm { padding-bottom: 210px; }
 .num-paper .anm-row { border-bottom-color: #efe4c0; }
 .num-paper .anm-val.hand { font-family: inherit; color: var(--ink); font-size: 14px; letter-spacing: .3px; }
 .num-paper .anm-row .anm-inwrap { grid-column: 2 / 4; }
+
+/* ---------- Kitab üzrə kurs ---------- */
+.k-home { margin-bottom: 18px; }
+.k-home h2 { margin-bottom: 2px; }
+.k-units, .k-parts { display: flex; flex-direction: column; gap: 8px; }
+.k-unit, .k-part { align-items: center; gap: 12px; }
+.k-unit > div, .k-part > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.k-unit small, .k-part small { overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.k-unit .progress, .k-part .progress { height: 5px; margin: 4px 0 0; }
+.k-unit.locked { opacity: .55; }
+.k-unit.review { background: #fff8e1; }
+.k-ico { font-size: 26px; flex: none; width: 34px; text-align: center; }
+.k-goals { margin: 6px 0 10px; padding-left: 20px; font-size: 14px; }
+.k-two { display: flex; gap: 8px; margin: 10px 0; }
+.k-two .btn { flex: 1; }
+.k-vocab h3 { font-size: 15px; margin: 16px 0 6px; color: var(--muted); }
+.k-wlist .word.known { border-color: #b7dfc5; background: #f3fbf6; }
+.k-wlist .word b { font-weight: 600; }
+.k-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 200px; margin: 14px 0 6px; padding: 18px; border-radius: var(--radius); border: 2px solid #c9cfdc; background: #fff; font: inherit; color: var(--ink); cursor: pointer; }
+.k-card.flipped { border-color: #2f62c9; background: #f3f6ff; }
+.k-card-de { font-size: 26px; font-weight: 700; text-align: center; }
+.k-card-az { font-size: 20px; color: #13603a; text-align: center; }
+.k-card-ex { font-size: 14px; color: var(--muted); font-style: italic; text-align: center; }
+main.k-run, main.k-gram, main.k-read { padding-bottom: 150px; }
+.k-item { margin-top: 14px; }
+.k-lbl { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.k-q { font-size: 20px; font-weight: 600; margin: 4px 0 12px; line-height: 1.35; }
+.k-q small { display: block; font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+.k-q.k-az { font-size: 17px; font-weight: 500; }
+.k-opts { display: flex; flex-direction: column; gap: 8px; }
+.k-opt { text-align: left; padding: 13px 14px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font: inherit; font-size: 17px; color: var(--ink); cursor: pointer; }
+.k-opt:disabled { opacity: 1; cursor: default; }
+.k-opt.ok { border-color: var(--ok); background: #e5f6ec; color: #13603a; font-weight: 600; }
+.k-opt.bad { border-color: #e05555; background: #fdeaea; color: #8a1f1f; }
+.k-in { display: block; width: 100%; padding: 12px; font: inherit; font-size: 18px; border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+.k-in:focus { outline: none; border-color: #2f62c9; }
+.k-in.ok { border-color: var(--ok); background: #e5f6ec; }
+.k-in.bad { border-color: #e05555; background: #fdeaea; }
+.k-in:disabled { opacity: 1; -webkit-text-fill-color: var(--ink); }
+.k-area { resize: vertical; min-height: 96px; font-size: 16px; }
+.k-listen { display: flex; gap: 8px; margin-bottom: 12px; }
+.k-listen .btn { flex: 1; padding: 14px; font-size: 17px; }
+.k-run .sc-result { margin-top: 14px; }
+.k-run .sc-correct small { font-weight: 400; font-size: 13px; color: var(--muted); }
+.k-text { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; font-size: 17px; line-height: 1.55; }
+.k-text p { margin: 0 0 8px; }
+.k-text p:last-child { margin-bottom: 0; }
+.k-text.az { margin-top: 8px; font-size: 15px; color: var(--muted); }
+.k-textbox { margin-bottom: 12px; }
+.k-textbox .k-text { border: 0; padding: 8px 0 0; font-size: 15px; }
+.k-gram .rule p { margin: 0 0 10px; }
+.k-old { margin-top: 6px; }

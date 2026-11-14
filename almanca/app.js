@@ -7,6 +7,7 @@ import { renderScramble } from './scramble.js';
 import { renderNumbers } from './numbers.js';
 import { renderAnmeldung } from './anmeldung.js';
 import { renderNummer } from './nummer.js';
+import { kursHomeHtml, renderKurs, KURS_CAT } from './kurs.js';
 import { dlog, showLogOverlay } from './log.js';
 import { assessPronunciation, azureErrors, markAzureWrong, worstPhoneme, phoneLabel, pcmToWav } from './azure.js';
 
@@ -73,8 +74,10 @@ function speak(text, onend) {
 // ---------- Marşrutlar ----------
 function route() {
   teardown();
-  const [view, id] = location.hash.replace(/^#\/?/, '').split('/');
+  const [view, id, sub, sub2] = location.hash.replace(/^#\/?/, '').split('/');
   window.scrollTo(0, 0);
+  // Kitab üzrə kurs (ayrıca faylda)
+  if (view === 'u') return renderKurs({ $app, store, esc, header, fx, confetti, saveMistake }, id, sub, sub2);
   if (view === 'cat') return renderCategory(id);
   if (view === 'd') return renderDialog(id);
   if (view === 'practice') return renderPractice(id);
@@ -117,12 +120,13 @@ function saveMistake(category, dialog, args) {
 }
 
 function renderMistakes(filter) {
+  const MCATS = [KURS_CAT, ...CATEGORIES];
   const all = getMistakes();
   const list = filter ? all.filter((m) => m.cat === filter) : all;
-  const cats = CATEGORIES.filter((c) => all.some((m) => m.cat === c.id));
+  const cats = MCATS.filter((c) => all.some((m) => m.cat === c.id));
   const fmt = (ts) => new Date(ts).toLocaleString('az', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
-  const groups = CATEGORIES.map((c) => ({ c, items: list.filter((m) => m.cat === c.id) })).filter((g) => g.items.length);
+  const groups = MCATS.map((c) => ({ c, items: list.filter((m) => m.cat === c.id) })).filter((g) => g.items.length);
 
   $app.innerHTML = `
     ${header('📒 Səhvlərim', '#/')}
@@ -266,7 +270,7 @@ function renderHome() {
     <main>
       ${!s.apiKey ? `<a class="notice" href="#/settings">🔑 Səsli məşq üçün əvvəlcə Gemini API açarını əlavə et →</a>` : ''}
       <section class="hero">
-        <p>Kateqoriya seç → dialoqu oxu və dinlə → qaydanı öyrən → süni intellektlə <b>səsli danış</b>.</p>
+        <p><b>Kitab üzrə kurs</b> ilə addım-addım öyrən, <b>səsli dərslərdə</b> süni intellekt müəllimi ilə danış.</p>
         <div class="progress"><span style="width:${Math.round((finished / total) * 100)}%"></span></div>
         <small>${finished} / ${total} dialoq məşq edilib</small>
       </section>
@@ -274,6 +278,8 @@ function renderHome() {
         <div><b>📒 Səhvlərim</b><small>Bütün kateqoriyalardan qeyd edilmiş səhvlər və izahları</small></div>
         <span class="state">${getMistakes().length} ›</span>
       </a>
+      ${kursHomeHtml({ store, esc })}
+      <h2 class="k-old">🎙️ Səsli dərslər və oyunlar</h2>
       <div class="grid">
         ${CATEGORIES.map((c) => {
           const n = c.dialogs.filter((d) => done[d.id]).length;
