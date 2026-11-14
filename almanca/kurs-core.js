@@ -19,6 +19,8 @@ export function normAns(s) {
   return String(s || '')
     .toLowerCase()
     .replace(/ß/g, 'ss')
+    .replace(/[éèê]/g, 'e')
+    .replace(/[áàâ]/g, 'a')
     .replace(PUNCT, ' ')
     .replace(/\s+/g, ' ')
     .trim();

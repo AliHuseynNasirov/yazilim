@@ -466,8 +466,20 @@ function renderTest(ctx, u) {
 // ---------- çalışma mühərriki ----------
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const cleanQ = (q) => String(q).replace(/\s*\([^)]*\)\s*$/, ''); // sondakı ipucunu "(kommen)" at
+// "Ich ___ um 7 Uhr ___." + "stehe … auf" → "Ich stehe um 7 Uhr auf."
+function fillGaps(q, ans) {
+  const parts = String(ans).split(' … ');
+  let i = 0;
+  return cleanQ(q)
+    .replace(/___/g, () => {
+      const p = parts[i++];
+      return p === undefined || p === '—' ? '' : p;
+    })
+    .replace(/\s+([.?!,])/g, '$1')
+    .replace(/\s+/g, ' ');
+}
 function correctText(it) {
-  if (it.t === 'mc') return it.q.includes('___') ? cleanQ(it.q).replace('___', it.opts[0]) : it.opts[0];
+  if (it.t === 'mc') return it.q.includes('___') ? fillGaps(it.q, it.opts[0]) : it.opts[0];
   if (it.t === 'lmc') return it.opts[0];
   if (it.t === 'gap') return cleanQ(it.q).replace('___', it.a[0]);
   if (it.t === 'tr') return it.a[0];
