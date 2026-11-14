@@ -77,6 +77,7 @@ export default {
       ['die Information, die Informationen', 'məlumat'],
       ['das Magazin, die Magazine', 'jurnal'],
       ['der Podcast, die Podcasts', 'podkast'],
+      ['das Intranet', 'daxili şəbəkə (intranet)'],
     ]),
     g('Fellər', [
       ['stehen', 'durmaq (şaquli)', 'Der Ordner steht im Regal.'],

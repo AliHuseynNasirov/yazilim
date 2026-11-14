@@ -108,6 +108,9 @@ export default {
       ['schön', 'gözəl'],
       ['unterwegs', 'yolda'],
       ['schon mal', 'nə vaxtsa (artıq)', 'Warst du schon mal in Berlin?'],
+      ['der Favorit, die Favoriten', 'favorit, ən sevimli'],
+      ['der Fotostopp, die Fotostopps', 'şəkil çəkmək üçün dayanacaq'],
+      ['der Deutschkurs, die Deutschkurse', 'alman dili kursu'],
     ]),
   ],
   grammar: [

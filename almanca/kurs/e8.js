@@ -34,6 +34,8 @@ export default {
       ['der Kletterkurs, die Kletterkurse', 'dırmaşma kursu'],
       ['das Programm, die Programme', 'proqram'],
       ['das Angebot, die Angebote', 'təklif; seçim'],
+      ['der Hobbykurs, die Hobbykurse', 'hobbi kursu'],
+      ['das Sportprogramm, die Sportprogramme', 'idman proqramı'],
     ]),
     g('İdman və qış', [
       ['das Tennis', 'tennis'],
@@ -51,6 +53,8 @@ export default {
       ['der Schnee', 'qar'],
       ['der Berg, die Berge', 'dağ'],
       ['die Bergbahn, die Bergbahnen', 'dağ kanat yolu'],
+      ['das Eisklettern', 'buz üzərində dırmaşma'],
+      ['der Wintersportfan, die Wintersportfans', 'qış idmanı həvəskarı'],
     ]),
     g('Təhsil və şəhər', [
       ['das Studium', 'ali təhsil'],
@@ -69,6 +73,9 @@ export default {
       ['der Geburtstag, die Geburtstage', 'ad günü'],
       ['der Kontakt, die Kontakte', 'əlaqə'],
       ['der Moderator, die Moderatoren', 'aparıcı'],
+      ['die Club-Szene', 'klub həyatı'],
+      ['das Campusradio', 'kampus radiosu'],
+      ['der Spaß', 'əyləncə, zövq', 'Wir hatten viel Spaß.'],
     ]),
     g('Keçmiş və bacarıq', [
       ['gestern', 'dünən'],

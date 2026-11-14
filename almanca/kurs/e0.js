@@ -113,6 +113,8 @@ export default {
       ['aus', '-dan/-dən (haradan)'],
       ['auf Deutsch', 'almanca'],
       ['an die Tafel', 'lövhəyə'],
+      ['komplett', 'tam, bütöv'],
+      ['grüezi', 'salam (İsveçrədə)'],
     ]),
   ],
   grammar: [

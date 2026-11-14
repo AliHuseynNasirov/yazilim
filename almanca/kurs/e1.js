@@ -34,6 +34,7 @@ export default {
       ['der Student, die Studenten', 'tələbə (oğlan)'],
       ['die Studentin, die Studentinnen', 'tələbə (qız)'],
       ['die WG, die WGs', 'birgə kirayə mənzil (Wohngemeinschaft)'],
+      ['die Studierenden (Pl.)', 'tələbələr'],
       ['Das ist …', 'Bu …-dır (kimisə təqdim edəndə)'],
       ['Mein Name ist …', 'Mənim adım …-dır'],
     ]),
@@ -90,6 +91,9 @@ export default {
       ['Norwegisch', 'norveç dili'],
       ['Portugiesisch', 'portuqal dili'],
       ['Farsi', 'fars dili'],
+      ['Polnisch', 'polyak dili'],
+      ['Thai', 'tay dili'],
+      ['Vietnamesisch', 'Vyetnam dili'],
     ]),
   ],
   grammar: [

@@ -107,6 +107,12 @@ export default {
       ['mal', 'bir (dəfə)', 'Probier mal!'],
       ['endlich', 'nəhayət'],
       ['wann', 'nə vaxt'],
+      ['einmal', 'bir dəfə'],
+      ['andere', 'başqa, digər'],
+      ['pro / kontra', 'lehinə / əleyhinə'],
+      ['die Kultur, die Kulturen', 'mədəniyyət'],
+      ['das Streetfood', 'küçə yeməyi'],
+      ['der Koch, die Köche', 'aşpaz'],
     ]),
   ],
   grammar: [

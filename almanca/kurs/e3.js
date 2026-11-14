@@ -102,6 +102,9 @@ export default {
       ['überall', 'hər yerdə'],
       ['als', 'kimi (als Kellner arbeiten)'],
       ['passen', 'uyğun gəlmək', 'Das passt.'],
+      ['sich freuen', 'sevinmək', 'Ich freue mich!'],
+      ['die Aussage, die Aussagen', 'ifadə, fikir'],
+      ['in sein', 'dəbdə olmaq', 'Das ist in.'],
     ]),
   ],
   grammar: [
