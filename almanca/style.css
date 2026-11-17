@@ -459,3 +459,8 @@ main.kn { padding-bottom: 40px; }
 .kn-form textarea:focus { outline: none; border-color: #2f62c9; }
 .kn-ok { color: #13603a; }
 .kn-bad { color: #8a1f1f; }
+.kn-voice { display: flex; align-items: center; gap: 14px; margin: 8px 0; }
+.kn-mic { flex: none; }
+.kn-heard { flex: 1; min-width: 0; font-size: 15px; color: var(--muted); background: #f6f7fb; border-radius: 12px; padding: 10px; min-height: 44px; }
+.kn-retry { background: #fff8e1; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.kn-kb { width: 100%; margin-top: 4px; font-size: 14px; }

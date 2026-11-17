@@ -4,9 +4,19 @@
 // Cavab verən: "Nein, das ist kein Kaffee. Das ist ein Espresso. (Und das ist mein Espresso.)"
 // Birinci soruşan təsadüfi seçilir, sonra növbə dəyişir. Müəllim cavab verəndə bəzən səhv edir — sən yoxlayırsan.
 
-import { findItem, ein, kein, mein, question, answer, checkQuestion, checkAnswer, explain, wrongAnswer, newGame } from './kein-core.js';
+import { findItem, question, answer, checkQuestion, checkAnswer, explain, wrongAnswer, newGame } from './kein-core.js';
+import { asrSupported, listen, asrErrorText } from './asr.js';
 
 const TEACHER_ERR = 0.3;
+// Səsi tanıma bəzən sözü tutmur — onda cəza yox, "yenidən de" (ən çox 2 dəfə)
+const MAX_RETRY = 2;
+const foldTxt = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/ß/g, 'ss')
+    .replace(/ä|ae/g, 'a')
+    .replace(/ö|oe/g, 'o')
+    .replace(/ü|ue/g, 'u');
 
 function speakDe(text) {
   if (!('speechSynthesis' in window)) return;
@@ -75,15 +85,15 @@ export function renderKein(ctx) {
     const turn = `<div class="wf-turn ${me ? 'me' : 'them'}">${me ? '🔵 Sən soruşursan, müəllim cavab verir' : '🔴 Müəllim soruşur, sən cavab ver'}</div>`;
     if (st.phase === 'ask') {
       return `<div class="wf-panel">${turn}
-        <p>✖ şəkil haqqında sual ver (bəli/xeyr sualı):</p>
-        <form id="knForm" class="wf-form"><input id="knIn" autocomplete="off" autocapitalize="sentences" autocorrect="off" spellcheck="false" placeholder="Ist das …?"><button class="btn primary">Soruş</button></form>
+        <p>✖ şəkil haqqında <b>səslə</b> sual ver: <i>Ist das …?</i></p>
+        ${voiceBox('Ist das …?')}
       </div>`;
     }
     if (st.phase === 'answer') {
       return `<div class="wf-panel">${turn}
         <p class="kn-bubble">🧑‍🏫 <b>${esc(c.q)}</b> <button class="say" id="knSayQ" aria-label="Dinlə">🔊</button></p>
-        <p class="small muted">Şəkilə bax və cavab ver: <i>Nein, das ist … Das ist …</i></p>
-        <form id="knForm" class="wf-form kn-form"><textarea id="knIn" rows="2" autocomplete="off" autocapitalize="sentences" autocorrect="off" spellcheck="false" placeholder="Nein, das ist …"></textarea><button class="btn primary">Yoxla</button></form>
+        <p class="small muted">Şəkilə bax və <b>səslə</b> cavab ver: <i>Nein, das ist … Das ist …</i></p>
+        ${voiceBox('Nein, das ist …')}
       </div>`;
     }
     if (st.phase === 'judge') {
@@ -99,6 +109,72 @@ export function renderKein(ctx) {
       </div>`;
     }
     return '';
+  }
+
+  // Səs bloku: böyük 🎙️ + eşidilən yazı; səs tanınmırsa və ya istəsən — yazmaq
+  function voiceBox(ph) {
+    const c = st.cur;
+    const can = asrSupported();
+    const kb = !can || c.kb;
+    return `${c.retryMsg ? `<p class="kn-retry">${c.retryMsg}</p>` : ''}
+      ${can ? `<div class="kn-voice">
+        <button class="mic kn-mic ${listening ? 'hold' : ''}" id="knMic" aria-label="Danış">🎙️</button>
+        <div class="kn-heard" id="knHeard">${listening ? '🔴 Dinləyirəm… danış' : c.heard ? `Eşitdim: «${esc(c.heard)}»` : '🎙️ düyməsinə bas və danış'}</div>
+      </div>` : '<p class="small muted">Bu brauzer səsi tanımır — cavabı yaz (Chrome-da səslə işləyir).</p>'}
+      ${kb
+        ? `<form id="knForm" class="wf-form kn-form"><textarea id="knIn" rows="2" autocomplete="off" autocapitalize="sentences" autocorrect="off" spellcheck="false" placeholder="${esc(ph)}"></textarea><button class="btn primary">Yoxla</button></form>`
+        : '<button class="btn ghost kn-kb" id="knKb" type="button">⌨️ Yazaraq cavab ver</button>'}`;
+  }
+
+  let listening = false;
+  let rec = null;
+  function micClick() {
+    if (listening) {
+      if (rec) rec.stop();
+      return;
+    }
+    fx.init();
+    listening = true;
+    st.cur.retryMsg = '';
+    render();
+    rec = listen({
+      onInterim: (t) => {
+        const h = $app.querySelector('#knHeard');
+        if (h) h.textContent = `🔴 ${t}`;
+      },
+      onError: (code) => {
+        const m = asrErrorText(code);
+        if (m) st.cur.retryMsg = m;
+      },
+      onEnd: () => {
+        listening = false;
+        rec = null;
+        if (!st.cur.pendingHeard) render();
+      },
+      onFinal: (t) => {
+        st.cur.pendingHeard = false;
+        heardText(t);
+      },
+    });
+  }
+
+  // Səslə deyilən: əvvəl sözlər tanınıbmı yoxla (tanınmayıbsa cəza yox, yenidən de)
+  function heardText(t) {
+    const r = round();
+    const need = st.phase === 'ask' ? [X().n] : [X().n, Y().n];
+    const ok = need.every((n) => foldTxt(t).includes(foldTxt(n)));
+    st.cur.heard = t;
+    if (!ok && (st.cur.tries || 0) < MAX_RETRY) {
+      st.cur.tries = (st.cur.tries || 0) + 1;
+      st.cur.retryMsg = `🤔 Eşitdim: «${esc(t)}». Şəkildəki sözü (${need.map(esc).join(', ')}) tanıya bilmədim — yenidən de, aydın və yavaş.`;
+      save();
+      render();
+      return;
+    }
+    st.cur.tries = 0;
+    st.cur.retryMsg = '';
+    st.phase === 'ask' ? asked(t) : answered(t);
+    void r;
   }
 
   function render() {
@@ -146,10 +222,15 @@ export function renderKein(ctx) {
     on('#knSayQ', () => speakDe(st.cur.q));
     on('#knSayT', () => speakDe(st.cur.t));
     on('#knSayC', () => speakDe(st.cur.model));
+    on('#knMic', micClick);
+    on('#knKb', () => {
+      st.cur.kb = true;
+      render();
+    });
     const form = $app.querySelector('#knForm');
     if (form) {
       const inp = $app.querySelector('#knIn');
-      inp.focus();
+      if (st.cur.kb) inp.focus();
       const go = () => {
         if (!inp.value.trim()) return;
         st.phase === 'ask' ? asked(inp.value) : answered(inp.value);
@@ -172,7 +253,7 @@ export function renderKein(ctx) {
   // ---------- gediş ----------
   function startRound() {
     const r = round();
-    st.cur = {};
+    st.cur = { kb: st.cur && st.cur.kb && !asrSupported() };
     if (r.asker === 'T') {
       st.cur.q = question(X());
       st.phase = 'answer';
@@ -196,10 +277,10 @@ export function renderKein(ctx) {
     if (r.ok) {
       st.stats.qOk++;
       fx.ding();
-      st.cur.qMsg = `<p class="kn-ok">✅ Sualın düzdür: <i>${esc(input.trim())}</i></p>`;
+      st.cur.qMsg = `<p class="kn-ok">✅ Sualın düzdür: <i>${esc(right)}</i></p>`;
     } else {
       fx.oops();
-      st.cur.qMsg = `<p class="kn-bad">❌ Sualda səhv var: <s>${esc(input.trim())}</s> → <b>${esc(right)}</b><br><small>💡 ${esc(explain(r.why, x, y, r.got))}</small></p>`;
+      st.cur.qMsg = `<p class="kn-bad">❌ Sualda səhv var. Sən dedin: <s>${esc(input.trim())}</s> → <b>${esc(right)}</b><br><small>💡 ${esc(explain(r.why, x, y, r.got))}</small></p>`;
       saveMistake(cat, d, { wrong: input.trim(), correct: right, explanation: explain(r.why, x, y, r.got) });
     }
     st.cur.wrong = Math.random() < TEACHER_ERR;
@@ -244,11 +325,11 @@ export function renderKein(ctx) {
     if (r.ok) {
       st.stats.ansOk++;
       fx.ding();
-      st.cur.msg = `<p>✅ <b>Düzgündür!</b></p><p class="wf-correct">${esc(input.trim())}</p>`;
-      speakDe(input.trim());
+      st.cur.msg = `<p>✅ <b>Düzgündür!</b> <small class="muted">(eşitdim: «${esc(input.trim())}»)</small></p><p class="wf-correct">${esc(answer(x, y, false))}</p>`;
+      speakDe(answer(x, y, false));
     } else {
       fx.oops();
-      st.cur.msg = `<p>❌ <b>Səhv var.</b> <s>${esc(input.trim())}</s></p><p class="wf-correct">✔ ${esc(model)} <button class="say" id="knSayC" aria-label="Dinlə">🔊</button></p><p class="small">💡 ${esc(explain(r.why, x, y, r.got))}</p>`;
+      st.cur.msg = `<p>❌ <b>Səhv var.</b> Sən dedin: <s>${esc(input.trim())}</s></p><p class="wf-correct">✔ ${esc(model)} <button class="say" id="knSayC" aria-label="Dinlə">🔊</button></p><p class="small">💡 ${esc(explain(r.why, x, y, r.got))}</p>`;
       saveMistake(cat, d, { wrong: input.trim(), correct: answer(x, y, false), explanation: explain(r.why, x, y, r.got) });
     }
     st.phase = 'result';
