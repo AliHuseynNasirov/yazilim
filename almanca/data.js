@@ -1216,7 +1216,7 @@ export const CATEGORIES = [
         id: 'fel-zar',
         title: '🎲 Würfeln und konjugieren (zər oyunu)',
         situation:
-          'Lövhə oyunu: sən və müəllim növbə ilə 2 zər atırsınız. 1-ci zər şəxsi seçir (1 = ich … 6 = sie/Sie), 2-ci zər neçə xana getməyi. Düşdüyün xanadakı feli həmin şəxslə yaz (məs. wir wohnen). Müəllimin növbəsində onun cavabını sən yoxlayırsan. ZIEL-ə birinci çatan qalib gəlir.',
+          'Lövhə oyunu: sən və müəllim növbə ilə 2 zər atırsınız. 1-ci zər şəxsi seçir (1 = ich … 6 = sie/Sie), 2-ci zər neçə xana getməyi. Düşdüyün xanadakı feli həmin şəxslə yaz (məs. wir wohnen). Müəllimin növbəsində onun cavabını sən yoxlayırsan. ZIEL-ə birinci çatan qalib gəlir. Hər yeni oyunda lövhədəki fellər dəyişir: kitabın A1.1 hissəsindəki 98 feldən qaydalı, qaydasız və ayrılan fellər qarışıq düşür.',
         wuerfel: true,
         lines: [
           ['A', 'Ich würfle: eine Vier und eine Drei.', 'Zər atıram: dörd və üç.'],

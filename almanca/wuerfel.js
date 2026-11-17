@@ -5,7 +5,7 @@
 // Qırmızı xanalar: 5 Joker (feli özün seç), 10 bir daha zər at, 15 bir növbə buraxırsan.
 // Müəllimin növbəsində müəllim yazır, sən düz/səhv olduğunu yoxlayırsan. ZIEL-ə birinci çatan qalib gəlir.
 
-import { VERBS, BOARD, GOAL, PERSONS, formOf, answerOf, checkAnswer, explain, wrongForm, rollDie, moveTo } from './wuerfel-core.js';
+import { VERBS, BOARD, GOAL, PERSONS, SHEET_VERBS, verbAt, pickVerbs, kindOf, formOf, answerOf, checkAnswer, explain, wrongForm, rollDie, moveTo } from './wuerfel-core.js';
 
 const WHO = { L: { name: 'Sən', tok: '🔵' }, T: { name: 'Müəllim', tok: '🔴' } };
 const OTHER = { L: 'T', T: 'L' };
@@ -35,12 +35,19 @@ function cellPos(i) {
 export function renderWuerfel(ctx) {
   const { $app, d, cat, store, esc, header, fx, confetti, saveMistake } = ctx;
   const KEY = `wuerfel.${d.id}`;
+  // Hər yeni oyunda lövhəyə kitabın A1.1 fellərindən 16 yeni fel düşür (az oynananlar əvvəl)
   const fresh = () => {
     const turn = Math.random() < 0.5 ? 'L' : 'T';
-    return { v: 1, pos: { L: 0, T: 0 }, turn, skip: { L: false, T: false }, phase: 'roll', cur: null, stats: { ok: 0, bad: 0, judgeOk: 0, judgeBad: 0 }, winner: null, starter: turn, started: false };
+    const used = store.get('wuerfelUsed', {});
+    const verbs = pickVerbs(used);
+    verbs.forEach((v) => (used[v] = (used[v] || 0) + 1));
+    store.set('wuerfelUsed', used);
+    return { v: 1, verbs, pos: { L: 0, T: 0 }, turn, skip: { L: false, T: false }, phase: 'roll', cur: null, stats: { ok: 0, bad: 0, judgeOk: 0, judgeBad: 0 }, winner: null, starter: turn, started: false };
   };
   let st = store.get(KEY, null);
   if (!st || st.v !== 1 || !st.pos) st = fresh();
+  if (!Array.isArray(st.verbs) || st.verbs.length !== 16 || !st.verbs.every((v) => VERBS[v])) st.verbs = [...SHEET_VERBS]; // köhnə oyun
+  const boardVerbs = () => [...new Set(st.verbs)];
   const save = () => store.set(KEY, st);
 
   let root = null;
@@ -64,7 +71,10 @@ export function renderWuerfel(ctx) {
       const curCell = st.cur && st.cur.to === i && !anim ? 'now' : '';
       let inner;
       if (c.t === 'start') inner = '<b class="wf-start">START</b><b class="wf-goal">ZIEL</b>';
-      else if (c.t === 'verb') inner = `<b>${esc(c.v)}</b>`;
+      else if (c.t === 'verb') {
+        const v = verbAt(st.verbs, i);
+        inner = `<b class="${v.length > 11 ? 'xl' : v.length > 9 ? 'l' : ''}">${esc(v)}</b>`;
+      }
       else if (c.t === 'joker') inner = '<b class="red">Joker!</b><small>Feli seç</small>';
       else if (c.t === 'again') inner = '<b class="red">Noch einmal</b><small>yenə at</small>';
       else inner = '<b class="red">Pause</b><small>1 növbə</small>';
@@ -72,7 +82,7 @@ export function renderWuerfel(ctx) {
     }).join('');
     const c = st.cur;
     const dice = c ? `<div class="wf-dice"><span class="wf-die" id="wfD1">${PIPS[c.die1]}</span><span class="wf-die" id="wfD2">${PIPS[c.die2]}</span></div>` : '<div class="wf-dice"><span class="wf-die">🎲</span><span class="wf-die">🎲</span></div>';
-    return `<div class="wf-board">
+    return `<div class="wf-board" lang="de">
       ${cells}
       <div class="wf-center">
         <div class="wf-title">Würfeln und konjugieren</div>
@@ -92,7 +102,8 @@ export function renderWuerfel(ctx) {
 
   function promptOf(c) {
     const P = PERSONS[c.die1 - 1];
-    return `<div class="wf-task"><span class="wf-pill">${PIPS[c.die1]} ${esc(P.label)}</span> + <span class="wf-pill verb">${esc(c.verb)}</span> <small>(${esc(VERBS[c.verb].az)})</small></div>`;
+    const kind = { irr: '<span class="wf-kind irr">qaydasız</span>', sep: '<span class="wf-kind sep">ayrılan fel</span>', reg: '' }[kindOf(c.verb)];
+    return `<div class="wf-task"><span class="wf-pill">${PIPS[c.die1]} ${esc(P.label)}</span> + <span class="wf-pill verb">${esc(c.verb)}</span> <small>(${esc(VERBS[c.verb].az)})</small> ${kind}</div>`;
   }
 
   function panelHtml() {
@@ -110,6 +121,11 @@ export function renderWuerfel(ctx) {
       return `<div class="wf-panel">
         <p>🎲 Püşk atıldı: <b>${st.starter === 'L' ? 'sən başlayırsan' : 'müəllim başlayır'}</b>.</p>
         <p class="small muted">1-ci zər şəxsi, 2-ci zər neçə xana getməyi göstərir. Düşdüyün xanadakı feli şəxslə yaz: məs. <i>wir wohnen</i>.</p>
+        <p class="small">Bu oyunun felləri (kitabın A1.1 hissəsindən): ${(() => {
+          const k = { reg: 0, irr: 0, sep: 0 };
+          boardVerbs().forEach((v) => k[kindOf(v)]++);
+          return `<b>${k.reg}</b> qaydalı, <b>${k.irr}</b> qaydasız, <b>${k.sep}</b> ayrılan`;
+        })()}. Hər yeni oyunda fellər dəyişir.</p>
         <button class="btn primary big" id="wfGo">▶ Başla</button>
       </div>`;
     }
@@ -123,7 +139,7 @@ export function renderWuerfel(ctx) {
     if (st.phase === 'joker') {
       return `<div class="wf-panel">${turnLbl}
         <p>🃏 <b>Joker!</b> Şəxs: <b>${esc(PERSONS[c.die1 - 1].label)}</b>. ${me ? 'İstədiyin feli seç:' : 'Müəllim fel seçir…'}</p>
-        ${me ? `<div class="wf-verbs">${Object.keys(VERBS).map((v) => `<button class="chip-btn" data-verb="${v}">${esc(v)}</button>`).join('')}</div>` : ''}
+        ${me ? `<div class="wf-verbs">${boardVerbs().map((v) => `<button class="chip-btn" data-verb="${v}">${esc(v)}</button>`).join('')}</div>` : ''}
       </div>`;
     }
     if (st.phase === 'answer') {
@@ -300,7 +316,7 @@ export function renderWuerfel(ctx) {
     }
     const cell = BOARD[c.to];
     if (cell.t === 'verb') {
-      c.verb = cell.v;
+      c.verb = verbAt(st.verbs, c.to);
       st.phase = w === 'L' ? 'answer' : 'judge';
       if (w === 'T') teacherAnswer();
     } else if (cell.t === 'joker') {
@@ -353,7 +369,7 @@ export function renderWuerfel(ctx) {
       save();
       render();
       later(() => {
-        const vs = Object.keys(VERBS);
+        const vs = boardVerbs();
         st.cur.verb = vs[Math.floor(Math.random() * vs.length)];
         st.phase = 'judge';
         teacherAnswer();
@@ -381,7 +397,7 @@ export function renderWuerfel(ctx) {
       st.stats.bad++;
       fx.oops();
       st.pos.L = c.from;
-      const why = { pron: 'Şəxs (əvəzlik) düz deyil.', noPron: 'Şəxsi də yazmaq lazımdır.', form: 'Felin forması düz deyil.', empty: '' }[r.why] || '';
+      const why = { pron: 'Şəxs (əvəzlik) düz deyil.', noPron: 'Şəxsi də yazmaq lazımdır.', form: 'Felin forması düz deyil.', sep: 'Ayrılan feldir: önşəkilçi ayrıca, cümlənin sonunda yazılır.', empty: '' }[r.why] || '';
       st.msg = `<p>❌ <b>Səhvdir.</b> ${esc(why)}</p><p class="wf-correct">✔ ${esc(right)} <button class="say" id="wfSay" aria-label="Dinlə">🔊</button></p><p class="small">💡 ${esc(explain(c.verb, c.die1))}</p><p class="small">↩️ Köhnə xanaya (${c.from === 0 ? 'START' : c.from}) qayıdırsan.</p>`;
       saveMistake(cat, d, { wrong: c.said, correct: right, explanation: explain(c.verb, c.die1) });
     }

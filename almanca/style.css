@@ -435,3 +435,9 @@ main.wf { padding-bottom: 40px; }
 .wf-verbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .wf .rule-mini { margin-top: 12px; }
 .wf-restart { margin-top: 10px; width: 100%; }
+.wf-board { hyphens: auto; -webkit-hyphens: auto; }
+.wf-cell b.l { font-size: 9px; }
+.wf-cell b.xl { font-size: 8px; }
+.wf-kind { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px; vertical-align: middle; }
+.wf-kind.irr { background: #ede7f6; color: #5e35b1; }
+.wf-kind.sep { background: #e0f2f1; color: #00695c; }
