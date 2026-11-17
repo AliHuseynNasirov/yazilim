@@ -389,3 +389,49 @@ main.k-run, main.k-gram, main.k-read { padding-bottom: 150px; }
 .k-textbox .k-text { border: 0; padding: 8px 0 0; font-size: 15px; }
 .k-gram .rule p { margin: 0 0 10px; }
 .k-old { margin-top: 6px; }
+
+/* ---------- Würfeln und konjugieren ---------- */
+main.wf { padding-bottom: 40px; }
+.wf-score { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; margin-bottom: 8px; }
+.wf-score span { flex: 1; padding: 6px 8px; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+.wf-score span.on { border-color: #2f62c9; box-shadow: 0 0 0 2px #dbe5fb; }
+.wf-board { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, minmax(52px, auto)); gap: 2px; background: #2f4fa8; border: 2px solid #2f4fa8; border-radius: 6px; overflow: hidden; }
+.wf-cell { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff3d4; padding: 12px 2px 14px; text-align: center; min-width: 0; }
+.wf-cell i { position: absolute; top: 1px; left: 3px; font-size: 9px; font-style: normal; color: #6b7489; }
+.wf-cell b { font-size: 10.5px; line-height: 1.1; word-break: break-word; }
+.wf-cell small { font-size: 8.5px; color: #555; line-height: 1.1; }
+.wf-cell.joker, .wf-cell.again, .wf-cell.pause { background: #fde3e3; }
+.wf-cell b.red { color: #d32f2f; }
+.wf-cell.start { background: linear-gradient(135deg, #dff5ea 50%, #e8f5ef 50%); justify-content: space-between; padding: 4px; }
+.wf-start { align-self: flex-start; color: #1f9d55; font-size: 10px; }
+.wf-goal { align-self: flex-end; color: #1f9d55; font-size: 10px; }
+.wf-cell.now { box-shadow: inset 0 0 0 3px #ffb300; }
+.wf-toks { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 1px; font-size: 13px; line-height: 1; }
+.wf-tok { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.wf-center { grid-row: 2 / 6; grid-column: 2 / 6; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 6px; }
+.wf-title { font-weight: 800; color: #2f4fa8; font-size: 14px; text-align: center; }
+.wf-dice { display: flex; gap: 10px; }
+.wf-die { font-size: 46px; line-height: 1; color: #c62828; }
+.wf-dice .wf-die:last-child { color: #2f4fa8; }
+.wf-legend { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, auto); grid-auto-flow: column; gap: 1px 10px; font-size: 11px; color: #c62828; font-weight: 600; }
+.wf-legend span { white-space: nowrap; }
+.wf-panel { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius); background: #fff; border: 1px solid var(--line); }
+.wf-panel.ok { background: #e5f6ec; border-color: #b7dfc5; }
+.wf-panel.bad { background: #fdeaea; border-color: #f3c2bf; }
+.wf-panel h2 { margin-top: 0; }
+.wf-panel p { margin: 6px 0; }
+.wf-turn { font-weight: 700; margin-bottom: 6px; }
+.wf-turn.me { color: #2f62c9; }
+.wf-turn.them { color: #c62828; }
+.wf-msg { background: #fff8e1; border-radius: 8px; padding: 6px 8px; }
+.wf-task { font-size: 17px; margin: 4px 0 6px; }
+.wf-pill { display: inline-block; padding: 3px 10px; border-radius: 99px; background: #fdeaea; color: #c62828; font-weight: 700; }
+.wf-pill.verb { background: #fff3d4; color: #1b2236; }
+.wf-form { display: flex; gap: 8px; margin-top: 6px; }
+.wf-form input { flex: 1; min-width: 0; padding: 12px; font: inherit; font-size: 18px; border: 2px solid var(--line); border-radius: 12px; }
+.wf-form input:focus { outline: none; border-color: #2f62c9; }
+.wf-ans { font-size: 19px; }
+.wf-correct { font-size: 18px; font-weight: 700; color: #13603a; }
+.wf-verbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.wf .rule-mini { margin-top: 12px; }
+.wf-restart { margin-top: 10px; width: 100%; }

@@ -1212,6 +1212,56 @@ export const CATEGORIES = [
           ['haben', 'malik olmaq'],
         ],
       },
+      {
+        id: 'fel-zar',
+        title: '🎲 Würfeln und konjugieren (zər oyunu)',
+        situation:
+          'Lövhə oyunu: sən və müəllim növbə ilə 2 zər atırsınız. 1-ci zər şəxsi seçir (1 = ich … 6 = sie/Sie), 2-ci zər neçə xana getməyi. Düşdüyün xanadakı feli həmin şəxslə yaz (məs. wir wohnen). Müəllimin növbəsində onun cavabını sən yoxlayırsan. ZIEL-ə birinci çatan qalib gəlir.',
+        wuerfel: true,
+        lines: [
+          ['A', 'Ich würfle: eine Vier und eine Drei.', 'Zər atıram: dörd və üç.'],
+          ['A', 'Vier = wir. Drei Felder vor: lernen.', 'Dörd = wir. Üç xana irəli: lernen.'],
+          ['B', 'Wir lernen.', 'Biz öyrənirik.'],
+          ['A', 'Richtig! Jetzt du.', 'Düzdür! İndi sən.'],
+          ['B', 'Eine Zwei und eine Fünf: du … Joker!', 'İki və beş: du … Joker!'],
+          ['B', 'Ich wähle „sprechen": du sprichst.', '"sprechen" seçirəm: du sprichst.'],
+        ],
+        rule: {
+          title: 'Fel şəxsə görə: sonluqlar',
+          focus: 'Present tense conjugation of regular and irregular verbs with all personal pronouns.',
+          text: [
+            'Sonluqlar: <b>ich -e</b> · <b>du -st</b> · <b>er/sie/es -t</b> · <b>wir -en</b> · <b>ihr -t</b> · <b>sie/Sie -en</b>.',
+            'Kökü <b>-t</b> ilə bitən fellərdə arada <b>-e-</b> gəlir: du arbeit<b>e</b>st, er antwort<b>e</b>t, ihr arbeit<b>e</b>t.',
+            '<b>heißen</b>: du heißt (-st yox, kök artıq s-səsi ilə bitir).',
+            'Qaydasız (du və er/sie/es-də e → i): <b>sprechen</b> → du sprichst, er spricht · <b>geben</b> → du gibst, er gibt · <b>nehmen</b> → du nimmst, er nimmt.',
+          ],
+          tables: [
+            {
+              head: ['Zər', 'Şəxs', 'wohnen', 'sprechen', 'arbeiten'],
+              rows: [
+                ['1', 'ich', 'wohne', 'spreche', 'arbeite'],
+                ['2', 'du', 'wohnst', 'sprichst', 'arbeitest'],
+                ['3', 'er / sie / es', 'wohnt', 'spricht', 'arbeitet'],
+                ['4', 'wir', 'wohnen', 'sprechen', 'arbeiten'],
+                ['5', 'ihr', 'wohnt', 'sprecht', 'arbeitet'],
+                ['6', 'sie / Sie', 'wohnen', 'sprechen', 'arbeiten'],
+              ],
+            },
+          ],
+          tips: ['Tez-tez edilən səhvlər: ❌ du sprechst → ✅ du sprichst · ❌ er arbeitt → ✅ er arbeitet · ❌ du heißst → ✅ du heißt · ❌ ihr nimmt → ✅ ihr nehmt'],
+        },
+        vocab: [
+          ['würfeln', 'zər atmaq'],
+          ['der Würfel', 'zər'],
+          ['das Feld, die Felder', 'xana'],
+          ['vor', 'irəli'],
+          ['zurück', 'geri'],
+          ['noch einmal', 'bir daha'],
+          ['aussetzen', 'növbəni buraxmaq'],
+          ['wählen', 'seçmək'],
+          ['das Ziel', 'finiş, hədəf'],
+        ],
+      },
     ],
   },
   {
