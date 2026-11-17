@@ -5,6 +5,7 @@ import { checkSentence, checkWords, buildLexicon, matchCardSentence, inferField,
 import { renderDrill } from './drill.js';
 import { renderScramble } from './scramble.js';
 import { renderWuerfel } from './wuerfel.js';
+import { renderKein } from './kein.js';
 import { renderNumbers } from './numbers.js';
 import { renderAnmeldung } from './anmeldung.js';
 import { renderNummer } from './nummer.js';
@@ -379,7 +380,7 @@ function renderDialog(id) {
         </div>
       </section>
       <div class="sticky-cta">
-        <a class="btn primary big" href="#/practice/${d.id}">${d.scramble ? '🧩 Məşqə başla' : d.numbers ? '🎧 Məşqə başla' : d.wuerfel ? '🎲 Oyuna başla' : '🎙️ Səsli məşqə başla'}</a>
+        <a class="btn primary big" href="#/practice/${d.id}">${d.scramble ? '🧩 Məşqə başla' : d.numbers ? '🎧 Məşqə başla' : d.wuerfel ? '🎲 Oyuna başla' : d.keinSpiel ? '☕ Oyuna başla' : '🎙️ Səsli məşqə başla'}</a>
       </div>
     </main>`;
 
@@ -502,6 +503,7 @@ function renderPractice(id) {
   if (d.scramble) return renderScramble({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
   if (d.numbers) return renderNumbers({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
   if (d.wuerfel) return renderWuerfel({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
+  if (d.keinSpiel) return renderKein({ $app, d, cat, store, esc, header, fx, confetti, saveMistake });
   // "Hast du die Nummer von …?" rol oyunu: ayrıca faylda
   if (d.nummer) {
     return renderNummer({

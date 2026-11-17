@@ -701,6 +701,55 @@ export const CATEGORIES = [
           ['zahlen', 'ödəmək'],
         ],
       },
+      {
+        id: 'kafe-kein',
+        title: '☕ Ist das ein Kaffee? (ein / kein oyunu)',
+        situation:
+          'Şəkil oyunu: hər raundda iki şəkil var — ✖ yanlış və ✔ düzgün. Soruşan ✖ şəkil haqqında soruşur: "Ist das ein Kaffee?" Cavab verən: "Nein, das ist kein Kaffee. Das ist ein Espresso." Birinci kimin soruşacağı təsadüfi seçilir, sonra növbə ilə: bir sən soruşursan, bir müəllim. Müəllimin cavabını sən yoxlayırsan.',
+        keinSpiel: true,
+        lines: [
+          ['A', 'Ist das ein Kaffee?', 'Bu qəhvədir?'],
+          ['B', 'Nein, das ist kein Kaffee. Das ist ein Espresso. Und das ist mein Espresso.', 'Xeyr, bu qəhvə deyil. Bu espressodur. Bu da mənim espressomdur.'],
+          ['B', 'Ist das eine Cola?', 'Bu koladır?'],
+          ['A', 'Nein, das ist keine Cola. Das ist mein Apfelsaft.', 'Xeyr, bu kola deyil. Bu mənim alma şirəmdir.'],
+          ['A', 'Ist das ein Wasser?', 'Bu sudur?'],
+          ['B', 'Nein, das ist kein Wasser. Das ist ein Orangensaft.', 'Xeyr, bu su deyil. Bu portağal şirəsidir.'],
+        ],
+        rule: {
+          title: 'ein / eine → kein / keine → mein / meine',
+          focus: 'Indefinite article (ein/eine), negation with kein/keine and possessive mein/meine in the nominative; yes/no question "Ist das ein …?".',
+          text: [
+            '<b>der</b> və <b>das</b> sözləri: <b>ein</b> · <b>kein</b> · <b>mein</b> (sonluq yoxdur).',
+            '<b>die</b> sözləri: <b>eine</b> · <b>keine</b> · <b>meine</b> (sonuna -e gəlir).',
+            'Sual — bəli/xeyr sualı, fel əvvəldə: <i>Ist das ein Kaffee?</i>',
+            'Cavab: <i>Nein, das ist <b>kein</b> Kaffee. Das ist <b>ein</b> Espresso.</i> Və ya: <i>Das ist <b>mein</b> Espresso.</i>',
+          ],
+          tables: [
+            {
+              head: ['', 'der Kaffee', 'das Wasser', 'die Cola'],
+              rows: [
+                ['ein / eine', 'ein Kaffee', 'ein Wasser', 'eine Cola'],
+                ['kein / keine', 'kein Kaffee', 'kein Wasser', 'keine Cola'],
+                ['mein / meine', 'mein Kaffee', 'mein Wasser', 'meine Cola'],
+              ],
+            },
+          ],
+          tips: ['Tez-tez edilən səhvlər: ❌ keine Kaffee → ✅ kein Kaffee · ❌ ein Cola → ✅ eine Cola · ❌ Das ist nicht Kaffee → ✅ Das ist kein Kaffee · ❌ Das ist ein Kaffee? → ✅ Ist das ein Kaffee?'],
+        },
+        vocab: [
+          ['der Kaffee', 'qəhvə'],
+          ['der Espresso', 'espresso'],
+          ['der Tee', 'çay'],
+          ['der Apfelsaft', 'alma şirəsi'],
+          ['der Orangensaft', 'portağal şirəsi'],
+          ['das Wasser', 'su'],
+          ['die Cola', 'kola'],
+          ['die Limonade', 'limonad'],
+          ['die Milch', 'süd'],
+          ['kein / keine', 'heç bir … deyil'],
+          ['mein / meine', 'mənim'],
+        ],
+      },
     ],
   },
   {
