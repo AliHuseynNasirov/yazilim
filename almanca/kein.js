@@ -5,7 +5,7 @@
 // Birinci soruşan təsadüfi seçilir, sonra növbə dəyişir. Müəllim cavab verəndə bəzən səhv edir — sən yoxlayırsan.
 
 import { findItem, question, answer, checkQuestion, checkAnswer, explain, wrongAnswer, newGame } from './kein-core.js';
-import { asrSupported, listen, asrErrorText } from './asr.js';
+import { asrSupported, listenLong, asrErrorText } from './asr.js';
 
 const TEACHER_ERR = 0.3;
 // Səsi tanıma bəzən sözü tutmur — onda cəza yox, "yenidən de" (ən çox 2 dəfə)
@@ -42,6 +42,8 @@ export function renderKein(ctx) {
     store.set('keinUsed', used);
     return { v: 1, ...g, i: 0, phase: 'start', cur: {}, stats: { ans: 0, ansOk: 0, q: 0, qOk: 0, judge: 0, judgeOk: 0 } };
   };
+  let root = null;
+  const alive = () => root && document.body.contains(root);
   let st = store.get(KEY, null);
   if (!st || st.v !== 1 || !Array.isArray(st.rounds)) st = fresh();
   const save = () => store.set(KEY, st);
@@ -118,44 +120,61 @@ export function renderKein(ctx) {
     const kb = !can || c.kb;
     return `${c.retryMsg ? `<p class="kn-retry">${c.retryMsg}</p>` : ''}
       ${can ? `<div class="kn-voice">
-        <button class="mic kn-mic ${listening ? 'hold' : ''}" id="knMic" aria-label="Danış">🎙️</button>
-        <div class="kn-heard" id="knHeard">${listening ? '🔴 Dinləyirəm… danış' : c.heard ? `Eşitdim: «${esc(c.heard)}»` : '🎙️ düyməsinə bas və danış'}</div>
-      </div>` : '<p class="small muted">Bu brauzer səsi tanımır — cavabı yaz (Chrome-da səslə işləyir).</p>'}
+        <button class="mic kn-mic ${listening ? 'hold' : ''}" id="knMic" aria-label="Danış" ${listening ? 'disabled' : ''}>🎙️</button>
+        <div class="kn-heard" id="knHeard">${listening ? `🔴 ${esc(liveText) || 'Dinləyirəm… cümləni tam de, sonra yaşıl düyməni bas'}` : c.heard ? `Eşitdim: «${esc(c.heard)}»` : '🎙️ düyməsinə bas və danış'}</div>
+      </div>
+      ${listening ? `<div class="kn-live-btns">
+        <button class="btn ghost" id="knClear" type="button">↺ Sil, yenidən de</button>
+        <button class="btn kn-send" id="knSend" type="button">✅ Bitirdim — yoxla</button>
+      </div>` : ''}` : '<p class="small muted">Bu brauzer səsi tanımır — cavabı yaz (Chrome-da səslə işləyir).</p>'}
       ${kb
         ? `<form id="knForm" class="wf-form kn-form"><textarea id="knIn" rows="2" autocomplete="off" autocapitalize="sentences" autocorrect="off" spellcheck="false" placeholder="${esc(ph)}"></textarea><button class="btn primary">Yoxla</button></form>`
         : '<button class="btn ghost kn-kb" id="knKb" type="button">⌨️ Yazaraq cavab ver</button>'}`;
   }
 
+  // 🎙️ basanda dinləmə başlayır və yaşıl "Bitirdim" basılana qədər davam edir (fasilələrdə dayanmır)
   let listening = false;
+  let liveText = '';
   let rec = null;
   function micClick() {
-    if (listening) {
-      if (rec) rec.stop();
-      return;
-    }
+    if (listening) return;
     fx.init();
     listening = true;
+    liveText = '';
     st.cur.retryMsg = '';
     render();
-    rec = listen({
-      onInterim: (t) => {
+    rec = listenLong({
+      isAlive: alive,
+      onText: (t) => {
+        liveText = t;
         const h = $app.querySelector('#knHeard');
-        if (h) h.textContent = `🔴 ${t}`;
+        if (h) h.textContent = `🔴 ${t || 'Dinləyirəm…'}`;
       },
       onError: (code) => {
         const m = asrErrorText(code);
         if (m) st.cur.retryMsg = m;
       },
-      onEnd: () => {
+      onDone: (t, fatal) => {
         listening = false;
         rec = null;
-        if (!st.cur.pendingHeard) render();
-      },
-      onFinal: (t) => {
-        st.cur.pendingHeard = false;
-        heardText(t);
+        liveText = '';
+        if (!alive()) return;
+        if (t) heardText(t);
+        else {
+          if (!fatal && !st.cur.retryMsg) st.cur.retryMsg = asrErrorText('no-speech');
+          render();
+        }
       },
     });
+  }
+  function sendClick() {
+    if (rec) rec.finish();
+  }
+  function clearClick() {
+    liveText = '';
+    if (rec) rec.clear();
+    const h = $app.querySelector('#knHeard');
+    if (h) h.textContent = '🔴 Dinləyirəm… yenidən de';
   }
 
   // Səslə deyilən: əvvəl sözlər tanınıbmı yoxla (tanınmayıbsa cəza yox, yenidən de)
@@ -193,6 +212,7 @@ export function renderKein(ctx) {
         </div></details>
         ${st.phase !== 'start' && st.phase !== 'over' ? '<button class="btn ghost wf-restart" id="knRestart">🔄 Yeni oyun</button>' : ''}
       </main>`;
+    root = $app.querySelector('main');
     bind();
   }
 
@@ -223,6 +243,8 @@ export function renderKein(ctx) {
     on('#knSayT', () => speakDe(st.cur.t));
     on('#knSayC', () => speakDe(st.cur.model));
     on('#knMic', micClick);
+    on('#knSend', sendClick);
+    on('#knClear', clearClick);
     on('#knKb', () => {
       st.cur.kb = true;
       render();

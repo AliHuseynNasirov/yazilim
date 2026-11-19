@@ -464,3 +464,7 @@ main.kn { padding-bottom: 40px; }
 .kn-heard { flex: 1; min-width: 0; font-size: 15px; color: var(--muted); background: #f6f7fb; border-radius: 12px; padding: 10px; min-height: 44px; }
 .kn-retry { background: #fff8e1; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
 .kn-kb { width: 100%; margin-top: 4px; font-size: 14px; }
+.kn-live-btns { display: flex; gap: 8px; margin: 6px 0 4px; }
+.kn-live-btns .btn { flex: 1; }
+.kn-send { flex: 2 !important; background: #1f9d55; color: #fff; font-size: 17px; padding: 14px; }
+.kn-mic:disabled { opacity: 1; }
