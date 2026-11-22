@@ -981,6 +981,56 @@ export const CATEGORIES = [
           ['das Wochenende', 'həftə sonu'],
         ],
       },
+      {
+        id: 'hobbi-chat',
+        title: '💬 WhatsApp: dostla yazışma (dəvət)',
+        situation:
+          'WhatsApp kimi yazışma. Əvvəlcə kart göstərilir: gün (heute / morgen), tədbir (konsert, futbol oyunu…), məkan və ünvan. 1-ci raund: dostun səni dəvət edir — sən razılaşırsan, harada olduğunu və ünvanı soruşursan, sağollaşırsan. 2-ci raund: sən dəvət edirsən, dostun soruşur. Süni intellekt hər mesajın qrammatikasını yoxlayır və səhvi düzəldir — düzgün yazana qədər.',
+        chat: true,
+        lines: [
+          ['A', 'Hallo! 👋 Morgen ist ein Konzert. Hast du Lust? 🎸', 'Salam! Sabah konsert var. Həvəsin var?'],
+          ['B', 'Ja, gerne! Wo ist das Konzert?', 'Bəli, məmnuniyyətlə! Konsert haradadır?'],
+          ['A', 'In der Bar Fuchs. 🍸', '"Fuchs" barında.'],
+          ['B', 'Wo ist die Bar Fuchs?', '"Fuchs" barı haradadır?'],
+          ['A', 'Die Adresse ist Goethestraße 12. 📍 Kommst du?', 'Ünvan: Goethe küçəsi 12. Gəlirsən?'],
+          ['B', 'Ja! Danke für die Nachricht. Ich freue mich! Bis morgen!', 'Hə! Mesaj üçün sağ ol. Sevinirəm! Sabaha qədər!'],
+          ['A', 'Ich freue mich auch! Bis morgen! 😊', 'Mən də sevinirəm! Sabaha qədər!'],
+        ],
+        rule: {
+          title: 'Dəvət: Heute ist ein Konzert. Hast du Lust?',
+          focus: 'Inviting a friend in a chat: "Heute/Morgen ist ein/eine …. Hast du Lust?", W-question "Wo ist …?", "in der / im", address, "Ich freue mich", "Danke für die Nachricht", "Bis gleich / Bis später / Bis morgen".',
+          text: [
+            'Dəvət: <i><b>Morgen ist</b> ein Konzert. <b>Hast du Lust?</b></i> — vaxt sözü əvvəldədirsə, fel 2-ci yerdədir: <i>Morgen <b>ist</b> …</i>',
+            'Artikl: <i>ein Konzert, ein Fußballspiel</i> (das) · <i>ein Flohmarkt</i> (der) · <i><b>eine</b> Party</i> (die).',
+            'Harada? <i><b>Wo</b> ist das Konzert?</i> → <i><b>In der</b> Bar Fuchs.</i> (die Bar) · <i><b>Im</b> Café Mozart.</i> (das Café) · <i><b>Im</b> Stadtpark.</i> (der Park)',
+            'Ünvan: <i>Wo ist die Bar Fuchs?</i> / <i>Wie ist die Adresse?</i> → <i>Die Adresse ist Goethestraße 12.</i>',
+            'Sonda: <i>Ich freue mich!</i> · <i>Danke für die Nachricht!</i> · <i>Bis gleich!</i> (az sonra) · <i>Bis später!</i> · <i>Bis morgen!</i>',
+          ],
+          tables: [
+            {
+              head: ['', 'der', 'das', 'die'],
+              rows: [
+                ['ein / eine', 'ein Flohmarkt', 'ein Konzert', 'eine Party'],
+                ['harada?', 'im Stadtpark', 'im Café Mozart', 'in der Bar Fuchs'],
+              ],
+            },
+          ],
+          tips: ['Tez-tez edilən səhvlər: ❌ Morgen ein Konzert ist → ✅ Morgen ist ein Konzert · ❌ ein Party → ✅ eine Party · ❌ im Bar → ✅ in der Bar · ❌ Wo das Konzert ist? → ✅ Wo ist das Konzert?'],
+        },
+        vocab: [
+          ['die Nachricht', 'mesaj'],
+          ['Hast du Lust?', 'Həvəsin var? (gəlirsən?)'],
+          ['das Konzert', 'konsert'],
+          ['das Fußballspiel', 'futbol oyunu'],
+          ['die Party', 'əyləncə, parti'],
+          ['der Flohmarkt', 'bit bazarı'],
+          ['die Adresse', 'ünvan'],
+          ['die Straße', 'küçə'],
+          ['heute / morgen', 'bu gün / sabah'],
+          ['Ich freue mich!', 'Sevinirəm!'],
+          ['Bis gleich! / Bis später!', 'Görüşənədək (az sonra)! / Sonra görüşərik!'],
+        ],
+      },
     ],
   },
   {
