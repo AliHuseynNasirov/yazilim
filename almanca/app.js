@@ -706,8 +706,9 @@ function renderPractice(id) {
   let convLog = convOn ? store.get(CKEY, []) : [];
   if (!Array.isArray(convLog)) convLog = [];
   let convEntry = null;
+  let convPaused = false; // "Bitir" basılandan sonra vidalaşma yaddaşa yazılmasın
   function convTrack(role, raw, fresh) {
-    if (!convOn) return;
+    if (!convOn || convPaused) return;
     if (fresh || !convEntry) {
       convEntry = { r: role === 'ai' ? 'T' : 'L', t: '' };
       convLog.push(convEntry);
@@ -1500,6 +1501,10 @@ function renderPractice(id) {
             // yalnız İLK qoşulmanın modelini yadda saxla (dərs ortasında ehtiyat modelə keçid yadda qalmasın)
             if (data && data.model && !data.reconnect) store.set('workingModel', data.model);
             if (data && data.reconnect) {
+              if (lessonEnding) {
+                finishLesson(); // bitirilərkən bağlantı qopdusa — sadəcə bitir
+                break;
+              }
               setStatus(idleStatus());
               if (data.resumed) {
                 sys('✅ Bağlantı bərpa olundu, qaldığımız yerdən davam edirik.');
@@ -1550,6 +1555,7 @@ function renderPractice(id) {
               if (convOn) {
                 convLog = [];
                 convEntry = null;
+                convPaused = false;
                 store.set(CKEY, convLog);
               }
               session.sendText(START_MESSAGE);
@@ -1584,9 +1590,18 @@ function renderPractice(id) {
             stopWaiting();
             if (last) last.open = false;
             closeUtter();
+            if (lessonEnding) {
+              goodbyeDone = true;
+              setTimeout(() => lessonEnding && !aiSpeaking && finishLesson(), 1500);
+              break;
+            }
             checkAfterTurn();
             break;
           case 'speaking':
+            aiSpeaking = !!data;
+            if (!data && lessonEnding && goodbyeDone) {
+              setTimeout(() => lessonEnding && !aiSpeaking && finishLesson(), 400);
+            }
             if (data) stopWaiting();
             setStatus(data ? '🗣️ Müəllim danışır…' : idleStatus());
             break;
@@ -1681,8 +1696,52 @@ function renderPractice(id) {
     });
   }
 
+  // "⏹ Bitir": söhbət dərslərində dərs tam bitir, yaddaş silinir — növbəti dəfə əvvəldən başlayır.
+  // (Kart dərsinin öz irəliləyişi var — orada əvvəlki kimi qalır.)
+  let lessonEnding = false;
+  let goodbyeDone = false;
+  let aiSpeaking = false;
+  let endTimer = null;
+  function finishLesson() {
+    clearTimeout(endTimer);
+    lessonEnding = false;
+    goodbyeDone = false;
+    stopWaiting();
+    clearInterval(timerId);
+    if (session) session.stop();
+    session = null;
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    sys('⏹ Dərs bitdi. Yenidən başlayanda dərs əvvəldən başlayacaq.');
+    setStatus('Dərs bitdi');
+    micBtn.hidden = endBtn.hidden = textForm.hidden = quick.hidden = true;
+    startBtn.hidden = false;
+    startBtn.disabled = false;
+    startBtn.textContent = '▶️ Yenidən başla (əvvəldən)';
+  }
   endBtn.addEventListener('click', () => {
-    if (session) session.sendText('Bitte beende jetzt das Rollenspiel und gib mir kurzes Feedback.');
+    if (!session) return;
+    if (!convOn) {
+      session.sendText('Bitte beende jetzt das Rollenspiel und gib mir kurzes Feedback.');
+      return;
+    }
+    if (lessonEnding) return finishLesson(); // ikinci dəfə basılsa — dərhal
+    lessonEnding = true;
+    goodbyeDone = false;
+    // söhbət yaddaşını sil: növbəti başlanğıc əvvəldən olsun
+    convPaused = true;
+    convLog = [];
+    convEntry = null;
+    store.set(CKEY, null);
+    { const rb = $app.querySelector('.resume-bar.conv'); if (rb) rb.remove(); }
+    stopWaiting();
+    sys('⏹ Dərs bitirilir…');
+    setStatus('⏹ Dərs bitirilir…');
+    micBtn.hidden = textForm.hidden = quick.hidden = true;
+    session.sendText(
+      '[App] The learner pressed the STOP button: the lesson is over now. Do not continue the lesson, do not ask any question and do not say that this is off-topic. ' +
+        'Say goodbye briefly in Azerbaijani: one short sentence of praise and, if there were mistakes, name the most important one (wrong → right). Then end your turn.',
+    );
+    endTimer = setTimeout(() => lessonEnding && finishLesson(), 15000);
   });
 
   textForm.addEventListener('submit', (e) => {
