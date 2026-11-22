@@ -1002,6 +1002,7 @@ export const CATEGORIES = [
           text: [
             'Dəvət: <i><b>Morgen ist</b> ein Konzert. <b>Hast du Lust?</b></i> — vaxt sözü əvvəldədirsə, fel 2-ci yerdədir: <i>Morgen <b>ist</b> …</i>',
             'Artikl: <i>ein Konzert, ein Fußballspiel</i> (das) · <i>ein Flohmarkt</i> (der) · <i><b>eine</b> Party</i> (die).',
+            'İkinci forma: <i>Morgen <b>gibt es</b> ein Konzert.</i> (<i>es gibt</i> = var). <i>es gibt</i>-dən sonra der-sözlər dəyişir: <i>Morgen gibt es <b>einen</b> Flohmarkt.</i> (das / die dəyişmir: <i>ein Konzert, eine Party</i>). Dostun bir söhbətdə <i>ist</i>, növbətidə <i>gibt es</i> ilə yazır.',
             'Harada? <i><b>Wo</b> ist das Konzert?</i> → <i><b>In der</b> Bar Fuchs.</i> (die Bar) · <i><b>Im</b> Café Mozart.</i> (das Café) · <i><b>Im</b> Stadtpark.</i> (der Park)',
             'Ünvan: <i>Wo ist die Bar Fuchs?</i> / <i>Wie ist die Adresse?</i> → <i>Die Adresse ist Goethestraße 12.</i>',
             'Sonda: <i>Ich freue mich!</i> · <i>Danke für die Nachricht!</i> · <i>Bis gleich!</i> (az sonra) · <i>Bis später!</i> · <i>Bis morgen!</i>',
@@ -1015,7 +1016,7 @@ export const CATEGORIES = [
               ],
             },
           ],
-          tips: ['Tez-tez edilən səhvlər: ❌ Morgen ein Konzert ist → ✅ Morgen ist ein Konzert · ❌ ein Party → ✅ eine Party · ❌ im Bar → ✅ in der Bar · ❌ Wo das Konzert ist? → ✅ Wo ist das Konzert?'],
+          tips: ['Tez-tez edilən səhvlər: ❌ Morgen ein Konzert ist → ✅ Morgen ist ein Konzert · ❌ es gibt ein Flohmarkt → ✅ es gibt einen Flohmarkt · ❌ ein Party → ✅ eine Party · ❌ im Bar → ✅ in der Bar · ❌ Wo das Konzert ist? → ✅ Wo ist das Konzert?'],
         },
         vocab: [
           ['die Nachricht', 'mesaj'],

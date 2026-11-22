@@ -43,6 +43,9 @@ export const pl = (sc) => PLACES.find((x) => x.id === sc.pl);
 export const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const ein = (it) => (it.art === 'die' ? 'eine' : 'ein');
 export const evIndef = (sc) => `${ein(ev(sc))} ${ev(sc).n}`; // ein Konzert
+export const evAcc = (sc) => `${ev(sc).art === 'der' ? 'einen' : ein(ev(sc))} ${ev(sc).n}`; // es gibt einen Flohmarkt
+// sc.gibt: bu söhbətdə dəvət "es gibt" ilə (Akkusativ), yoxsa "ist" ilə
+export const inviteLine = (sc) => (sc.gibt ? `${cap(sc.day)} gibt es ${evAcc(sc)}` : `${cap(sc.day)} ist ${evIndef(sc)}`);
 export const evDef = (sc) => `${ev(sc).art} ${ev(sc).n}`; // das Konzert
 export const plDef = (sc) => `${pl(sc).art} ${pl(sc).n}`; // die Bar Fuchs
 export const address = (sc) => `${sc.street} ${sc.no}`;
@@ -84,7 +87,7 @@ export function newGame(rnd = Math.random) {
 export const ROUNDS = [
   // 1-ci raund: dost dəvət edir, şagird soruşur
   [
-    { k: 'inv', who: 'T', say: (sc) => `Hallo! 👋 ${cap(sc.day)} ist ${evIndef(sc)}. Hast du Lust? ${ev(sc).e}` },
+    { k: 'inv', who: 'T', say: (sc) => `Hallo! 👋 ${inviteLine(sc)}. Hast du Lust? ${ev(sc).e}` },
     { k: 'askWhere', who: 'L', task: (sc) => `Razılaş və ${ev(sc).az} harada olduğunu soruş.`, ex: (sc) => `Ja, gerne! Wo ist ${evDef(sc)}?` },
     { k: 'place', who: 'T', say: (sc) => `${cap(pl(sc).in)}. ${pl(sc).e}` },
     { k: 'askAddr', who: 'L', task: (sc) => `"${pl(sc).n}" harada yerləşir? Ünvanı soruş.`, ex: (sc) => `Wo ist ${plDef(sc)}?` },
@@ -94,7 +97,7 @@ export const ROUNDS = [
   ],
   // 2-ci raund: şagird dəvət edir, dost soruşur
   [
-    { k: 'invite', who: 'L', task: (sc) => `Kartdakı tədbirə dostunu dəvət et: gün + tədbir + "Hast du Lust?"`, ex: (sc) => `Hallo! ${cap(sc.day)} ist ${evIndef(sc)}. Hast du Lust?` },
+    { k: 'invite', who: 'L', task: (sc) => `Kartdakı tədbirə dostunu dəvət et: gün + tədbir + "Hast du Lust?"`, ex: (sc) => `Hallo! ${inviteLine(sc)}. Hast du Lust?` },
     { k: 'tWhere', who: 'T', say: (sc) => `Ja, gerne! 😃 Wo ist ${evDef(sc)}?` },
     { k: 'tellPlace', who: 'L', task: () => 'Yerini yaz (kartdakı məkan).', ex: (sc) => `${cap(pl(sc).in)}.` },
     { k: 'tAddr', who: 'T', say: (sc) => `Super! Und wo ist ${plDef(sc)}? Wie ist die Adresse?` },
@@ -136,7 +139,10 @@ export function checkStep(k, text, sc) {
       if (!hasDay && new RegExp(`\\b${other}\\b`).test(t2)) return bad(`Gün səhvdir: kartda "${cap(sc.day)}" (${DAYS[sc.day]}) yazılıb.`);
       if (!hasDay) return bad(`Günü də yaz — kartda "${cap(sc.day)}" (${DAYS[sc.day]}).`);
       const wrongEv = EVENTS.find((x) => x.id !== E.id && x.re.test(t));
-      if (!E.re.test(t)) return bad(wrongEv ? `Tədbir səhvdir: kartda "${E.n}" (${E.az}) yazılıb.` : `Tədbiri yaz: "${evIndef(sc)}".`);
+      if (!E.re.test(t)) return bad(wrongEv ? `Tədbir səhvdir: kartda "${E.n}" (${E.az}) yazılıb.` : `Tədbiri yaz: "${sc.gibt ? evAcc(sc) : evIndef(sc)}".`);
+      // "es gibt" + der-söz → einen; "ist" + der-söz → ein
+      if (E.art === 'der' && /\bgibt\b/.test(t) && new RegExp(`\\bein ${norm(E.n)}`).test(t)) return bad(`"es gibt"-dən sonra der-söz Akkusativdə olur: "einen ${E.n}" ("ein" yox).`);
+      if (E.art === 'der' && /\bist\b/.test(t) && !/\bgibt\b/.test(t) && new RegExp(`\\beinen ${norm(E.n)}`).test(t)) return bad(`"ist"-dən sonra Nominativ olur: "ein ${E.n}" ("einen" yox).`);
       if (!/lust|zeit|kommst|mitkommen|m(ö|o|oe)chtest|willst|gehen wir|gehst du|machst du mit/.test(t)) return bad('Dostunu dəvət et — soruş: "Hast du Lust?"');
       return ok;
     }

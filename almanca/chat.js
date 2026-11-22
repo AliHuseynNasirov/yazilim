@@ -15,6 +15,10 @@ export function renderChat(ctx) {
   let st = store.get(KEY, null);
   const fresh = () => {
     const g = newGame();
+    // dəvət forması növbə ilə: bir söhbət "es gibt", növbəti "ist"
+    const gibt = store.get('chatForm', 'ist') !== 'gibt';
+    store.set('chatForm', gibt ? 'gibt' : 'ist');
+    g.sc.forEach((x) => (x.gibt = gibt));
     return { v: 1, ...g, round: 0, idx: 0, intro: [false, false], msgs: [{ type: 'date' }, { type: 'sys', text: '🔒 Bu söhbət A1.1 məşqidir. Müəllim hər mesajını yoxlayacaq və səhvləri düzəldəcək.' }], ok: 0, bad: 0, lastFix: null, tries: 0, finished: false };
   };
   if (!st || st.v !== 1 || !Array.isArray(st.msgs)) st = fresh();
@@ -240,8 +244,9 @@ export function renderChat(ctx) {
     const go = () => {
       st.intro[st.round] = true;
       push({ type: 'card', r: st.round });
-      if (st.round === 0) push({ type: 'note', text: `${friend.n} səni dəvət edir. Kartda hər şey yazılıb.` });
-      else push({ type: 'note', text: 'Bu kartı dostuna göndərmək üçün özün yaz: gün, tədbir, yer, ünvan.' });
+      const g = sc().gibt;
+      if (st.round === 0) push({ type: 'note', text: `${friend.n} səni dəvət edir. Kartda hər şey yazılıb. ` + (g ? 'Bu dəfə "es gibt" (var) ilə yazacaq: "Heute gibt es ein Konzert." der-sözlərdə artikl dəyişir: "es gibt einen Flohmarkt".' : 'Bu dəfə "ist" ilə yazacaq: "Heute ist ein Konzert."') });
+      else push({ type: 'note', text: 'Bu kartı dostuna göndərmək üçün özün yaz: gün, tədbir, yer, ünvan. ' + (g ? 'Dəvəti "… gibt es …" ilə yaz (der-söz → einen).' : 'Dəvəti "… ist ein/eine …" ilə yaz.') });
       save();
       friendTurn();
     };
