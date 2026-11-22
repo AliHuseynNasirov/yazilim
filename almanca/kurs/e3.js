@@ -311,7 +311,7 @@ export default {
     wr('Dostuna mesaj yaz: salam, haradasan, sən kafedəsən, "tezliklə görüşərik".', [{ l: 'salam (Hey / Hallo)', a: ['hey', 'hallo', 'hi '] }, { l: 'Wo bist du?', a: ['wo bist du'] }, { l: 'Ich bin im Café', a: ['ich bin im cafe'] }, { l: 'Bis gleich / später', a: ['bis gleich', 'bis spater', 'bis dann'] }], 'Hey Mia, wo bist du? Ich bin im Café. Bis gleich!'),
     wr('Dostunu konsertə dəvət et: bu gün konsert var + həvəsin var?', [{ l: 'Heute ist ein Konzert', a: ['heute ist ein konzert', 'heute ist konzert'] }, { l: 'Hast du Lust?', a: ['hast du lust'] }], 'Heute ist ein Konzert. Hast du Lust?'),
   ],
-  speaking: ['kafe-1', 'kitab-3', 'kafe-kein'],
+  speaking: ['kafe-1', 'kitab-3', 'kafe-kein', 'kafe-kellner'],
   phon: {
     title: 'Uzun və qısa "e"',
     html: [

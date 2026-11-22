@@ -8,6 +8,7 @@ import { renderWuerfel } from './wuerfel.js';
 import { renderKein } from './kein.js';
 import { renderNumbers } from './numbers.js';
 import { renderAnmeldung } from './anmeldung.js';
+import { renderKellner } from './kellner.js';
 import { renderNummer } from './nummer.js';
 import { kursHomeHtml, renderKurs, KURS_CAT } from './kurs.js';
 import { dlog, showLogOverlay } from './log.js';
@@ -380,7 +381,7 @@ function renderDialog(id) {
         </div>
       </section>
       <div class="sticky-cta">
-        <a class="btn primary big" href="#/practice/${d.id}">${d.scramble ? '🧩 Məşqə başla' : d.numbers ? '🎧 Məşqə başla' : d.wuerfel ? '🎲 Oyuna başla' : d.keinSpiel ? '☕ Oyuna başla' : '🎙️ Səsli məşqə başla'}</a>
+        <a class="btn primary big" href="#/practice/${d.id}">${d.scramble ? '🧩 Məşqə başla' : d.numbers ? '🎧 Məşqə başla' : d.wuerfel ? '🎲 Oyuna başla' : d.keinSpiel ? '☕ Oyuna başla' : d.kellner ? '🤵 Oyuna başla' : '🎙️ Səsli məşqə başla'}</a>
       </div>
     </main>`;
 
@@ -507,6 +508,15 @@ function renderPractice(id) {
   // "Hast du die Nummer von …?" rol oyunu: ayrıca faylda
   if (d.nummer) {
     return renderNummer({
+      $app, d, cat, store, esc, header, fx, confetti, saveMistake, closeMessage, MODELS, ruleHtml, settings,
+      teardown,
+      setSession: (x) => (session = x),
+      setTimer: (id) => (timerId = id),
+    });
+  }
+  // Kellner und Gast: animasiyalı kafe rol oyunu, ayrıca faylda
+  if (d.kellner) {
+    return renderKellner({
       $app, d, cat, store, esc, header, fx, confetti, saveMistake, closeMessage, MODELS, ruleHtml, settings,
       teardown,
       setSession: (x) => (session = x),
