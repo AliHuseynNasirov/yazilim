@@ -1007,7 +1007,9 @@ export const CATEGORIES = [
             'İkinci forma: <i>Morgen <b>gibt es</b> ein Konzert.</i> (<i>es gibt</i> = var). <i>es gibt</i>-dən sonra der-sözlər dəyişir: <i>Morgen gibt es <b>einen</b> Flohmarkt.</i> (das / die dəyişmir: <i>ein Konzert, eine Party</i>). Dostun bir söhbətdə <i>ist</i>, növbətidə <i>gibt es</i> ilə yazır.',
             'Harada? <i><b>Wo</b> ist das Konzert?</i> → <i><b>In der</b> Bar Fuchs.</i> (die Bar) · <i><b>Im</b> Café Mozart.</i> (das Café) · <i><b>Im</b> Stadtpark.</i> (der Park)',
             'Ünvan: <i>Wo ist die Bar Fuchs?</i> / <i>Wie ist die Adresse?</i> → <i>Die Adresse ist Goethestraße 12.</i>',
-            'Sonda: <i>Ich freue mich!</i> · <i>Danke für die Nachricht!</i> · <i>Bis gleich!</i> (az sonra) · <i>Bis später!</i> · <i>Bis morgen!</i>',
+            'Dəvətə cavab: <i>Ja, <b>ich komme gern</b>!</i> (məmnuniyyətlə gəlirəm)',
+            'Sonda: <i>Ich freue mich!</i> → <i>Ich freue mich <b>auch</b>!</i> · <i>Danke für die Nachricht!</i> · <i>Bis gleich!</i> (az sonra) · <i>Bis später!</i> · <i>Bis dann!</i> · <i>Bis morgen!</i> · rəsmi: <i>Auf Wiedersehen!</i>',
+            'Bu ifadələri yazmasan, müəllim mesajından sonra “💡 Bunu da yaza bilərdin” deyə xatırladır.',
           ],
           tables: [
             {
@@ -1031,7 +1033,11 @@ export const CATEGORIES = [
           ['die Straße', 'küçə'],
           ['heute / morgen', 'bu gün / sabah'],
           ['Ich freue mich!', 'Sevinirəm!'],
+          ['Ich komme gern!', 'Məmnuniyyətlə gəlirəm!'],
+          ['Ich freue mich auch!', 'Mən də sevinirəm!'],
           ['Bis gleich! / Bis später!', 'Görüşənədək (az sonra)! / Sonra görüşərik!'],
+          ['Bis dann! / Bis morgen!', 'Onda görüşərik! / Sabah görüşərik!'],
+          ['Auf Wiedersehen!', 'Sağ olun! (rəsmi vidalaşma)'],
         ],
       },
     ],

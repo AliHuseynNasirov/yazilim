@@ -49,7 +49,19 @@ export const inviteLine = (sc) => (sc.gibt ? `${cap(sc.day)} gibt es ${evAcc(sc)
 export const evDef = (sc) => `${ev(sc).art} ${ev(sc).n}`; // das Konzert
 export const plDef = (sc) => `${pl(sc).art} ${pl(sc).n}`; // die Bar Fuchs
 export const address = (sc) => `${sc.street} ${sc.no}`;
-export const byeWord = (sc) => (sc.day === 'heute' ? 'gleich' : 'morgen');
+export const byeWord = (sc) => sc.bye || (sc.day === 'heute' ? 'gleich' : 'morgen');
+// sağollaşma variantları: bu gün → gleich / später / dann; sabah → morgen / dann
+export const BYES = { heute: ['gleich', 'später', 'dann'], morgen: ['morgen', 'dann'] };
+export const PHRASES = {
+  'komme gern': { de: 'Ich komme gern!', az: 'Məmnuniyyətlə gəlirəm!' },
+  'freue mich': { de: 'Ich freue mich!', az: 'Sevinirəm! (səbirsizliklə gözləyirəm)' },
+  'freue mich auch': { de: 'Ich freue mich auch!', az: 'Mən də sevinirəm!' },
+  gleich: { de: 'Bis gleich!', az: 'Az sonra görüşərik!' },
+  später: { de: 'Bis später!', az: 'Sonra görüşərik!' },
+  dann: { de: 'Bis dann!', az: 'Onda görüşərik!' },
+  morgen: { de: 'Bis morgen!', az: 'Sabah görüşərik!' },
+  wiedersehen: { de: 'Auf Wiedersehen!', az: 'Sağ olun! (rəsmi vidalaşma — daha çox tanımadığın adamlara)' },
+};
 
 export function norm(s) {
   return String(s || '')
@@ -68,13 +80,15 @@ export function newScenario(rnd = Math.random, avoid = null) {
   let e;
   do e = pick(EVENTS, rnd);
   while (avoid && e.id === avoid.ev && rnd() < 0.9);
-  return {
+  const sc = {
     day: rnd() < 0.5 ? 'heute' : 'morgen',
     ev: e.id,
     pl: pick(PAIRS[e.id], rnd),
     street: pick(STREETS, rnd),
     no: 2 + Math.floor(rnd() * 47),
   };
+  sc.bye = pick(BYES[sc.day], rnd);
+  return sc;
 }
 export function newGame(rnd = Math.random) {
   const s1 = newScenario(rnd);
@@ -88,17 +102,18 @@ export const ROUNDS = [
   // 1-ci raund: dost dəvət edir, şagird soruşur
   [
     { k: 'inv', who: 'T', say: (sc) => `Hallo! 👋 ${inviteLine(sc)}. Hast du Lust? ${ev(sc).e}` },
-    { k: 'askWhere', who: 'L', task: (sc) => `Razılaş və ${ev(sc).az} harada olduğunu soruş.`, ex: (sc) => `Ja, gerne! Wo ist ${evDef(sc)}?` },
+    { k: 'askWhere', who: 'L', task: (sc) => `Razılaş və ${ev(sc).az} harada olduğunu soruş.`, ex: (sc) => `Ja, ich komme gern! Wo ist ${evDef(sc)}?` },
     { k: 'place', who: 'T', say: (sc) => `${cap(pl(sc).in)}. ${pl(sc).e}` },
     { k: 'askAddr', who: 'L', task: (sc) => `"${pl(sc).n}" harada yerləşir? Ünvanı soruş.`, ex: (sc) => `Wo ist ${plDef(sc)}?` },
     { k: 'addr', who: 'T', say: (sc) => `Die Adresse ist ${address(sc)}. 📍 Kommst du?` },
-    { k: 'closing', who: 'L', task: () => 'Sevindiyini yaz və sağollaş.', ex: (sc) => `Ja! Danke für die Nachricht. Ich freue mich! Bis ${byeWord(sc)}!` },
-    { k: 'bye', who: 'T', say: (sc) => `Ich freue mich auch! Bis ${byeWord(sc)}! 😊` },
+    { k: 'closing', who: 'L', task: () => 'Sevindiyini yaz və sağollaş.', ex: (sc) => `Ja, ich komme gern! Danke für die Nachricht. Ich freue mich! Bis ${byeWord(sc)}!` },
+    // prev — şagirdin son mesajı: "Ich freue mich" yazıbsa, dost "Ich freue mich auch" deyir
+    { k: 'bye', who: 'T', say: (sc, prev = '') => `${/freu/.test(norm(prev)) ? 'Ich freue mich auch!' : 'Super, ich freue mich!'} Bis ${byeWord(sc)}! 😊` },
   ],
   // 2-ci raund: şagird dəvət edir, dost soruşur
   [
     { k: 'invite', who: 'L', task: (sc) => `Kartdakı tədbirə dostunu dəvət et: gün + tədbir + "Hast du Lust?"`, ex: (sc) => `Hallo! ${inviteLine(sc)}. Hast du Lust?` },
-    { k: 'tWhere', who: 'T', say: (sc) => `Ja, gerne! 😃 Wo ist ${evDef(sc)}?` },
+    { k: 'tWhere', who: 'T', say: (sc) => `Ja, ich komme gern! 😃 Wo ist ${evDef(sc)}?` },
     { k: 'tellPlace', who: 'L', task: () => 'Yerini yaz (kartdakı məkan).', ex: (sc) => `${cap(pl(sc).in)}.` },
     { k: 'tAddr', who: 'T', say: (sc) => `Super! Und wo ist ${plDef(sc)}? Wie ist die Adresse?` },
     { k: 'tellAddr', who: 'L', task: () => 'Ünvanı yaz (küçə + nömrə).', ex: (sc) => `Die Adresse ist ${address(sc)}.` },
@@ -107,7 +122,7 @@ export const ROUNDS = [
   ],
 ];
 
-const CLOSING = /freu(e)? mich|bis gleich|bis sp(ä|a|ae)t|bis dann|bis morgen|bis bald|danke f(ü|u)r die nachricht|ich auch|super|toll|prima/;
+const CLOSING = /freu(e)? mich|komme gern|auf wiedersehen|bis gleich|bis sp(ä|a|ae)t|bis dann|bis morgen|bis bald|danke f(ü|u)r die nachricht|ich auch|super|toll|prima/;
 const wordCount = (t) => (t.match(/[a-zäöü]{2,}/g) || []).length;
 function numbersIn(t) {
   return (wordsToDigits(norm(t)).match(/\d+/g) || []).map(Number);
@@ -163,6 +178,33 @@ export function checkStep(k, text, sc) {
     }
   }
   return ok;
+}
+
+// ---------- məsləhət: yazmadığı faydalı ifadələr ----------
+// Şagirdin mesajı qəbul olunandan sonra: bu yerdə yaza biləcəyi, amma yazmadığı ifadələr [{de, az}]
+const hasBye = (t) => /\bbis (gleich|spat|später|dann|morgen|bald)\b|auf wiedersehen/.test(t);
+function byeTips(sc) {
+  const day = BYES[sc.day] ? sc.day : 'heute';
+  const main = byeWord(sc);
+  const list = [main, ...BYES[day].filter((x) => x !== main)].map((k) => PHRASES[k]);
+  return [...list, PHRASES.wiedersehen];
+}
+export function tipsFor(k, text, sc) {
+  const t = norm(text);
+  const out = [];
+  const gern = /komme (gern|gerne)/.test(t);
+  const freu = /freu(e)? mich/.test(t);
+  if (k === 'askWhere' && !gern) out.push(PHRASES['komme gern']);
+  if (k === 'closing') {
+    if (!gern) out.push(PHRASES['komme gern']);
+    if (!freu) out.push(PHRASES['freue mich']);
+    if (!hasBye(t)) out.push(...byeTips(sc));
+  }
+  if (k === 'closing2') {
+    if (!/freu(e)? mich auch/.test(t)) out.push(PHRASES['freue mich auch']);
+    if (!hasBye(t)) out.push(...byeTips(sc));
+  }
+  return out;
 }
 
 // ---------- söz-söz fərq (düzəlişi göstərmək üçün) ----------

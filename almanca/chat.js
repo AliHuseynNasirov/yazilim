@@ -4,7 +4,7 @@
 // 1-ci raund: dost (müəllim) dəvət edir, şagird soruşur. 2-ci raund: şagird dəvət edir, dost soruşur.
 // Məzmunu tətbiq yoxlayır; qrammatikanı süni intellekt (Gemini) yoxlayır və düzəldir — şagird düzgün yazana qədər.
 
-import { ROUNDS, DAYS, FRIENDS, ev, pl, cap, address, checkStep, aiCheck, wordDiff, same, newGame } from './chat-core.js';
+import { ROUNDS, DAYS, FRIENDS, ev, pl, cap, address, checkStep, aiCheck, wordDiff, same, newGame, tipsFor } from './chat-core.js';
 import { dlog } from './log.js';
 
 export function renderChat(ctx) {
@@ -107,6 +107,8 @@ export function renderChat(ctx) {
           <div class="wa-fix-a">👉 Düzgün yazıb yenidən göndər.</div></div>`;
       case 'task':
         return `<div class="wa-fix task"><div class="wa-fix-h">🎯 Müəllim</div><div class="wa-fix-e">${esc(m.text)}</div></div>`;
+      case 'tip':
+        return `<div class="wa-tip"><b>💡 Bunu da yaza bilərdin:</b>${m.items.map((x) => `<div><i data-de="${esc(x.de)}">${esc(x.de)}</i> — ${esc(x.az)}</div>`).join('')}</div>`;
       case 'note':
         return `<div class="wa-note">💡 ${esc(m.text)}</div>`;
       case 'end':
@@ -197,7 +199,7 @@ export function renderChat(ctx) {
     busy = 'friend';
     paintTask();
     while (alive() && cur() && cur().who === 'T') {
-      const text = cur().say(sc());
+      const text = cur().say(sc(), st.lastLearner || '');
       await wait(500);
       if (!alive()) return;
       markRead();
@@ -298,6 +300,10 @@ export function renderChat(ctx) {
     m.status = 'delivered';
     refreshOut(m);
     if (r && r.minor) push({ type: 'note', text: r.minor });
+    // yaddan çıxmasın: bu yerdə yaza biləcəyi, amma yazmadığı ifadələr
+    const tips = tipsFor(cur().k, m.text, sc());
+    if (tips.length) push({ type: 'tip', items: tips });
+    st.lastLearner = m.text;
     st.ok++;
     st.idx++;
     st.tries = 0;
@@ -336,9 +342,9 @@ export function renderChat(ctx) {
   });
   // dostun mesajına toxunanda səsləndir
   list.addEventListener('click', (e) => {
-    const el = e.target.closest('[data-say]');
+    const el = e.target.closest('[data-say],[data-de]');
     if (!el || !('speechSynthesis' in window)) return;
-    const m = st.msgs[+el.dataset.say];
+    const m = el.dataset.de ? { text: el.dataset.de } : st.msgs[+el.dataset.say];
     if (!m) return;
     const u = new SpeechSynthesisUtterance(m.text.replace(/[^\p{L}\p{N}\s.,!?'-]/gu, ''));
     u.lang = 'de-DE';
