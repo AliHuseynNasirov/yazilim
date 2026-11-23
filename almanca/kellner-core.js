@@ -150,13 +150,26 @@ export const CHECK = {
     if (has(text, /\bnein\b/)) return { ok: false, why: 'polite', az: 'Nəzakətlə de: "Nein, danke."' };
     return { ok: false, why: 'noThanks', az: 'Başqa heç nə istəmirsənsə, de: "Nein, danke."' };
   },
-  pay(text) {
+  // ctx.form: bu oyunda qiyməti "Was macht das?" (macht) və ya "Was kostet das?" (kostet) ilə soruşmaq
+  pay(text, ctx = {}) {
     const wantPay = has(text, /\b(be)?zahlen\b|\brechnung\b/);
     const askPrice = has(text, /was macht das|wie ?viel (kostet|macht)|was kostet/);
-    if (wantPay && askPrice) return { ok: true };
-    if (wantPay) return { ok: false, why: 'price', az: 'Qiyməti də soruş: "Was macht das?" və ya "Wie viel kostet das?"' };
-    if (askPrice) return { ok: false, why: 'zahlen', az: 'Əvvəl ödəmək istədiyini de: "Ich möchte bitte zahlen."' };
-    return { ok: false, why: 'pay', az: 'De: "Ich möchte bitte zahlen. Was macht das?"' };
+    if (!ctx.form) {
+      if (wantPay && askPrice) return { ok: true };
+      if (wantPay) return { ok: false, why: 'price', az: 'Qiyməti də soruş: "Was macht das?" və ya "Wie viel kostet das?"' };
+      if (askPrice) return { ok: false, why: 'zahlen', az: 'Əvvəl ödəmək istədiyini de: "Ich möchte bitte zahlen."' };
+      return { ok: false, why: 'pay', az: 'De: "Ich möchte bitte zahlen. Was macht das?"' };
+    }
+    const f = ctx.form;
+    const other = f === 'macht' ? 'kostet' : 'macht';
+    const full = `"Ich möchte bitte zahlen. Die Rechnung, bitte. Was ${f} das?"`;
+    if (!has(text, /\b(be)?zahlen\b/)) return { ok: false, why: 'zahlen', az: `Əvvəl ödəmək istədiyini de: "Ich möchte bitte zahlen." Sonra hesabı istə və qiyməti soruş: ${full}` };
+    if (!has(text, /\brechnung\b/)) return { ok: false, why: 'rechnung', az: `Hesabı da istə: "Die Rechnung, bitte." Hamısı birlikdə: ${full}` };
+    if (!has(text, new RegExp(`was ${f} das|wie ?viel ${f}`))) {
+      if (has(text, new RegExp(`was ${other} das|wie ?viel ${other}`))) return { ok: false, why: 'form', az: `Bu oyunda qiyməti "Was ${f} das?" ilə soruş ("Was ${other} das?" yox). Növbəti oyunda o biri gələcək.` };
+      return { ok: false, why: 'price', az: `Qiyməti də soruş: "Was ${f} das?" Hamısı birlikdə: ${full}` };
+    }
+    return { ok: true };
   },
   together(text) {
     if (has(text, /\bzusammen\b/)) return { ok: true, val: 'zusammen' };
@@ -189,10 +202,13 @@ export const CHECK = {
     return { ok: false, why: 'askMore', az: 'Soruş: "Möchten Sie noch etwas?" və ya "Möchten Sie sonst noch etwas?"' };
   },
   price(text, ctx) {
+    const f = ctx.form || 'macht';
     const c = parseMoney(text);
-    if (c === ctx.total) return { ok: true };
-    if (c == null) return { ok: false, why: 'noPrice', az: `Qiyməti de: "Das macht ${euroWords(ctx.total)}."` };
-    return { ok: false, why: 'wrongPrice', az: `Qiymət düz deyil (${euro(c)}). Hesaba bax: ${euro(ctx.total)} — "Das macht ${euroWords(ctx.total)}."` };
+    if (c == null) return { ok: false, why: 'noPrice', az: `Qiyməti de: "Das ${f} ${euroWords(ctx.total)}."` };
+    if (c !== ctx.total) return { ok: false, why: 'wrongPrice', az: `Qiymət düz deyil (${euro(c)}). Hesaba bax: ${euro(ctx.total)} — "Das ${f} ${euroWords(ctx.total)}."` };
+    // müştəri hansı feli işlətdisə (macht / kostet), cavabda da o olmalıdır
+    if (ctx.form && !has(text, new RegExp(`\\b${f}\\b`))) return { ok: false, why: 'form', az: `Müştəri "Was ${f} das?" soruşdu — cavabda da "${f}" işlət: "Das ${f} ${euroWords(ctx.total)}."` };
+    return { ok: true };
   },
   askTogether(text) {
     if (has(text, /zusammen/) && has(text, /getrennt/)) return { ok: true };

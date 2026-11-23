@@ -21,8 +21,8 @@ const R1 = [
   { k: 'more', who: 'T', anim: 'notepad', say: (c) => (c.order.some((x) => itemById(x.id).grp === 'food') ? 'Gerne. Möchten Sie sonst noch etwas?' : 'Gerne. Möchten Sie noch etwas dazu? Vielleicht einen Kuchen?') },
   { k: 'no', who: 'L', check: 'noThanks', az: 'Başqa bir şey istəmirsən — nəzakətlə de. (İstəyirsənsə, sifariş ver.)', ex: () => 'Nein, danke.' },
   { k: 'serve', who: 'T', anim: 'serve', say: () => 'Kommt sofort! … Bitte schön. Guten Appetit!' },
-  { k: 'pay', who: 'L', check: 'pay', az: 'Yedin, içdin. İndi ödəmək istədiyini de və qiyməti soruş.', ex: () => 'Ich möchte bitte zahlen. Was macht das?' },
-  { k: 'price', who: 'T', anim: 'bill', say: (c) => `Das macht ${euroWords(c.total)}. Zusammen oder getrennt?` },
+  { k: 'pay', who: 'L', check: 'pay', az: (c) => `Yedin, içdin. Ödəmək istədiyini de, hesabı istə və qiyməti soruş (bu oyunda: "Was ${c.form} das?").`, ex: (c) => `Ich möchte bitte zahlen. Die Rechnung, bitte. Was ${c.form} das?` },
+  { k: 'price', who: 'T', anim: 'bill', say: (c) => `Gerne, hier ist die Rechnung. Das ${c.form} ${euroWords(c.total)}. Zusammen oder getrennt?` },
   { k: 'tog', who: 'L', check: 'together', az: 'Cavab ver: birlikdə və ya ayrı.', ex: () => 'Zusammen, bitte.' },
   { k: 'ok', who: 'T', say: () => 'Gerne.' },
   { k: 'give', who: 'L', check: 'give', az: 'Pulu ver və məbləği de (hesabdan çox ola bilər).', ex: (c) => `Hier sind ${euroWords(payAmount(c.total))}.` },
@@ -36,8 +36,8 @@ const R2 = [
   { k: 'korder', who: 'T', anim: 'notepad', say: (c) => `Ich möchte ${orderPhrase(c.order)}, bitte.` },
   { k: 'kmore', who: 'L', check: 'askMore', az: 'Başqa bir şey istəyib-istəmədiyini soruş.', ex: () => 'Möchten Sie sonst noch etwas?' },
   { k: 'kno', who: 'T', anim: 'serve', say: () => 'Nein, danke.' },
-  { k: 'kpay', who: 'T', anim: 'bill', say: () => 'Danke, das war lecker! Ich möchte bitte zahlen. Was macht das?' },
-  { k: 'kprice', who: 'L', check: 'price', az: 'Hesaba bax və qiyməti de, sonra "birlikdə, yoxsa ayrı?" soruş.', ex: (c) => `Das macht ${euroWords(c.total)}. Zusammen oder getrennt?` },
+  { k: 'kpay', who: 'T', anim: 'bill', say: (c) => `Danke, das war lecker! Ich möchte bitte zahlen. Die Rechnung, bitte. Was ${c.form} das?` },
+  { k: 'kprice', who: 'L', check: 'price', az: (c) => `Hesabı ver, qiyməti de — müştərinin sözü ilə: "Das ${c.form} …". Sonra "birlikdə, yoxsa ayrı?" soruş.`, ex: (c) => `Hier ist die Rechnung. Das ${c.form} ${euroWords(c.total)}. Zusammen oder getrennt?` },
   { k: 'ktog', who: 'L', check: 'askTogether', az: 'Soruş: birlikdə, yoxsa ayrı?', ex: () => 'Zusammen oder getrennt?' },
   { k: 'kpays', who: 'T', anim: 'pay', say: (c) => `Zusammen, bitte. Hier sind ${euroWords(c.paid)}.` },
   { k: 'kchange', who: 'L', check: 'change', okAnim: 'change', az: 'Qalığı hesabla və qaytar.', ex: (c) => `Danke! Und ${euroWords(c.paid - c.total)} zurück.` },
@@ -86,14 +86,22 @@ export function renderKellner(ctx) {
 
   // ---------- vəziyyət ----------
   const KEY = `kellner.${d.id}`;
-  const fresh = () => ({ v: 1, round: 0, idx: 0, order: [], total: 0, paid: 0, scene: { waiter: 'away', menu: false, pad: false, items: [], bill: false, money: false, coins: false, wave: false }, mistakes: 0, okSteps: 0, tries: 0, lastLine: '', finished: false });
+  // qiymət sualı növbə ilə: bir oyun "Was macht das?", növbəti "Was kostet das?"
+  const nextForm = () => {
+    const f = store.get('kellnerForm', 'macht') === 'macht' ? 'kostet' : 'macht';
+    store.set('kellnerForm', f);
+    return f;
+  };
+  const fresh = () => ({ v: 1, form: nextForm(), round: 0, idx: 0, order: [], total: 0, paid: 0, scene: { waiter: 'away', menu: false, pad: false, items: [], bill: false, money: false, coins: false, wave: false }, mistakes: 0, okSteps: 0, tries: 0, lastLine: '', finished: false });
   let st = store.get(KEY, null);
   if (!st || st.v !== 1 || !Array.isArray(st.order)) st = fresh();
+  if (!st.form) st.form = 'macht'; // köhnə yadda saxlanmış oyun
   const save = () => store.set(KEY, st);
   const steps = () => ROUNDS[st.round];
   const cur = () => steps()[st.idx];
   const learnerIsWaiter = () => st.round === 1;
-  const c = () => ({ order: st.order, total: st.total, paid: st.paid });
+  const c = () => ({ order: st.order, total: st.total, paid: st.paid, form: st.form });
+  const azOf = (step) => (typeof step.az === 'function' ? step.az(c()) : step.az);
   const hasProgress = () => st.round > 0 || st.idx > 0;
 
   // ---------- ekran ----------
@@ -281,7 +289,7 @@ export function renderKellner(ctx) {
       return;
     }
     const exShow = st.tries >= 1;
-    box.innerHTML = `<div class="kc-t me">🎤 <b>Sənin növbən</b> (${learnerIsWaiter() ? 'ofisiant' : 'müştəri'}): ${esc(step.az)}</div>
+    box.innerHTML = `<div class="kc-t me">🎤 <b>Sənin növbən</b> (${learnerIsWaiter() ? 'ofisiant' : 'müştəri'}): ${esc(azOf(step))}</div>
       <div class="kc-ex ${exShow ? 'show' : ''}"><button type="button" id="kcExBtn">💡 Nümunə</button><span>${esc(step.ex(c()))}</span></div>`;
     const b = $('#kcExBtn');
     if (b) b.addEventListener('click', () => $('#kcTask .kc-ex').classList.toggle('show'));
@@ -362,7 +370,7 @@ export function renderKellner(ctx) {
       }
       if (!res) res = r;
     }
-    res = res || { ok: false, az: step.az };
+    res = res || { ok: false, az: azOf(step) };
     if (!res.ok) {
       st.tries++;
       st.mistakes++;
@@ -437,7 +445,7 @@ export function renderKellner(ctx) {
     const role = learnerIsWaiter() ? 'Round 2: the learner is the WAITER, you are the GUEST.' : 'Round 1: you are the WAITER, the learner is the GUEST.';
     const ord = st.order.length ? ` Order so far: ${orderPhrase(st.order)} (total ${euroWords(st.total)}).` : '';
     if (!step) return `${role}${ord}`;
-    return `${role}${ord} Now the learner must: ${step.az}`;
+    return `${role}${ord} Now the learner must: ${azOf(step)}`;
   }
   function resumeTail() {
     const step = cur();
