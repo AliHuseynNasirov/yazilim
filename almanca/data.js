@@ -807,6 +807,57 @@ export const CATEGORIES = [
           ['der Euro / der Cent', 'avro / sent'],
         ],
       },
+      {
+        id: 'kafe-blog',
+        title: '🍽️ Guten Appetit! Food Blogger (Pro oder Kontra?)',
+        situation:
+          'Kitabın 4-cü bölməsi: "Was machen Food Blogger?" Əvvəl mətni oxu və dinlə (Elaine: ➕, Sascha: ➖). Sonra müəllim səslə soruşur: mətndən (Wer? Wie alt? Wo?), "pro oder kontra?" və sənin fikrin (Findest du das interessant? Postest du Fotos von Essen?). Səhv desən, müəllim izah edir və düzgün deyənə qədər təkrar etdirir. "👂 Qulaqla" rejimində sual yazısı gizlənir.',
+        blog: true,
+        lines: [
+          ['A', 'Findest du das interessant?', 'Bunu maraqlı hesab edirsən?'],
+          ['B', 'Nein, ich finde das nicht interessant. Das nervt!', 'Xeyr, bunu maraqlı hesab etmirəm. Bu, adamı əsəbiləşdirir!'],
+          ['A', 'Postest du Fotos von Essen?', 'Yemək şəkilləri paylaşırsan?'],
+          ['B', 'Ja, ich poste oft Fotos von Essen. Essen ist ein super Thema.', 'Bəli, tez-tez yemək şəkilləri paylaşıram. Yemək əla mövzudur.'],
+          ['A', 'Machen deine Freunde das auch?', 'Dostların da bunu edir?'],
+          ['B', 'Ja, meine Freunde machen das auch. Sie finden die Fotos toll.', 'Bəli, dostlarım da bunu edir. Onlar şəkilləri əla hesab edir.'],
+        ],
+        rule: {
+          title: 'Fikir bildirmək: finden · nicht / kein · Das nervt!',
+          focus: 'Giving opinions: "Ich finde das (nicht) interessant / toll", "Das nervt!", "Das ist toll!", negation with nicht (verb, adjective) and kein (noun): "Ich poste keine Fotos", answering du-questions with ich, "meine Freunde machen".',
+          text: [
+            'Fikir: <i>Ich <b>finde</b> das interessant / toll / gut.</i> · <i>Das finde ich interessant.</i> · <i>Das ist toll!</i> · <i><b>Das nervt!</b></i> (adamı əsəbiləşdirir)',
+            'İnkar: sifətdən əvvəl <b>nicht</b>: <i>Ich finde das <b>nicht</b> interessant.</i> · cümlənin sonunda: <i>Ich fotografiere das Essen <b>nicht</b>.</i> · isimlə <b>kein(e)</b>: <i>Ich poste <b>keine</b> Fotos.</i>',
+            '"du" sualına "ich" ilə cavab: <i>Find<b>est du</b> …?</i> → <i>Ja, ich find<b>e</b> …</i> · <i>Post<b>est du</b> …?</i> → <i>Ja, ich post<b>e</b> …</i> · <i>Isst du …?</i> → <i>Ich <b>esse</b> …</i>',
+            '<i>Machen <b>deine</b> Freunde das auch?</i> → <i>Ja, <b>meine</b> Freunde machen das auch.</i> (Freunde — cəm: machen)',
+          ],
+          tables: [
+            {
+              head: ['', 'finden', 'posten', 'machen', 'essen'],
+              rows: [
+                ['ich', 'finde', 'poste', 'mache', 'esse'],
+                ['du', 'findest', 'postest', 'machst', 'isst'],
+                ['er/sie', 'findet', 'postet', 'macht', 'isst'],
+                ['wir/sie', 'finden', 'posten', 'machen', 'essen'],
+              ],
+            },
+          ],
+          tips: ['Tez-tez edilən səhvlər: ❌ ich findest → ✅ ich finde · ❌ Ich poste nicht Fotos → ✅ Ich poste keine Fotos · ❌ Ich finde nicht das interessant → ✅ Ich finde das nicht interessant · ❌ meine Freunde macht → ✅ meine Freunde machen'],
+        },
+        vocab: [
+          ['fotografieren', 'şəkil çəkmək'],
+          ['posten', 'paylaşmaq (internetdə)'],
+          ['das Foto, die Fotos', 'şəkil'],
+          ['der Kommentar', 'şərh'],
+          ['Sieht lecker aus!', 'Dadlı görünür!'],
+          ['Das nervt!', 'Bu, adamı əsəbiləşdirir!'],
+          ['Ich finde das interessant.', 'Bunu maraqlı hesab edirəm.'],
+          ['das Thema', 'mövzu'],
+          ['die Kultur', 'mədəniyyət'],
+          ['das Leben', 'həyat'],
+          ['pro / kontra', 'lehinə (+) / əleyhinə (−)'],
+          ['Meine Freunde machen das auch.', 'Dostlarım da bunu edir.'],
+        ],
+      },
     ],
   },
   {
