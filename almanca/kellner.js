@@ -24,10 +24,13 @@ const R1 = [
   { k: 'pay', who: 'L', check: 'pay', az: (c) => `Yedin, içdin. Ödəmək istədiyini de, hesabı istə və qiyməti soruş (bu oyunda: "Was ${c.form} das?").`, ex: (c) => `Ich möchte bitte zahlen. Die Rechnung, bitte. Was ${c.form} das?` },
   { k: 'price', who: 'T', anim: 'bill', say: (c) => `Gerne, hier ist die Rechnung. Das ${c.form} ${euroWords(c.total)}. Zusammen oder getrennt?` },
   { k: 'tog', who: 'L', check: 'together', az: 'Cavab ver: birlikdə və ya ayrı.', ex: () => 'Zusammen, bitte.' },
-  { k: 'ok', who: 'T', say: () => 'Gerne.' },
-  { k: 'give', who: 'L', check: 'give', az: 'Pulu ver və məbləği de (hesabdan çox ola bilər).', ex: (c) => `Hier sind ${euroWords(payAmount(c.total))}.` },
-  { k: 'change', who: 'T', anim: 'change', say: (c) => (c.paid > c.total ? `Danke schön! Und ${euroWords(c.paid - c.total)} zurück.` : 'Danke schön, das passt genau.') },
-  { k: 'keep', who: 'L', check: 'keepChange', az: 'Qalığı saxlasın deyə de (bəxşiş).', ex: () => 'Stimmt so, danke!' },
+  // nağd və ya kart: seçim şagirddədir; o biri yolun addımları keçilir (skip)
+  { k: 'ok', who: 'T', say: () => 'Gerne. Zahlen Sie bar oder mit Karte?' },
+  { k: 'method', who: 'L', check: 'payMethod', az: 'Cavab ver: nağd (bar) və ya kartla (mit Karte).', ex: () => 'Bar, bitte. / Mit Karte, bitte.' },
+  { k: 'card', who: 'T', anim: 'card', skip: (c) => c.method !== 'karte', say: () => 'Gerne. Hier ist das Kartengerät. … So, das hat geklappt!' },
+  { k: 'give', who: 'L', check: 'give', skip: (c) => c.method === 'karte', az: 'Pulu ver və məbləği de (hesabdan çox ola bilər).', ex: (c) => `Hier sind ${euroWords(payAmount(c.total))}.` },
+  { k: 'change', who: 'T', anim: 'change', skip: (c) => c.method === 'karte', say: (c) => (c.paid > c.total ? `Danke schön! Und ${euroWords(c.paid - c.total)} zurück.` : 'Danke schön, das passt genau.') },
+  { k: 'keep', who: 'L', check: 'keepChange', skip: (c) => c.method === 'karte', az: 'Qalığı saxlasın deyə de (bəxşiş).', ex: () => 'Stimmt so, danke!' },
   { k: 'thanks', who: 'T', say: () => 'Vielen Dank! Auf Wiedersehen!' },
   { k: 'bye', who: 'L', check: 'bye', okAnim: 'bye', az: 'Vidalaş.', ex: () => 'Auf Wiedersehen!' },
 ];
@@ -39,9 +42,15 @@ const R2 = [
   { k: 'kpay', who: 'T', anim: 'bill', say: (c) => `Danke, das war lecker! Ich möchte bitte zahlen. Die Rechnung, bitte. Was ${c.form} das?` },
   { k: 'kprice', who: 'L', check: 'price', az: (c) => `Hesabı ver, qiyməti de — müştərinin sözü ilə: "Das ${c.form} …". Sonra "birlikdə, yoxsa ayrı?" soruş.`, ex: (c) => `Hier ist die Rechnung. Das ${c.form} ${euroWords(c.total)}. Zusammen oder getrennt?` },
   { k: 'ktog', who: 'L', check: 'askTogether', az: 'Soruş: birlikdə, yoxsa ayrı?', ex: () => 'Zusammen oder getrennt?' },
-  { k: 'kpays', who: 'T', anim: 'pay', say: (c) => `Zusammen, bitte. Hier sind ${euroWords(c.paid)}.` },
-  { k: 'kchange', who: 'L', check: 'change', okAnim: 'change', az: 'Qalığı hesabla və qaytar.', ex: (c) => `Danke! Und ${euroWords(c.paid - c.total)} zurück.` },
-  { k: 'kkeep', who: 'T', say: () => 'Stimmt so, danke! Auf Wiedersehen!' },
+  { k: 'ktogA', who: 'T', say: () => 'Zusammen, bitte.' },
+  { k: 'kmethod', who: 'L', check: 'askMethod', skip: (c) => c.methodAsked, az: 'Soruş: nağd, yoxsa kartla?', ex: () => 'Zahlen Sie bar oder mit Karte?' },
+  // müştəri (müəllim) növbə ilə: bir oyun nağd, növbəti kartla
+  { k: 'kpays', who: 'T', anim: 'pay', skip: (c) => c.method === 'karte', say: (c) => `Bar, bitte. Hier sind ${euroWords(c.paid)}.` },
+  { k: 'kchange', who: 'L', check: 'change', okAnim: 'change', skip: (c) => c.method === 'karte', az: 'Qalığı hesabla və qaytar.', ex: (c) => `Danke! Und ${euroWords(c.paid - c.total)} zurück.` },
+  { k: 'kkeep', who: 'T', skip: (c) => c.method === 'karte', say: () => 'Stimmt so, danke! Auf Wiedersehen!' },
+  { k: 'kcardA', who: 'T', skip: (c) => c.method !== 'karte', say: () => 'Mit Karte, bitte.' },
+  { k: 'kcard', who: 'L', check: 'cardDevice', okAnim: 'card', skip: (c) => c.method !== 'karte', az: 'Kart aparatını ver.', ex: () => 'Gerne. Hier ist das Kartengerät.' },
+  { k: 'kcardBye', who: 'T', skip: (c) => c.method !== 'karte', say: () => 'Danke, das hat geklappt! Auf Wiedersehen!' },
   { k: 'kbye', who: 'L', check: 'byeWaiter', okAnim: 'bye', az: 'Təşəkkür et və vidalaş.', ex: () => 'Vielen Dank! Auf Wiedersehen!' },
 ];
 const ROUNDS = [R1, R2];
@@ -92,15 +101,33 @@ export function renderKellner(ctx) {
     store.set('kellnerForm', f);
     return f;
   };
-  const fresh = () => ({ v: 1, form: nextForm(), round: 0, idx: 0, order: [], total: 0, paid: 0, scene: { waiter: 'away', menu: false, pad: false, items: [], bill: false, money: false, coins: false, wave: false }, mistakes: 0, okSteps: 0, tries: 0, lastLine: '', finished: false });
+  // 2-ci raundda müştəri (müəllim) növbə ilə: bir oyun nağd, növbəti kartla
+  const nextPay = () => {
+    const m = store.get('kellnerPay', 'karte') === 'karte' ? 'bar' : 'karte';
+    store.set('kellnerPay', m);
+    return m;
+  };
+  const fresh = () => ({ v: 2, form: nextForm(), guestPay: nextPay(), method: null, methodAsked: false, round: 0, idx: 0, order: [], total: 0, paid: 0, scene: { waiter: 'away', menu: false, pad: false, items: [], bill: false, money: false, coins: false, wave: false }, mistakes: 0, okSteps: 0, tries: 0, lastLine: '', finished: false });
   let st = store.get(KEY, null);
-  if (!st || st.v !== 1 || !Array.isArray(st.order)) st = fresh();
+  if (!st || st.v !== 2 || !Array.isArray(st.order)) st = fresh();
   if (!st.form) st.form = 'macht'; // köhnə yadda saxlanmış oyun
   const save = () => store.set(KEY, st);
   const steps = () => ROUNDS[st.round];
   const cur = () => steps()[st.idx];
   const learnerIsWaiter = () => st.round === 1;
-  const c = () => ({ order: st.order, total: st.total, paid: st.paid, form: st.form });
+  const c = () => ({ order: st.order, total: st.total, paid: st.paid, form: st.form, method: st.method, methodAsked: st.methodAsked });
+  // növbəti addım (seçilməmiş yolun addımlarını keç)
+  const skipDead = () => {
+    while (cur() && cur().skip && cur().skip(c())) st.idx++;
+  };
+  const advance = () => {
+    st.idx++;
+    skipDead();
+  };
+  const goTo = (k) => {
+    st.idx = steps().findIndex((x) => x.k === k);
+    skipDead();
+  };
   const azOf = (step) => (typeof step.az === 'function' ? step.az(c()) : step.az);
   const hasProgress = () => st.round > 0 || st.idx > 0;
 
@@ -120,6 +147,7 @@ export function renderKellner(ctx) {
           <div class="kc-bill" id="kcBill"></div>
           <div class="kc-money" id="kcMoney">💶</div>
           <div class="kc-coins" id="kcCoins">🪙</div>
+          <div class="kc-cardpay" id="kcCard">💳<span>📟</span><b>✅</b></div>
         </div>
         <div class="kc-wave" id="kcWave">👋</div>
       </div>
@@ -203,6 +231,8 @@ export function renderKellner(ctx) {
     scene.classList.toggle('s-bill', sc.bill);
     scene.classList.toggle('s-money', sc.money);
     scene.classList.toggle('s-coins', sc.coins);
+    scene.classList.toggle('s-card', !!sc.card);
+    scene.classList.toggle('s-cardok', !!sc.cardOk);
     scene.classList.toggle('s-wave', sc.wave);
     $('#kcHand').textContent = sc.tray ? '🍽️' : sc.pad ? '📝' : '';
     $('#kcItems').innerHTML = sc.items.map((e, i) => `<span style="animation-delay:${i * 0.15}s">${e}</span>`).join('');
@@ -219,6 +249,7 @@ export function renderKellner(ctx) {
     $('#kcBillBox').innerHTML = `<div class="kc-bt">🧾 ${learnerIsWaiter() ? 'Sifariş (bloknot)' : 'Sənin sifarişin'}</div>
       ${rows || '<div class="muted small">Hələ sifariş yoxdur.</div>'}
       ${st.order.length ? `<div class="kc-br kc-sum"><span>Cəmi</span><b>${euro(st.total)}</b></div>` : ''}
+      ${st.method === 'karte' ? '<div class="kc-br"><span>💳 Ödəniş</span><b>kartla</b></div>' : ''}
       ${st.paid ? `<div class="kc-br"><span>💶 Verilən</span><b>${euro(st.paid)}</b></div><div class="kc-br"><span>🪙 Qalıq</span><b>${euro(Math.max(0, st.paid - st.total))}</b></div>` : ''}`;
   }
 
@@ -226,7 +257,7 @@ export function renderKellner(ctx) {
   function anim(name) {
     const sc = st.scene;
     if (name === 'arrive') {
-      Object.assign(sc, { waiter: 'table', menu: true, pad: false, tray: false, items: [], bill: false, money: false, coins: false, wave: false });
+      Object.assign(sc, { waiter: 'table', menu: true, pad: false, tray: false, items: [], bill: false, money: false, coins: false, wave: false, card: false, cardOk: false });
     } else if (name === 'notepad') {
       Object.assign(sc, { waiter: 'table', pad: true });
     } else if (name === 'serve') {
@@ -252,6 +283,18 @@ export function renderKellner(ctx) {
       Object.assign(sc, { waiter: 'table', bill: true });
     } else if (name === 'pay') {
       Object.assign(sc, { money: true });
+    } else if (name === 'card') {
+      // kart aparata yaxınlaşır → ✅
+      Object.assign(sc, { waiter: 'table', card: true, cardOk: false });
+      paintScene();
+      setTimeout(() => {
+        if (!alive()) return;
+        sc.cardOk = true;
+        paintScene();
+        save();
+        fx.tone([880, 1320], 0.09, 'sine', 0.06);
+      }, 1300);
+      return;
     } else if (name === 'change') {
       Object.assign(sc, { money: true });
       paintScene();
@@ -267,7 +310,7 @@ export function renderKellner(ctx) {
       paintScene();
       setTimeout(() => {
         if (!alive()) return;
-        Object.assign(sc, { waiter: 'away', bill: false, money: false, coins: false });
+        Object.assign(sc, { waiter: 'away', bill: false, money: false, coins: false, card: false, cardOk: false });
         paintScene();
         save();
       }, 1400);
@@ -323,7 +366,7 @@ export function renderKellner(ctx) {
         setTimeout(() => alive() && anim(a), delay);
         delay += a === 'serve' ? 2600 : 300;
       }
-      st.idx++;
+      advance();
     }
     st.tries = 0;
     if (lines.length) st.lastLine = lines.join(' ');
@@ -337,7 +380,9 @@ export function renderKellner(ctx) {
     st.idx = 0;
     st.order = randomOrder();
     st.total = orderTotal(st.order);
-    st.paid = payAmount(st.total);
+    st.method = st.guestPay || 'bar';
+    st.methodAsked = false;
+    st.paid = st.method === 'karte' ? 0 : payAmount(st.total);
     st.scene = { waiter: 'away', menu: false, pad: false, items: [], bill: false, money: false, coins: false, wave: false };
     st.tries = 0;
     save();
@@ -405,22 +450,46 @@ export function renderKellner(ctx) {
       }
     }
     if (step.check === 'give') st.paid = res.val;
-    if (step.check === 'together') {
+    const all = sources.join(' ');
+    if (step.check === 'payMethod') {
+      st.method = res.val;
       // pulu da eyni cümlədə veribsə — "give" addımını da keç
-      const money = CHECK.give(sources.join(' '), c());
-      if (money.ok) {
+      const money = res.val === 'bar' && CHECK.give(all, c());
+      if (money && money.ok) {
         st.paid = money.val;
-        st.idx += 3; // tog → ok → give keçildi
+        goTo('change');
         save();
         return `CORRECT — stay in your role, do not praise. Then ${teacherTurn()}`;
       }
     }
+    if (step.check === 'together') {
+      // nağd/kart və ya pulu da eyni cümlədə deyibsə — o addımları da keç
+      const m = CHECK.payMethod(all);
+      const money = CHECK.give(all, c());
+      if (money.ok) {
+        st.method = 'bar';
+        st.paid = money.val;
+        goTo('change');
+        save();
+        return `CORRECT — stay in your role, do not praise. Then ${teacherTurn()}`;
+      }
+      if (m.ok) {
+        st.method = m.val;
+        goTo(m.val === 'karte' ? 'card' : 'give');
+        save();
+        return st.method === 'karte' ? `CORRECT — stay in your role, do not praise. Then ${teacherTurn()}` : 'CORRECT — stay in your role. Say only "Gerne." and end your turn: the learner continues.';
+      }
+    }
+    if (step.check === 'price' || step.check === 'askTogether') {
+      // "bar oder mit Karte?" da eyni cümlədədirsə — sonra soruşmasın
+      if (CHECK.askMethod(all).ok) st.methodAsked = true;
+    }
     if (step.check === 'price') {
       // "Zusammen oder getrennt?" da eyni cümlədədirsə — onu da keç
-      if (CHECK.askTogether(sources.join(' ')).ok) st.idx++;
+      if (CHECK.askTogether(all).ok) st.idx++;
     }
     if (step.okAnim) anim(step.okAnim);
-    st.idx++;
+    advance();
     st.tries = 0;
     save();
     paintAll();

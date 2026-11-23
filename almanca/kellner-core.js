@@ -171,6 +171,23 @@ export const CHECK = {
     }
     return { ok: true };
   },
+  // nağd və ya kart
+  payMethod(text) {
+    const bar = has(text, /\bbar\b|\bbargeld\b/);
+    const karte = has(text, /\b(kredit|ec ?|bank)?karte\b/);
+    if (bar && !karte) return { ok: true, val: 'bar' };
+    if (karte && !bar) return { ok: true, val: 'karte' };
+    if (bar && karte) return { ok: false, why: 'both', az: 'Birini seç: "Bar, bitte." (nağd) və ya "Mit Karte, bitte." (kartla).' };
+    return { ok: false, why: 'method', az: 'Cavab ver: "Bar, bitte." (nağd) və ya "Mit Karte, bitte." (kartla).' };
+  },
+  askMethod(text) {
+    if (has(text, /\bbar\b/) && has(text, /\bkarte\b/)) return { ok: true };
+    return { ok: false, why: 'askMethod', az: 'Soruş: "Zahlen Sie bar oder mit Karte?" (nağd, yoxsa kartla?)' };
+  },
+  cardDevice(text) {
+    if (has(text, /karten ?gerat|\bgerat\b|kartenleser|lesegerat|terminal/)) return { ok: true };
+    return { ok: false, why: 'card', az: 'Kart aparatını ver: "Hier ist das Kartengerät."' };
+  },
   together(text) {
     if (has(text, /\bzusammen\b/)) return { ok: true, val: 'zusammen' };
     if (has(text, /\bgetrennt\b/)) return { ok: true, val: 'getrennt' };

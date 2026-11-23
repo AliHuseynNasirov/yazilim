@@ -627,3 +627,9 @@ main.kn { padding-bottom: 40px; }
 .wa-tip { align-self: center; width: 92%; background: #eafbe7; border: 1px solid #b7e2c6; border-radius: 10px; padding: 7px 10px; margin: 4px 0; font-size: 13.5px; color: #1b4332; }
 .wa-tip b { display: block; margin-bottom: 2px; color: #1b6b3a; }
 .wa-tip i { font-style: normal; font-weight: 700; color: #075e54; cursor: pointer; }
+.kc-cardpay { position: absolute; right: -6px; top: -20px; font-size: 22px; opacity: 0; transform: translateX(40px); transition: transform .7s ease, opacity .4s; }
+.kc-cardpay span { display: inline-block; margin-left: -4px; }
+.kc-cardpay b { position: absolute; right: -8px; top: -12px; font-size: 16px; transform: scale(0); transition: transform .35s cubic-bezier(.3,1.6,.5,1); }
+.kc-scene.s-card .kc-cardpay { opacity: 1; transform: none; animation: kcTap 1.2s ease-in-out 1; }
+.kc-scene.s-cardok .kc-cardpay b { transform: scale(1); }
+@keyframes kcTap { 40% { transform: translate(-14px, -4px) rotate(-12deg); } 70% { transform: translate(-10px, 0) rotate(-6deg); } }
