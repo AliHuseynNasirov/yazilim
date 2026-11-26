@@ -665,3 +665,52 @@ main.kn { padding-bottom: 40px; }
 .fb-ex i { font-style: normal; font-weight: 700; color: #1b4d8a; cursor: pointer; }
 .fb-ex small { font-size: 12px; }
 .fb-done { text-align: center; }
+
+/* ---------- Zwei Freunde im Restaurant ---------- */
+.mm { gap: 8px; }
+.mm-top { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.mm-top #mmScore { color: var(--muted); font-size: 13px; }
+.mm-rb { margin-bottom: 0; }
+.mm-scene { position: relative; flex: none; height: 170px; border-radius: 16px; overflow: hidden; background: linear-gradient(#f4ecdf 0 55%, #8d6e4f 55% 100%); border: 1px solid #e2d3bd; }
+.mm-scene::before { content: 'Restaurant Max & Moritz'; position: absolute; left: 50%; top: 8px; transform: translateX(-50%); font: italic 700 15px Georgia, serif; color: #6d5a3c; white-space: nowrap; }
+.mm-p { position: absolute; bottom: 30px; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.mm-p.me { left: 14px; }
+.mm-p.fr { right: 14px; }
+.mm-p > span { font-size: 50px; line-height: 1; animation: kcBreath 3s ease-in-out infinite; }
+.mm-p.fr > span { animation-delay: 1.5s; }
+.mm-p small { font-size: 11px; font-weight: 700; color: #fff; background: rgba(31,42,68,.85); border-radius: 99px; padding: 1px 8px; margin-top: 2px; white-space: nowrap; }
+.mm-bub { position: absolute; bottom: 100%; margin-bottom: 4px; width: max-content; max-width: 200px; background: #fff; border: 1px solid #d8dbe6; border-radius: 12px; padding: 5px 9px; font-size: 12px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,.12); opacity: 0; transform: translateY(6px) scale(.95); transition: opacity .25s, transform .25s; pointer-events: none; }
+.mm-p.me .mm-bub { left: 0; }
+.mm-p.fr .mm-bub { right: 0; }
+.mm-bub.on { opacity: 1; transform: none; }
+.mm-table { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); width: 170px; height: 44px; background: #fff; border-radius: 50% / 40%; box-shadow: inset 0 -6px 0 #e0d6c8, 0 6px 8px rgba(0,0,0,.25); display: flex; align-items: center; justify-content: space-around; z-index: 1; }
+.mm-menu-ic { font-size: 22px; transform: rotate(-8deg); }
+.mm-plate { font-size: 28px; transform: scale(0); transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
+.mm-plate.on { transform: scale(1); }
+.mm-task { flex: none; }
+.mm-t { border-radius: 12px; padding: 8px 12px; font-size: 14px; }
+.mm-t.me { background: #e9f7ef; border: 1px solid #b7e2c6; }
+.mm-t.them { background: #eef1fb; border: 1px solid var(--line); color: #4a5470; }
+.mm-ex { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 14px; }
+.mm-ex button { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 3px 10px; font: inherit; font-size: 13px; flex: none; }
+.mm-ex span { display: none; font-style: italic; color: #1b4d8a; }
+.mm-ex.show span { display: inline; }
+.mm-done { background: #fff8d6; border: 1px solid #f2d46b; border-radius: 12px; padding: 10px 12px; text-align: center; font-size: 14px; }
+.mm-mid { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.mm-mid .chat { flex: none; overflow: visible; }
+.mm-card { background: #fffdf8; border: 1px dotted #b9a888; border-radius: 12px; padding: 8px 12px; }
+.mm-card summary { font: italic 700 16px Georgia, serif; color: #6d5a3c; cursor: pointer; }
+.mm-sec { text-align: center; letter-spacing: .3em; font-size: 12px; font-weight: 700; color: #4a4033; margin: 8px 0 2px; border-bottom: 1px solid #d8ccb5; }
+.mm-row { display: grid; grid-template-columns: 18px 1fr auto; gap: 6px; align-items: baseline; padding: 4px 0; border-bottom: 1px dotted #e4dac8; cursor: pointer; }
+.mm-no { font-weight: 700; color: #8a7a5c; }
+.mm-name { display: flex; flex-direction: column; font-size: 14.5px; }
+.mm-name small { font-size: 11.5px; color: var(--muted); }
+.mm-row b { white-space: nowrap; font-size: 14px; }
+.mm-g { font-style: normal; font-weight: 800; border-radius: 4px; padding: 0 4px; color: #fff; font-size: 10.5px; }
+.mm-g.der { background: #1e88e5; }
+.mm-g.die { background: #e53935; }
+.mm-g.das { background: #43a047; }
+.mm-akk { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; font-size: 13px; }
+.mm-akk summary { font-weight: 700; cursor: pointer; }
+.mm-akk table { width: 100%; border-collapse: collapse; margin: 6px 0 2px; }
+.mm-akk th, .mm-akk td { border: 1px solid var(--line); padding: 3px 5px; text-align: left; }
