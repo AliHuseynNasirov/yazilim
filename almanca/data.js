@@ -883,6 +883,7 @@ export const CATEGORIES = [
             'Yalnız <b>der</b>-sözlər dəyişir: der Salat → <b>einen / keinen / den</b> Salat. die və das dəyişmir.',
             'Seçəndə: <i>Ich nehme <b>den</b> Salat / <b>die</b> Suppe / <b>das</b> Steak.</i> · <i>Ich esse gern Fisch.</i> · <i>Das ist vegetarisch / lecker / scharf.</i>',
             'Sualda fel əvvəldədir: <i><b>Gibt</b> es hier …?</i> · <i><b>Haben</b> die hier …?</i> Cavab eyni formada: <i>Ja, es gibt …</i> / <i>Ja, die haben …</i>',
+            'Yemək nədir? <i>Was ist das?</i> → <i>Das ist <b>eine</b> Spezialität <b>aus</b> Österreich. Das ist Schweinefleisch <b>mit</b> Kartoffelsalat.</i> (die Spezialität → eine; <i>aus <b>der</b> Schweiz / aus <b>der</b> Türkei / aus <b>den</b> USA</i>)',
           ],
           tables: [
             {
@@ -913,6 +914,10 @@ export const CATEGORIES = [
           ['das Schwein', 'donuz (əti)'],
           ['Gibt es hier …? / Haben die hier …?', 'Burada … var?'],
           ['Was nimmst du?', 'Sən nə götürürsən?'],
+          ['Was ist das?', 'Bu nədir?'],
+          ['die Spezialität', 'xüsusi (milli) yemək'],
+          ['aus Österreich / aus den USA', 'Avstriyadan / ABŞ-dan'],
+          ['das Fleisch / das Rindfleisch / das Schweinefleisch', 'ət / mal əti / donuz əti'],
           ['Guten Appetit!', 'Nuş olsun!'],
         ],
       },

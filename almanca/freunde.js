@@ -9,7 +9,7 @@
 import { LiveSession } from './live.js';
 import { plausibleTranscript } from './checker.js';
 import { correctionRules } from './prompt.js';
-import { MENU, FORMS, T, akk, akkNeg, euro, dishById, onMenu, friendPlan, checkHow, checkAsk, checkLike, checkBack, checkAnswer, checkBye } from './freunde-core.js';
+import { MENU, FORMS, T, akk, akkNeg, euro, dishById, onMenu, friendPlan, checkHow, checkAsk, checkLike, checkBack, checkAnswer, checkBye, checkWhatIs, checkExplain, ORIGIN, LANDS } from './freunde-core.js';
 import { dlog, showLogOverlay } from './log.js';
 
 const LANG = { az: 'Azerbaijani', tr: 'Turkish', de: 'very simple German' };
@@ -60,7 +60,7 @@ export function renderFreunde(ctx) {
 
   // ---------- ekran ----------
   const menuRow = (m, i) =>
-    `<div class="mm-row" data-de="${esc(`${m.g} ${m.n}`)}"><span class="mm-no">${i + 1}</span><span class="mm-name">${esc(m.full)}<small><i class="mm-g ${m.g}">${m.g}</i> ${esc(m.az)}${m.veg ? ' · 🥕 vegetarisch' : ''}${m.pork ? ' · 🐷 Schwein' : ''}</small></span><b>${euro(m.p)}</b></div>`;
+    `<div class="mm-row" data-de="${esc(`${m.g} ${m.n}`)}"><span class="mm-no">${i + 1}</span><span class="mm-name">${esc(m.full)}<small><i class="mm-g ${m.g}">${m.g}</i> ${esc(m.az)}${m.veg ? ' · 🥕 vegetarisch' : ''}${m.pork ? ' · 🐷 Schwein' : ''}</small>${ORIGIN[m.id] ? `<small class="mm-orig">🌍 ${ORIGIN[m.id].spez === false ? 'das Baguette: ' : ''}${esc(LANDS[ORIGIN[m.id].land].de)} <em>(${esc(LANDS[ORIGIN[m.id].land].az)})</em> · 🥔 ${esc(ORIGIN[m.id].zut)} <em>(${esc(ORIGIN[m.id].zutAz)})</em></small>` : ''}</span><b>${euro(m.p)}</b></div>`;
   $app.innerHTML = `
     ${header(esc(d.title), `#/d/${d.id}`)}
     <main class="practice mm">
@@ -191,12 +191,16 @@ export function renderFreunde(ctx) {
         return [`Menyuya bax və soruş: bu yemək var? Bu oyunda: "${f.q} …?" (Akkusativ: einen / eine / ein)`, `${f.q} eine Tomatensuppe?`];
       case 'like':
         return [`${d1.n} var! Fikrini de: xoşlayırsan? dadlıdır? vegetariandır? Sonra dostundan soruş: "Und was nimmst du?"`, `Super! Ich nehme ${akk(d1)}. Ich esse gern ${d1.n}. Und was nimmst du?`];
+      case 'explain':
+        return [`Lena soruşur: "Was ist das?" Menyuya bax: ${d1.n} haradandır və nədən hazırlanıb? (eine Spezialität aus … · mit …)`, ORIGIN[d1.id].say];
       case 'back':
         return ['İndi dostundan soruş: o nə götürür?', 'Und was nimmst du?'];
       case 'answer': {
         const a = asked();
         return [`Dostun soruşur: "${a.n}" var? Menyuya bax və eyni formada cavab ver.`, onMenu(a) ? `${f.yes} ${akk(a)}.` : `${f.no} ${akkNeg(a)}.`];
       }
+      case 'whatIs':
+        return [`Dostunun yeməyi haqqında soruş: bu nədir? (${dishById(st.dish2).n})`, 'Was ist das?'];
       case 'bye':
         return ['Yeməkdən əvvəl: "Guten Appetit!"', 'Guten Appetit!'];
     }
@@ -256,6 +260,8 @@ export function renderFreunde(ctx) {
     how: (t) => checkHow(t),
     ask: (t) => checkAsk(t, st.form),
     like: (t) => checkLike(t),
+    explain: (t) => checkExplain(t, st.dish1),
+    whatIs: (t) => checkWhatIs(t),
     back: (t) => checkBack(t),
     answer: (t) => checkAnswer(t, st.plan[st.pi], st.form),
     bye: (t) => checkBye(t),
@@ -307,13 +313,21 @@ export function renderFreunde(ctx) {
         return C + sayLine(T.yes(dish, st.form));
       }
       case 'like':
-        if (!res.back) {
+        // fikirdən sonra Lena soruşur: "Was ist das?"
+        st.backDone = !!res.back;
+        st.stage = 'explain';
+        return C + sayLine(T.what());
+      case 'explain':
+        if (!st.backDone) {
           st.stage = 'back';
           save();
           paint();
-          return 'CORRECT — stay in your role. Say only "Mhm, lecker!" and end your turn: the learner continues.';
+          return 'CORRECT — stay in your role. Say only "Ah, interessant!" and end your turn: the learner continues.';
         }
-      // eslint-disable-next-line no-fallthrough
+        st.plan = friendPlan(Math.random, st.dish1);
+        st.pi = 0;
+        st.stage = 'answer';
+        return C + sayLine(`Ah, interessant! ${T.ask(asked(), st.form)}`);
       case 'back':
         st.plan = friendPlan(Math.random, st.dish1);
         st.pi = 0;
@@ -326,9 +340,13 @@ export function renderFreunde(ctx) {
           return C + sayLine(T.schade(asked(), st.form));
         }
         st.dish2 = a.id;
-        st.stage = 'bye';
+        st.stage = 'whatIs';
         return C + sayLine(T.like(a));
       }
+      case 'whatIs':
+        // Lena yeməyini izah edir
+        st.stage = 'bye';
+        return C + sayLine(T.explain(dishById(st.dish2)));
       case 'bye':
         st.stage = 'end';
         st.finished = true;

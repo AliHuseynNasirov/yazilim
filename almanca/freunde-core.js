@@ -23,6 +23,29 @@ export const OFF = [
   { id: 'eis', n: 'Eis', g: 'das', e: '🍨', az: 'dondurma', re: /\beis\b/ },
   { id: 'kuchen', n: 'Kuchen', g: 'der', e: '🍰', az: 'tort', re: /\bkuchen\b/ },
 ];
+// ---------- yeməyin mənşəyi və tərkibi ("Was ist das?") ----------
+export const LANDS = {
+  frankreich: { de: 'aus Frankreich', az: 'Fransadan', re: /frankreich/ },
+  griechenland: { de: 'aus Griechenland', az: 'Yunanıstandan', re: /griechenland/ },
+  argentinien: { de: 'aus Argentinien', az: 'Argentinadan', re: /argentinien/ },
+  osterreich: { de: 'aus Österreich', az: 'Avstriyadan', re: /osterreich/ },
+  deutschland: { de: 'aus Deutschland', az: 'Almaniyadan', re: /deutschland/ },
+  usa: { de: 'aus den USA', az: 'ABŞ-dan', re: /\busa\b|amerika/, art: 'den' },
+  norddeutschland: { de: 'aus Norddeutschland', az: 'Şimali Almaniyadan', re: /norddeutschland|deutschland/ },
+  indien: { de: 'aus Indien', az: 'Hindistandan', re: /indien/ },
+};
+// land — mənşə; say — Lena-nın izahı / şagirdin nümunəsi; ing — tərkib (ən azı biri deyilməlidir)
+export const ORIGIN = {
+  suppe: { land: 'frankreich', say: 'Das ist eine Suppe mit Tomaten. Das Baguette ist ein Brot aus Frankreich.', zut: 'eine Suppe mit Tomaten, mit Brot', zutAz: 'pomidor şorbası, çörəklə', ing: /tomate|brot|baguette/, spez: false },
+  salat: { land: 'griechenland', say: 'Das ist eine Spezialität aus Griechenland. Das ist Salat mit Käse, Tomaten und Oliven.', zut: 'mit Käse, Tomaten und Oliven', zutAz: 'pendir, pomidor və zeytunla', ing: /kase|tomate|olive/ },
+  steak: { land: 'argentinien', say: 'Das ist eine Spezialität aus Argentinien. Das ist Rindfleisch mit Kartoffeln.', zut: 'Rindfleisch mit Kartoffeln', zutAz: 'mal əti, kartofla', ing: /fleisch|kartoffel/ },
+  schnitzel: { land: 'osterreich', say: 'Das ist eine Spezialität aus Österreich. Das ist Schweinefleisch mit Kartoffelsalat.', zut: 'Schweinefleisch mit Kartoffelsalat', zutAz: 'donuz əti, kartof salatı ilə', ing: /fleisch|kartoffel/ },
+  haehnchen: { land: 'deutschland', say: 'Das ist eine Spezialität aus Deutschland. Das ist Hähnchen mit Gemüse.', zut: 'Hähnchen mit Gemüse', zutAz: 'toyuq, tərəvəzlə', ing: /hahnchen|huhnchen|gemuse|fleisch/ },
+  hamburger: { land: 'usa', say: 'Das ist eine Spezialität aus den USA. Das ist Fleisch und Brot, mit Pommes Frites.', zut: 'Fleisch und Brot, mit Pommes Frites', zutAz: 'ət və çörək, kartof fri ilə', ing: /fleisch|brot|pommes/ },
+  fisch: { land: 'norddeutschland', say: 'Das ist eine Spezialität aus Norddeutschland. Das ist Fisch mit Kartoffelsalat.', zut: 'Fisch mit Kartoffelsalat', zutAz: 'balıq, kartof salatı ilə', ing: /fisch|kartoffel/ },
+  curry: { land: 'indien', say: 'Das ist eine Spezialität aus Indien. Das ist Gemüse mit Tofu und Reis.', zut: 'Gemüse mit Tofu und Reis', zutAz: 'tərəvəz, tofu və düyü ilə', ing: /gemuse|tofu|reis/ },
+};
+
 export const ALL = [...OFF, ...MENU]; // OFF əvvəl: "Currywurst" "Curry" kimi tanınmasın
 export const dishById = (id) => ALL.find((x) => x.id === id);
 export const onMenu = (d) => MENU.includes(d);
@@ -159,6 +182,32 @@ export function checkAnswer(text, dishId, form) {
   if (e) return { ok: false, az: e };
   return { ok: true };
 }
+// 5a) "Was ist das?" (yeməyin nə olduğunu soruşmaq)
+export function checkWhatIs(text) {
+  const n = norm(text);
+  if (/\bwas ist\b/.test(n)) return { ok: true };
+  if (/\bwas (das|es) ist\b/.test(n)) return { ok: false, az: 'Sualda fel ikinci yerdədir: "Was ist das?"' };
+  return { ok: false, az: 'Dostunun yeməyi haqqında soruş: "Was ist das?"' };
+}
+// 5b) Yeməyi izah etmək: "Das ist eine Spezialität aus Österreich. Das ist Schweinefleisch mit Kartoffelsalat."
+export function checkExplain(text, dishId) {
+  const o = ORIGIN[dishId];
+  if (!o) return { ok: true };
+  const n = norm(text);
+  const L = LANDS[o.land];
+  if (/\bein spezialitat/.test(n)) return { ok: false, az: `"die Spezialität" — die-sözdür: "eine Spezialität" ("ein" yox). Nümunə: "${o.say}"` };
+  const other = Object.entries(LANDS).find(([k, x]) => k !== o.land && !(o.land === 'norddeutschland' && k === 'deutschland') && !(o.land === 'deutschland' && k === 'norddeutschland') && x.re.test(n));
+  const said = n.match(/\baus (?:der |den |dem )?([a-z]+)/);
+  if (!L.re.test(n)) {
+    const wrong = other ? other[1].de : said ? `aus ${said[1].charAt(0).toUpperCase()}${said[1].slice(1)}` : null;
+    return { ok: false, az: wrong ? `Menyuya bax: bu yemək ${L.de} (${L.az}) — "${wrong}" yox. Nümunə: "${o.say}"` : `Haradan olduğunu de: "${L.de}". Nümunə: "${o.say}"` };
+  }
+  if (L.art && !new RegExp(`\\baus ${L.art} `).test(n)) return { ok: false, az: `"USA" cəmdir — artikl ilə: "aus den USA". Nümunə: "${o.say}"` };
+  if (!/\baus\b/.test(n)) return { ok: false, az: `Haradan? — "aus": "${L.de}". Nümunə: "${o.say}"` };
+  if (!o.ing.test(n)) return { ok: false, az: `Tərkibini də de: "${o.zut}". Nümunə: "${o.say}"` };
+  return { ok: true };
+}
+
 // 6) "Guten Appetit!"
 export function checkBye(text) {
   const n = norm(text);
@@ -175,6 +224,8 @@ export const T = {
   ask: (d, form) => `Hmm… ${FORMS[form].q} ${akk(d)}?`,
   schade: (d, form) => `Schade! ${FORMS[form].q} ${akk(d)}?`,
   like: (d) => `Super! Dann nehme ich ${akk(d)}. ${d.like}`,
+  what: () => 'Hmm, lecker! Was ist das?',
+  explain: (d) => ORIGIN[d.id].say,
   bye: () => 'Danke, dir auch! Guten Appetit!',
 };
 

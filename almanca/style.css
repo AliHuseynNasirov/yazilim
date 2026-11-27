@@ -751,3 +751,5 @@ main.kn { padding-bottom: 40px; }
 .mg-f div { display: flex; flex-direction: column; margin-top: 4px; }
 .mg-f i { font-style: normal; font-weight: 700; color: #1b4d8a; cursor: pointer; }
 .mg-f div small { font-size: 12px; color: var(--muted); }
+.mm-name small.mm-orig { color: #6d5a3c; }
+.mm-name small.mm-orig em { font-style: normal; color: var(--muted); }
