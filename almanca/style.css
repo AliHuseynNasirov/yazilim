@@ -718,3 +718,36 @@ main.kn { padding-bottom: 40px; }
 .mm-rep { position: absolute; top: -4px; right: -8px; font-style: normal; font-size: 13px; background: #fff; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .mm-p.fr.tap > span { animation: mmTap .45s ease; }
 @keyframes mmTap { 40% { transform: scale(1.15) rotate(-6deg); } }
+
+/* ---------- Magst du …? Isst du gern …? ---------- */
+.mg { gap: 8px; }
+.mg-rb { margin-bottom: 0; }
+.mg-food { flex: none; display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #fff3e0, #fff); border: 2px solid #ffb74d; border-radius: 16px; padding: 8px 12px; }
+.mg-emo { font-size: 46px; line-height: 1; animation: waBounce 2.4s ease-in-out infinite; }
+.mg-food > div { flex: 1; display: flex; flex-direction: column; line-height: 1.25; }
+.mg-food b { font-size: 22px; }
+.mg-food small { font-size: 12px; color: var(--muted); }
+.mg-count { display: flex; flex-direction: column; align-items: center; background: #1f2a44; color: #fff; border-radius: 12px; padding: 4px 10px; }
+.mg-count b { font-size: 20px; }
+.mg-count small { color: #cfd6e6; font-size: 11px; }
+.mg-mid { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.mg-mid .chat { flex: none; overflow: visible; }
+.mg-card { background: #fff; border: 2px solid #8bc34a; border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+.mg-q { flex: 1; display: flex; flex-direction: column; }
+.mg-q b { font-size: 20px; }
+.mg-q small { font-size: 13px; color: var(--muted); }
+.mg-card button { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 4px 10px; font: inherit; font-size: 13px; flex: none; }
+.mg-done { text-align: center; width: 100%; }
+.mg-forms { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.mg-fh { font-size: 13px; font-weight: 700; }
+.mg-fh small { font-weight: 400; color: var(--muted); }
+.mg-f { border-radius: 10px; padding: 6px 10px; font-size: 14.5px; border: 1px solid var(--line); background: #fff; }
+.mg-f.pos { border-left: 4px solid #43a047; }
+.mg-f.neg { border-left: 4px solid #e53935; }
+.mg-f summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: center; }
+.mg-f summary::-webkit-details-marker { display: none; }
+.mg-f.done { background: #e9f7ef; }
+.mg-f.done summary { color: #1b6b3a; font-weight: 700; }
+.mg-f div { display: flex; flex-direction: column; margin-top: 4px; }
+.mg-f i { font-style: normal; font-weight: 700; color: #1b4d8a; cursor: pointer; }
+.mg-f div small { font-size: 12px; color: var(--muted); }

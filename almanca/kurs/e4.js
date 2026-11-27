@@ -312,7 +312,7 @@ export default {
     wr('Restoranda sifariş ver: şorba (eine) və əsas yemək (den / das / die). (Ich nehme … und …)', [{ l: 'Ich nehme / Ich möchte', a: ['ich nehme', 'ich mochte'] }, { l: 'und', a: [' und '] }], 'Ich nehme eine Tomatensuppe und den Fisch mit Reis.'),
     wr('Bloqa şərh yaz: bir yemək haqqında fikrin. (Ich finde … lecker / nicht gut / interessant)', [{ l: 'Ich finde …', a: ['ich finde'] }], 'Ich finde die Currywurst total lecker!'),
   ],
-  speaking: ['kitab-4', 'kafe-1', 'kafe-blog', 'kafe-freunde'],
+  speaking: ['kitab-4', 'kafe-1', 'kafe-blog', 'kafe-freunde', 'kafe-magst'],
   phon: {
     title: 'Uzun və qısa saitlər; mürəkkəb sözlərdə vurğu',
     html: [

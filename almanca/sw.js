@@ -1,8 +1,8 @@
 // Offline üçün tətbiq fayllarını keşləyir. Səsli məşq internet tələb edir.
-const CACHE = 'deutsch-a1-v74';
+const CACHE = 'deutsch-a1-v75';
 const FILES = [
   './', './index.html', './style.css', './app.js', './data.js', './live.js',
-  './prompt.js', './checker.js', './log.js', './drill.js', './drill-core.js', './scramble.js', './scramble-core.js', './wuerfel.js', './wuerfel-core.js', './wuerfel-verbs.js', './kein.js', './kein-core.js', './kellner.js', './kellner-core.js', './chat.js', './chat-core.js', './blog.js', './blog-core.js', './freunde.js', './freunde-core.js', './asr.js', './numbers.js', './numbers-core.js', './anmeldung.js', './anmeldung-core.js', './nummer.js', './nummer-core.js', './kurs.js', './kurs-core.js', './kurs/h.js', './kurs/index.js', './kurs/e0.js', './kurs/e1.js', './kurs/e2.js', './kurs/e3.js', './kurs/e4.js', './kurs/e5.js', './kurs/e6.js', './kurs/e7.js', './kurs/e8.js', './azure.js', './pcm-worklet.js', './manifest.json',
+  './prompt.js', './checker.js', './log.js', './drill.js', './drill-core.js', './scramble.js', './scramble-core.js', './wuerfel.js', './wuerfel-core.js', './wuerfel-verbs.js', './kein.js', './kein-core.js', './kellner.js', './kellner-core.js', './chat.js', './chat-core.js', './blog.js', './blog-core.js', './freunde.js', './freunde-core.js', './magst.js', './magst-core.js', './asr.js', './numbers.js', './numbers-core.js', './anmeldung.js', './anmeldung-core.js', './nummer.js', './nummer-core.js', './kurs.js', './kurs-core.js', './kurs/h.js', './kurs/index.js', './kurs/e0.js', './kurs/e1.js', './kurs/e2.js', './kurs/e3.js', './kurs/e4.js', './kurs/e5.js', './kurs/e6.js', './kurs/e7.js', './kurs/e8.js', './azure.js', './pcm-worklet.js', './manifest.json',
   './images/thomas.jpg', './images/anna.jpg', './images/lukas.jpg', './images/maria.jpg', './images/ali.jpg', './images/elena.jpg', './images/leyla.jpg', './images/john.jpg', './images/mei.jpg', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 

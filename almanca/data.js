@@ -916,6 +916,54 @@ export const CATEGORIES = [
           ['Guten Appetit!', 'Nuş olsun!'],
         ],
       },
+      {
+        id: 'kafe-magst',
+        title: '🍽️ Magst du …? Isst du gern …? (6 cavab forması)',
+        situation:
+          'Kitabın 4-cü bölməsi, "Magst du …? Fragen und antworten Sie schnell." Hər oyunda bir yemək (Schnitzel, Hähnchen, Hamburger, Steak, Fisch, Käse, Gemüse, Oliven — növbə ilə). Müəllim səslə soruşur: "Magst du (gern) Fisch?" / "Isst du (gern) Fisch?" Sən bir oyunda 6 cavab formasının HAMISINI işlətməlisən: 3 təsdiq (Ja, ich finde … lecker / mag … gern / esse … gern) və 3 inkar (Nein, ich finde … nicht lecker / mag … nicht (gern) / esse … nicht (gern)).',
+        magst: true,
+        lines: [
+          ['A', 'Magst du Fisch?', 'Balıq xoşlayırsan?'],
+          ['B', 'Ja, ich mag Fisch gern.', 'Bəli, balıq xoşlayıram.'],
+          ['A', 'Isst du gern Fisch?', 'Balıq yeməyi xoşlayırsan?'],
+          ['B', 'Nein, ich esse Fisch nicht gern.', 'Xeyr, balıq yeməyi xoşlamıram.'],
+          ['A', 'Magst du gern Fisch?', 'Balıq xoşlayırsan?'],
+          ['B', 'Ja, ich finde Fisch lecker.', 'Bəli, məncə balıq dadlıdır.'],
+        ],
+        rule: {
+          title: 'mögen · essen · finden + nicht',
+          focus: 'Answering "Magst du …?" / "Isst du gern …?" with the six patterns: ich finde … (nicht) lecker, ich mag … (nicht) (gern), ich esse … (nicht) (gern); verb forms ich mag / du magst, ich esse / du isst; position of nicht.',
+          text: [
+            'Sual: <i><b>Magst</b> du (gern) Fisch?</i> · <i><b>Isst</b> du (gern) Fisch?</i> — fel əvvəldədir.',
+            'Təsdiq: <i>Ja, ich finde Fisch lecker.</i> · <i>Ja, ich mag Fisch gern.</i> · <i>Ja, ich esse Fisch gern.</i>',
+            'İnkar — <b>nicht</b> yeməkdən sonra, <i>lecker / gern</i>-dən əvvəl: <i>Nein, ich finde Fisch <b>nicht</b> lecker.</i> · <i>Nein, ich mag Fisch <b>nicht</b> (gern).</i> · <i>Nein, ich esse Fisch <b>nicht</b> (gern).</i>',
+            'Fel: <b>mögen</b> — ich <b>mag</b>, du <b>magst</b> · <b>essen</b> — ich <b>esse</b>, du <b>isst</b> · <b>finden</b> — ich finde, du findest.',
+          ],
+          tables: [
+            {
+              head: ['', 'mögen', 'essen', 'finden'],
+              rows: [
+                ['ich', 'mag', 'esse', 'finde'],
+                ['du', 'magst', 'isst', 'findest'],
+                ['er/sie/es', 'mag', 'isst', 'findet'],
+              ],
+            },
+          ],
+          tips: ['Tez-tez edilən səhvlər: ❌ ich magst → ✅ ich mag · ❌ ich isst → ✅ ich esse · ❌ Ich mag nicht Fisch → ✅ Ich mag Fisch nicht · ❌ Ich esse Fisch gern nicht → ✅ Ich esse Fisch nicht gern'],
+        },
+        vocab: [
+          ['mögen (ich mag, du magst)', 'xoşlamaq, sevmək'],
+          ['essen (ich esse, du isst)', 'yemək'],
+          ['gern', 'məmnuniyyətlə (xoşlayaraq)'],
+          ['lecker', 'dadlı'],
+          ['nicht', 'yox, deyil (inkar)'],
+          ['das Schnitzel', 'şnitsel'],
+          ['das Hähnchen', 'toyuq'],
+          ['der Käse', 'pendir'],
+          ['das Gemüse', 'tərəvəz'],
+          ['die Oliven', 'zeytun'],
+        ],
+      },
     ],
   },
   {
