@@ -714,3 +714,7 @@ main.kn { padding-bottom: 40px; }
 .mm-akk summary { font-weight: 700; cursor: pointer; }
 .mm-akk table { width: 100%; border-collapse: collapse; margin: 6px 0 2px; }
 .mm-akk th, .mm-akk td { border: 1px solid var(--line); padding: 3px 5px; text-align: left; }
+.mm-p.fr { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mm-rep { position: absolute; top: -4px; right: -8px; font-style: normal; font-size: 13px; background: #fff; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.mm-p.fr.tap > span { animation: mmTap .45s ease; }
+@keyframes mmTap { 40% { transform: scale(1.15) rotate(-6deg); } }

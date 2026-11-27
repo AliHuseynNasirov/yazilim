@@ -68,7 +68,7 @@ export function renderFreunde(ctx) {
       ${st.stage !== 'start' && !st.finished ? '<div class="resume-bar mm-rb">↩️ Qaldığın yerdən davam <button type="button" id="mmRestart">🔄 Yenidən başla</button></div>' : ''}
       <div class="mm-scene" id="mmScene">
         <div class="mm-p me"><div class="mm-bub" id="mmBubMe"></div><span>🧑</span><small>Sən</small></div>
-        <div class="mm-p fr"><div class="mm-bub" id="mmBubFr"></div><span>👩</span><small>${FRIEND} · müəllim</small></div>
+        <div class="mm-p fr" id="mmFriend" role="button" title="Toxun — son cümləni təkrar etsin"><div class="mm-bub" id="mmBubFr"></div><span>👩</span><i class="mm-rep">🔁</i><small>${FRIEND} · müəllim</small></div>
         <div class="mm-table"><span class="mm-plate me" id="mmPlateMe"></span><span class="mm-menu-ic">📖</span><span class="mm-plate fr" id="mmPlateFr"></span></div>
       </div>
       <div class="mm-task" id="mmTask"></div>
@@ -159,6 +159,25 @@ export function renderFreunde(ctx) {
   root.addEventListener('click', (e) => {
     const r = e.target.closest('[data-de]');
     if (r) speak(r.dataset.de);
+  });
+  // Dosta (Lena-ya) toxunanda — son cümləsini yenə desin ("Kannst du das bitte wiederholen?"); neçə dəfə bassan, o qədər
+  $('#mmFriend').addEventListener('click', () => {
+    const line = st.lastLine;
+    const f = $('#mmFriend');
+    f.classList.remove('tap');
+    void f.offsetWidth;
+    f.classList.add('tap');
+    const bub = $('#mmBubFr');
+    bub.textContent = line || `${FRIEND} hələ heç nə deməyib.`;
+    bub.classList.add('on');
+    clearTimeout(bub._t);
+    bub._t = setTimeout(() => bub.classList.remove('on'), 7000);
+    if (!line) return;
+    dlog.add('təkrar', line);
+    if (session && session.ready) {
+      stopWaiting();
+      session.sendText(`[App] The learner tapped on you to hear your last sentence again ("Kannst du das bitte wiederholen?"). Repeat it slowly and clearly, exactly: "${line}" Say nothing else, do not explain, do not call any function. Then end your turn and wait.`);
+    } else speak(line);
   });
 
   // ---------- tapşırıq ----------
@@ -313,6 +332,7 @@ export function renderFreunde(ctx) {
       case 'bye':
         st.stage = 'end';
         st.finished = true;
+        st.lastLine = T.bye();
         save();
         setTimeout(() => alive() && finish(), 1500);
         return `CORRECT — say exactly in German: "${T.bye()}" Then say in ${expl}: "Əla! Oyun bitdi. Növbəti oyunda başqa formada soruşacağıq." Then end your turn.`;
