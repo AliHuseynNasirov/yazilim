@@ -9,25 +9,66 @@ export const KURS_CAT = { id: 'kurs', icon: '📚', title: 'Kitab üzrə kurs (A
 
 // ---------- səs (brauzerin almanca səsi) ----------
 let sayTimer = null;
+let sayGen = 0;
 export function stopSay() {
   clearTimeout(sayTimer);
+  sayGen++;
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
-function utter(text, rate, pitch) {
+function germanVoice() {
+  const de = speechSynthesis.getVoices().filter((v) => v.lang && v.lang.replace('_', '-').toLowerCase().startsWith('de'));
+  return de.find((v) => v.localService) || de[0] || null;
+}
+function utter(text, rate, pitch, useVoice = true) {
   const u = new SpeechSynthesisUtterance(String(text).replace(/___/g, ' ').replace(/–|—/g, ','));
   u.lang = 'de-DE';
   u.rate = rate;
   u.pitch = pitch;
-  const de = speechSynthesis.getVoices().find((v) => v.lang && v.lang.replace('_', '-').startsWith('de'));
+  const de = useVoice && germanVoice();
   if (de) u.voice = de;
   return u;
 }
 /** Mətn və ya sətirlər siyahısı (dialoq: səs tonu növbə ilə dəyişir) */
 export function say(text, rate = 0.9) {
   if (!('speechSynthesis' in window)) return;
+  const busy = speechSynthesis.speaking || speechSynthesis.pending;
   stopSay();
-  const lines = [].concat(text);
-  lines.forEach((l, i) => speechSynthesis.speak(utter(l, rate, lines.length > 1 && i % 2 ? 0.75 : 1)));
+  const gen = sayGen;
+  const lines = [].concat(text).filter((l) => l != null && String(l).trim());
+  if (!lines.length) return;
+  const run = (useVoice) => {
+    if (gen !== sayGen) return;
+    // bəzi Android telefonlarında səs sistemi "dayanmış" qalır — oyat
+    try {
+      if (speechSynthesis.paused) speechSynthesis.resume();
+    } catch (e) {
+      /* yox */
+    }
+    let started = false;
+    let retried = false;
+    const retry = () => {
+      if (retried || !useVoice || started || gen !== sayGen) return;
+      retried = true;
+      clearTimeout(sayTimer);
+      speechSynthesis.cancel();
+      // seçilmiş almanca səs işləmirsə — telefonun standart almanca səsi ilə bir dəfə də
+      sayTimer = setTimeout(() => run(false), 80);
+    };
+    lines.forEach((l, i) => {
+      const u = utter(l, rate, lines.length > 1 && i % 2 ? 0.75 : 1, useVoice);
+      u.onstart = () => (started = true);
+      u.onerror = (e) => {
+        if (e && (e.error === 'interrupted' || e.error === 'canceled')) return;
+        retry();
+      };
+      speechSynthesis.speak(u);
+    });
+    // səs heç başlamadısa (bəzi telefonlarda xəta da gəlmir) — yenidən cəhd
+    if (useVoice) sayTimer = setTimeout(() => !speechSynthesis.speaking && retry(), 1500);
+  };
+  // cancel()-dan dərhal sonra speak() — bəzi Android telefonlarında yeni səs itir; azca gözlə
+  if (busy) sayTimer = setTimeout(() => run(true), 80);
+  else run(true);
 }
 
 // ---------- irəliləyiş ----------
